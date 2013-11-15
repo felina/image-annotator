@@ -1,0 +1,17 @@
+{
+  "name": "image-annotator",
+  "version": "0.0.0",
+  "homepage": "https://github.com/felina/image-annotator",
+  "authors": [
+    "Giles Lavelle <giles.lavelle@gmail.com>"
+  ],
+  "description": "JavaScript component for drawing arbitrary polygons over images and exporting them as JSON",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
