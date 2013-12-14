@@ -1,0 +1,29 @@
+.container {
+    width:300px;
+    height:200px;
+    position:relative;
+    margin:20px 0 0 0;
+    background: gray;
+    overflow: hidden;
+}
+.container #border {
+    width:300px;
+    height:200px;
+    border:1px red solid;
+    position:absolute;
+    left:0;
+    top:0;
+    z-index:2;
+}
+.iggy{
+    position:absolute;
+    left:0;
+    top:0;
+    z-index:1;
+    height:100%;
+    width:100%;
+}
+/*#zoomin {
+    position:relative;
+    z-index:3;
+}*/
