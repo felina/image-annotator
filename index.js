@@ -1,25 +1,29 @@
 (function( $ ) {
   $.fn.annotator = function(src) {
     return this.each(function() {
-      var $zoomin = $('<a href="#">Zoom In</a>');
-      var $zoomout = $('<a href="#">Zoom Out</a>');
+      var $zoomin = $('<button>Zoom In</button>');
+      var $zoomout = $('<button>Zoom Out</button>');
       var $img = $('<img class="iggy" src="'+src+'"></img>');
       var $container = $('<div class="container"></div>');
       $(this).append($zoomin);
-      $(this).append('<br></br>')
+      $(this).append('<br></br>');
       $(this).append($zoomout);
       $(this).append($container);
       $container.append($img);
       $img.draggable();
       var originalHeight = $img.height();
-      $zoomin.on("click", function (){console.log("zoomin"); zoom($img, originalHeight, 1.25)});
-      $zoomout.on("click", function(){console.log("zoomout"); zoom($img, originalHeight, 0.8)});
+      $zoomin.on("click", function (){
+        console.log("zoomin"); zoom($img, originalHeight, 1.25);
+      });
+      $zoomout.on("click", function(){
+        console.log("zoomout"); zoom($img, originalHeight, 0.8);
+      });
     });
-  }
+  };
 }( jQuery ));
 
 var zoom = function($img, originalHeight, adjustment){
-  var offset = $img.offset();    
+  var offset = $img.offset();
   var width = $img.width();
   var height = $img.height();
   
