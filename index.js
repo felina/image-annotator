@@ -18,6 +18,33 @@
   }
 }( jQuery ));
 
+var zoom = function($img, originalHeight, adjustment){
+  var offset = $img.offset();    
+  var width = $img.width();
+  var height = $img.height();
+  
+  if(adjustment < 1 && originalHeight >= height)
+      return;
+  
+  var newWidth = width * adjustment;
+  var newHeight = height * adjustment;
+  
+  var diffWidth = newWidth - width;
+  var diffHeight = newHeight - height;
+  
+  var hcenter = $('body').width() / 2;
+  var vcenter = $('body').height() / 2;
+  
+  var leftPercent = (hcenter - offset.left) / width;
+  var topPercent = (vcenter - offset.top) / height;
+
+  $img.offset({top: offset.top - (diffHeight * topPercent), left: offset.left - (diffWidth * leftPercent)});
+
+  $img.width(newWidth).height(newHeight);
+};
+
+
+
 
   // function insertImage(a,src){
   //   $('#'+a).append('<a id="zoomin" href="#">Zoom In</a>');
@@ -39,28 +66,3 @@
 //   $("#zoomout").on("click", function(){console.log("zoomin"); zoom(0.8)});
 
 // });
-
-var zoom = function($img, originalHeight, adjustment){
-    var offset = $img.offset();    
-    var width = $img.width();
-    var height = $img.height();
-    
-    if(adjustment < 1 && originalHeight >= height)
-        return;
-    
-    var newWidth = width * adjustment;
-    var newHeight = height * adjustment;
-    
-    var diffWidth = newWidth - width;
-    var diffHeight = newHeight - height;
-    
-    var hcenter = $('body').width() / 2;
-    var vcenter = $('body').height() / 2;
-    
-    var leftPercent = (hcenter - offset.left) / width;
-    var topPercent = (vcenter - offset.top) / height;
-
-    $img.offset({top: offset.top - (diffHeight * topPercent), left: offset.left - (diffWidth * leftPercent)});
-
-    $img.width(newWidth).height(newHeight);
-  };
