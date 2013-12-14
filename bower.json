@@ -14,9 +14,9 @@
     "bower_components",
     "test",
     "tests"
-    "vendor"
-    "index.html"
-    "LICENSE"
+    "**/vendor"
+    "**/index.html"
+    "**/LICENSE"
   ],
   "dependencies": {
     "jquery-ui": "~1.10.3"
