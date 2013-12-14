@@ -1,5 +1,5 @@
-jQuery.fn.extend({
-  annotator: function(src) {
+(function( $ ) {
+  $.fn.annotator = function(src) {
     return this.each(function() {
       var $zoomin = $('<a href="#">Zoom In</a>');
       var $zoomout = $('<a href="#">Zoom Out</a>');
@@ -16,7 +16,7 @@ jQuery.fn.extend({
       $zoomout.on("click", function(){console.log("zoomout"); zoom($img, originalHeight, 0.8)});
     });
   }
-});
+}( jQuery ));
 
 
   // function insertImage(a,src){
