@@ -1,4 +1,4 @@
-.container {
+.acontainer {
     width:300px;
     height:200px;
     position:relative;
@@ -6,7 +6,7 @@
     background: gray;
     overflow: hidden;
 }
-.container #border {
+.acontainer #border {
     width:300px;
     height:200px;
     border:1px red solid;

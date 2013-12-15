@@ -4,7 +4,7 @@
       var $zoomin = $('<button>Zoom In</button>');
       var $zoomout = $('<button>Zoom Out</button>');
       var $img = $('<img class="iggy" src="'+src+'"></img>');
-      var $container = $('<div class="container"></div>');
+      var $container = $('<div class="acontainer"></div>');
       $(this).append($zoomin);
       $(this).append('<br></br>');
       $(this).append($zoomout);
