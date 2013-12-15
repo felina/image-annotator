@@ -1,6 +1,6 @@
 {
     "name": "image-annotator",
-    "version": "0.0.1",
+    "version": "0.1.1",
     "homepage": "https://github.com/felina/image-annotator",
     "authors": [
         "Giles Lavelle <giles.lavelle@gmail.com>",
@@ -16,6 +16,7 @@
         "tests",
         "**/vendor",
         "**/index.html",
+        "**/style.css",
         "**/LICENSE"
     ],
     "dependencies": {
