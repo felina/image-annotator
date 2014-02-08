@@ -40,6 +40,7 @@ var repaint = function(g, $img) {
   var dx = annotation.w;
   var dy = annotation.h;
 
+  g.strokeStyle = "white";
   g.lineWidth = 2 / curScale;
   g.strokeRect(x, y, dx, dy);
 };
@@ -92,7 +93,7 @@ var pan = function(g, $img, x, y) {
   $.fn.annotator = function(src, width, height) {
     return this.each(function() {
       var $zoomin, $zoomout, $pan, $annotate,
-          $container, $img, $canvas;
+          $container, $img, $canvas, g;
 
       // Check for annotator class
       $parent = $(this);
@@ -129,6 +130,10 @@ var pan = function(g, $img, x, y) {
         $pan       = $('<button id="pan">Pan</button>').appendTo($parent);
         $annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
 
+        // Control functionality
+        $zoomin.click(  function(){zoom(g, $img, 1.25 );});
+        $zoomout.click( function(){zoom(g, $img, 0.8  );});
+
         // Canvas container
         $container = $('<div></div>')
                     .css(containercss)
@@ -152,23 +157,6 @@ var pan = function(g, $img, x, y) {
           console.log("um");
           canvas = G_vmlCanvasManager.initElement(canvas);
         }
-      }
-
-      // Scale the canvas to the original image
-      $canvas[0].width = width;
-      $canvas[0].height = height;
-
-      // 'g' is the graphics context for rendering
-      var g = $canvas[0].getContext("2d");
-
-      // Control functionality
-      $zoomin.click(  function(){zoom(g, $img, 1.25 );});
-      $zoomout.click( function(){zoom(g, $img, 0.8  );});
-
-      // We have to wait for the image to load before we can use it!
-      $img.load(function(){
-        doTransform(g, $img);
-        repaint(g, $img);
 
         // Canvas operations
         var x0;
@@ -213,8 +201,8 @@ var pan = function(g, $img, x, y) {
           }
           else if (op == "annotate") {
             // Annotation - in image space
-            annotation.x = (x0-width/2-xOffs)/curScale;
-            annotation.y = (y0-height/2-yOffs)/curScale;
+            annotation.x = (x0-$img.width()/2-xOffs)/curScale;
+            annotation.y = (y0-$img.height()/2-yOffs)/curScale;
             annotation.w = dx/curScale;
             annotation.h = dy/curScale;
 
@@ -227,6 +215,19 @@ var pan = function(g, $img, x, y) {
         $canvas.mouseup(function(){
           active = false;
         });
+      }
+
+      // Scale the canvas to the original image
+      $canvas[0].width = width;
+      $canvas[0].height = height;
+
+      // 'g' is the graphics context for rendering
+      g = $canvas[0].getContext("2d");
+
+      // We have to wait for the image to load before we can use it!
+      $img.load(function(){
+        doTransform(g, $img);
+        repaint(g, $img);
       });
     });
   };
