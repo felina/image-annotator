@@ -39,10 +39,13 @@ var repaint = function(g, $img) {
   g.drawImage($img[0], -w/2, -h/2);
 
   // Annotation
-  g.strokeRect( Math.min(annotation.x, annotation.x-annotation.w),
-                Math.min(annotation.y, annotation.y-annotation.h),
-                annotation.w,
-                annotation.h);
+  var x = Math.min(annotation.x, annotation.x+annotation.w);
+  var y = Math.min(annotation.y, annotation.y+annotation.h);
+  var dx = annotation.w;
+  var dy = annotation.h;
+
+  g.lineWidth = 2 / curScale;
+  g.strokeRect(x, y, dx, dy);
 };
 
 // Transform info
@@ -139,8 +142,7 @@ var pan = function(g, $img, x, y) {
         doTransform(g, $img);
         repaint(g, $img);
 
-        g.strokeStyle="red";
-
+        // Canvas operations
         var x0;
         var y0;
         var op = "pan";
@@ -162,12 +164,6 @@ var pan = function(g, $img, x, y) {
           x0 = e.pageX - offset.left;
           y0 = e.pageY - offset.top;
           active = true;
-
-          //console.log(startX+" "+startY);
-          //console.log(e.pageX+" "+e.pageY);
-          // g.strokeStyle = "red";
-          // g.strokeRect(x,y,10,10);
-          // g.stroke();
         });
 
         // Movement continues draw/pan as long as the mouse button is held
@@ -189,17 +185,17 @@ var pan = function(g, $img, x, y) {
           }
           else if (op == "annotate") {
             // Annotation - in image space
-            annotation.x = x0;
-            annotation.y = y0;
+            annotation.x = (x0-width/2-xOffs)/curScale;
+            annotation.y = (y0-height/2-yOffs)/curScale;
             annotation.w = dx/curScale;
             annotation.h = dy/curScale;
 
             doTransform(g, $img);
             repaint(g, $img);
-            //g.strokeRect(Math.min(x0,x1), Math.min(y0,y1), w, h);
           }
         });
 
+        // Operation end
         $canvas.mouseup(function(){
           active = false;
         });
