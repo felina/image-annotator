@@ -14,6 +14,7 @@ var canvascss = {
   left : 0,
   top : 0,
   "z-index" : 100,
+  cursor : "move"
 };
 
 var annotation = {
@@ -34,9 +35,14 @@ var repaint = function(g, $img) {
   g.shadowColor = "#555";
   g.shadowBlur = 40;
 
-  console.log(w + ", " + h);
-
+  // Draw the image
   g.drawImage($img[0], -w/2, -h/2);
+
+  // Annotation
+  g.strokeRect( Math.min(annotation.x, annotation.x-annotation.w),
+                Math.min(annotation.y, annotation.y-annotation.h),
+                annotation.w,
+                annotation.h);
 };
 
 // Transform info
@@ -66,6 +72,11 @@ var doTransform = function(g, $img) {
 var zoom = function(g, $img, scale) {
   // New scaling level
   curScale *= scale;
+
+  if (curScale < 0.9) {
+    curScale = 0.9;
+  }
+
   doTransform(g, $img);
 };
 
@@ -84,9 +95,10 @@ var pan = function(g, $img, x, y) {
       $parent = $(this);
       
       // Controls
-  	  var $zoomin = $('<button>Zoom In</button>').appendTo($parent);
-      var $zoomout = $('<button>Zoom Out</button>').appendTo($parent);
-      var $moveit = $('<button>Move it!</button>').appendTo($parent);
+  	  var $zoomin    = $('<button>+</button>').appendTo($parent);
+      var $zoomout   = $('<button>-</button>').appendTo($parent);
+      var $pan       = $('<button>Pan</button>').appendTo($parent);
+      var $annotate  = $('<button>Annotate</button>').appendTo($parent);
 
       // Canvas container
       var $container = $('<div></div>')
@@ -121,7 +133,6 @@ var pan = function(g, $img, x, y) {
       // Control functionality
       $zoomin.click(  function(){zoom(g, $img, 1.25 );});
       $zoomout.click( function(){zoom(g, $img, 0.8  );});
-      $moveit.click(  function(){pan(g, $img, 10, 20);});
 
       // We have to wait for the image to load before we can use it!
       $img.load(function(){
@@ -132,14 +143,25 @@ var pan = function(g, $img, x, y) {
 
         var x0;
         var y0;
-        var op = "none";
+        var op = "pan";
+        var active = false;
+
+        // Operation selection
+        $pan.click(function(){
+          op = "pan";
+          $canvas.css("cursor", "move");
+        });
+        $annotate.click(function(){
+          op = "annotate";
+          $canvas.css("cursor", "crosshair");
+        });
 
         // Mouse down - start drawing or panning
         $canvas.mousedown(function(e){
           var offset = $canvas.offset();
           x0 = e.pageX - offset.left;
           y0 = e.pageY - offset.top;
-          op = "pan";
+          active = true;
 
           //console.log(startX+" "+startY);
           //console.log(e.pageX+" "+e.pageY);
@@ -150,23 +172,36 @@ var pan = function(g, $img, x, y) {
 
         // Movement continues draw/pan as long as the mouse button is held
         $canvas.mousemove(function(e){
-          if(op == "pan"){
-            var offset = $canvas.offset();
-            var x1 = e.pageX - offset.left;
-            var y1 = e.pageY - offset.top;
+          if (!active) return;
 
-            pan(g, $img, x1 - x0, y1 - y0);
+          var offset = $canvas.offset();
+          var x1 = e.pageX - offset.left;
+          var y1 = e.pageY - offset.top;
+
+          var dx = x1 - x0;
+          var dy = y1 - y0;
+
+          if (op == "pan") {
+            // Panning the image
+            pan(g, $img, dx, dy);
             x0 = x1;
             y0 = y1;
+          }
+          else if (op == "annotate") {
+            // Annotation - in image space
+            annotation.x = x0;
+            annotation.y = y0;
+            annotation.w = dx/curScale;
+            annotation.h = dy/curScale;
 
-            //var w = Math.abs(startX - x);
-            //var h = Math.abs(startY - y);
-            //g.strokeRect(Math.min(x,startX), Math.min(y,startY), w, h);
+            doTransform(g, $img);
+            repaint(g, $img);
+            //g.strokeRect(Math.min(x0,x1), Math.min(y0,y1), w, h);
           }
         });
 
         $canvas.mouseup(function(){
-          op = "none";
+          active = false;
         });
       });
     });
