@@ -1,7 +1,3 @@
-var imgcss = {
-  visibility : "hidden",
-};
-
 var containercss = {
   position : "relative",
   // "margin" : "20px 0 0 0",
@@ -95,35 +91,64 @@ var pan = function(g, $img, x, y) {
   // The annotator function - appplicable to any jQuery object collection
   $.fn.annotator = function(src, width, height) {
     return this.each(function() {
+      var $zoomin, $zoomout, $pan, $annotate,
+          $container, $img, $canvas;
+
+      // Check for annotator class
       $parent = $(this);
+
+      // Update if we're passed an existing annotator
+      if ($parent.hasClass("annotator")) {
+        // Retrieve controls
+        $zoomin     = $parent.find("#zoomin");
+        $zoomout    = $parent.find("#zoomin");
+        $pan        = $parent.find("#pan");
+        $annotate   = $parent.find("#annot");
+
+        // Reload the image
+        $img = $parent.find("img").attr("src", src).width(width).height(height);
+
+        // Retrieve canvas
+        $canvas = $parent.find("canvas");
+
+        // Reset pan/zoom
+        curScale = 0.9;
+        xOffs = 0;
+        yOffs = 0;
+      }
+      else {
+        // Register and generate annotator components
+        $parent.addClass("annotator");
       
-      // Controls
-  	  var $zoomin    = $('<button>+</button>').appendTo($parent);
-      var $zoomout   = $('<button>-</button>').appendTo($parent);
-      var $pan       = $('<button>Pan</button>').appendTo($parent);
-      var $annotate  = $('<button>Annotate</button>').appendTo($parent);
+        // Controls
+    	  $zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
+        $zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
+        $pan       = $('<button id="pan">Pan</button>').appendTo($parent);
+        $annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
 
-      // Canvas container
-      var $container = $('<div></div>')
-                        .css(containercss)
-                        .width(width)
-                        .height(width).appendTo($parent);
+        // Canvas container
+        $container = $('<div></div>')
+                    .css(containercss)
+                    .width(width)
+                    .height(width)
+                    .appendTo($parent);
 
-      // Load the image - don't need to put it in the page!
-      var $img = $('<img src="'+src+'"></img>')
-                        .width(width)
-                        .height(height);
+        // Load the image
+        $img = $('<img src="'+src+'"></img>')
+                    .width(width)
+                    .height(height)
+                    .hide()
+                    .appendTo($parent);
 
-      // The drawing canvas
-      var $canvas = $('<canvas>Unsupported browser.</canvas>')
-                      .css(canvascss)
-                      .appendTo($container);
+        // The drawing canvas
+        $canvas = $('<canvas>Unsupported browser.</canvas>')
+                    .css(canvascss)
+                    .appendTo($container);
 
-      var originalHeight = $img.height();
-
-      if (typeof G_vmlCanvasManager != 'undefined') {
-        console.log("badamdisssss");
-        canvas = G_vmlCanvasManager.initElement(canvas);
+        if (typeof G_vmlCanvasManager != 'undefined') {
+          console.log("um");
+          canvas = G_vmlCanvasManager.initElement(canvas);
+        }
       }
 
       // Scale the canvas to the original image
