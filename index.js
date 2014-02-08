@@ -35,8 +35,8 @@ var repaint = function(g, $img) {
   g.drawImage($img[0], -w/2, -h/2);
 
   // Annotation
-  var x = Math.min(annotation.x, annotation.x+annotation.w);
-  var y = Math.min(annotation.y, annotation.y+annotation.h);
+  var x = Math.min(annotation.x, annotation.x-annotation.w);
+  var y = Math.min(annotation.y, annotation.y-annotation.h);
   var dx = annotation.w;
   var dy = annotation.h;
 
@@ -215,7 +215,7 @@ var pan = function(g, $img, x, y) {
         $canvas.mouseup(function(){
           active = false;
         });
-      }
+      } // end of conditional update
 
       // Scale the canvas to the original image
       $canvas[0].width = width;
@@ -224,7 +224,7 @@ var pan = function(g, $img, x, y) {
       // 'g' is the graphics context for rendering
       g = $canvas[0].getContext("2d");
 
-      // We have to wait for the image to load before we can use it!
+      // We have to wait for the image to load before we can use it
       $img.load(function(){
         doTransform(g, $img);
         repaint(g, $img);
