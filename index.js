@@ -30,11 +30,17 @@ var repaint = function(g, $img) {
   var w = $img.width();
   var h = $img.height();
 
+  // Drop shadow
+  g.shadowColor = "#555";
+  g.shadowBlur = 40;
+
+  console.log(w + ", " + h);
+
   g.drawImage($img[0], -w/2, -h/2);
 };
 
 // Transform info
-var curScale = 1;
+var curScale = 0.9;
 var xOffs = 0;
 var yOffs = 0;
 
@@ -118,8 +124,9 @@ var pan = function(g, $img, x, y) {
       $moveit.click(  function(){pan(g, $img, 10, 20);});
 
       // We have to wait for the image to load before we can use it!
-      $img.ready(function(){
-        g.drawImage($img[0], 0, 0);
+      $img.load(function(){
+        doTransform(g, $img);
+        repaint(g, $img);
 
         g.strokeStyle="red";
 
