@@ -99,11 +99,16 @@ var pan = function(g, $img, x, y) {
 
       // Update if we're passed an existing annotator
       if ($parent.hasClass("annotator")) {
+        console.log("Updating existing - "+src);
+
         // Retrieve controls
         $zoomin     = $parent.find("#zoomin");
         $zoomout    = $parent.find("#zoomin");
         $pan        = $parent.find("#pan");
         $annotate   = $parent.find("#annot");
+
+        // Retrieve/resize container
+        $container = $parent.find("div").width(width).height(height);
 
         // Reload the image
         $img = $parent.find("img").attr("src", src).width(width).height(height);
@@ -117,6 +122,8 @@ var pan = function(g, $img, x, y) {
         yOffs = 0;
       }
       else {
+        console.log("Building new annotator - "+src);
+
         // Register and generate annotator components
         $parent.addClass("annotator");
       
