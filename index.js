@@ -13,13 +13,15 @@ var canvascss = {
   cursor : "move"
 };
 
-var annotation = {
-  type : "rect",
-  x : 0,
-  y : 0,
-  w : 0,
-  h : 0
+function Annotation() {
+  this.x = 0;
+  this.y = 0;
+  this.w = 0;
+  this.h = 0;
+  this.type = "rect";
 };
+
+var att = new Annotation();
 
 // Canvas re-draw op
 var repaint = function(g, $img) {
@@ -39,10 +41,10 @@ var repaint = function(g, $img) {
 
 // Annotation draw op
 var drawAtt = function(g) {
-  var dx = Math.abs(annotation.w);
-  var dy = Math.abs(annotation.h);
-  var x = Math.min(annotation.x, annotation.x+annotation.w);
-  var y = Math.min(annotation.y, annotation.y+annotation.h);
+  var dx = Math.abs(att.w);
+  var dy = Math.abs(att.h);
+  var x = Math.min(att.x, att.x+att.w);
+  var y = Math.min(att.y, att.y+att.h);
 
   g.strokeStyle = "white";
   g.lineWidth = 2 / curScale;
@@ -137,6 +139,9 @@ var ptToImg = function($img, x, y) {
         curScale = 0.9;
         xOffs = 0;
         yOffs = 0;
+
+        // Reset annotation
+        att = new Annotation();
       }
       else {
         // Register and generate annotator components
@@ -226,12 +231,12 @@ var ptToImg = function($img, x, y) {
           else if (op == "annotate") {
             // Annotation - in image space
             var pt1 = ptToImg($img, x0, y0);
-            annotation.x = pt1.x;
-            annotation.y = pt1.y;
+            att.x = pt1.x;
+            att.y = pt1.y;
 
             var pt2 = ptToImg($img, x1, y1);
-            annotation.w = pt2.x - pt1.x;
-            annotation.h = pt2.y - pt1.y;
+            att.w = pt2.x - pt1.x;
+            att.h = pt2.y - pt1.y;
 
             doTransform(g, $img);
           }

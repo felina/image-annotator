@@ -4,24 +4,35 @@
 	<script type="text/javascript" src="jquery-debug.js"></script>
 	<script type="text/javascript" src="index.js"></script>
 	<script type="text/javascript">
+	    var $div;
+	    var x = "640", y = "480";
+
+	    function reAnnot() {
+	    	$div.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x), parseInt(y));
+	    }
+
 		$(document).ready(function(){
 			$div = $("div");
+			reAnnot();
 
-			// Single instance test
-			$div.annotator("http://lorempixel.com/640/480/animals", 640, 480);
-
-			// Update test
-			/*window.setTimeout(function(){
-				$div.annotator("http://lorempixel.com/640/480/animals", 640, 480);
-			}, 3000);*/
-
-			// Large image test
-			//$div.annotator("http://lorempixel.com/1024/768/animals", 1024, 768);
+			$("#resSel").change(function(e){
+				var str = $(this).val();
+				var res = str.split("x");
+				x = res[0];
+				y = res[1];
+			});
 		});
 	</script>
 </head>
 
 <body>
+	<button onclick="reAnnot();">Re-Annotate</button>
+	<select id="resSel">
+		<option>640x480</option>
+		<option>800x600</option>
+		<option>1024x768</option>
+	</select>
+	<hr/>
 	<div></div>
 </body>
 </html>
