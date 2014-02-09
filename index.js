@@ -13,12 +13,13 @@ var canvascss = {
   cursor : "move"
 };
 
-function Annotation() {
+function Annotation(type) {
+  this.valid = false;
   this.pts = [{x:0,y:0}, {x:0,y:0}];
-  this.type = "rect";
+  this.type = type;
 };
 
-var att = new Annotation();
+var att = new Annotation("rect");
 
 // Canvas re-draw op
 function repaint(g, $img) {
@@ -38,9 +39,13 @@ function repaint(g, $img) {
 
 // Annotation draw op
 function drawAtt(g) {
-  g.shadowBlur = 10;
+  if (!att.valid) return;
+
+  g.shadowColor = "#222";
+  g.shadowBlur = 5;
   g.strokeStyle = "white";
   g.lineWidth = 1 / curScale;
+  g.fillStyle = "white";
 
   // Box drawing (2-point)
   if (att.type == "rect") {
@@ -55,6 +60,11 @@ function drawAtt(g) {
     var y = Math.min(y0, y1);
 
     g.strokeRect(x, y, dx, dy);
+
+    drawPt(g, {x:x0, y:y0});
+    drawPt(g, {x:x0, y:y1});
+    drawPt(g, {x:x1, y:y0});
+    drawPt(g, {x:x1, y:y1});
   }
   // Polygon drawing (n-point)
   else if (att.type == "poly") {
@@ -67,7 +77,18 @@ function drawAtt(g) {
 
     g.lineTo(att.pts[0].x, att.pts[0].y);
     g.stroke();
+
+    for (var i = 0; i < att.pts.length; i++) {
+      drawPt(g, att.pts[i]);
+    }
   }
+}
+
+// Point drawing util
+function drawPt(g, pt) {
+  g.beginPath();
+  g.arc(pt.x, pt.y, 2.5/curScale, 0, 2*Math.PI, false);
+  g.fill();
 }
 
 // Transform info
@@ -171,7 +192,7 @@ function ptToImg($img, x, y) {
         yOffs = 0;
 
         // Reset annotation
-        att = new Annotation();
+        att = new Annotation("rect");
       }
       else {
         // Register and generate annotator components
@@ -249,11 +270,14 @@ function ptToImg($img, x, y) {
             y1 = y0 = e.pageY - offset.top;
             active = true;
 
-            if (op == "annotate" && att.type == "poly") {
-              att = new Annotation();
-              att.type = "poly";
-              att.pts[0] = ptToImg($img, x0, y0);
-              polyC = 1;
+            if (op == "annotate") {
+              att = new Annotation(att.type);
+              att.valid = true;
+
+              if (att.type == "poly") {
+                att.pts[0] = ptToImg($img, x0, y0);
+                polyC = 1;
+              }
             }
           }
         });
