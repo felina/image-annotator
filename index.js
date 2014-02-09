@@ -14,10 +14,7 @@ var canvascss = {
 };
 
 function Annotation() {
-  this.x = 0;
-  this.y = 0;
-  this.w = 0;
-  this.h = 0;
+  this.pts = [{x:0,y:0}, {x:0,y:0}];
   this.type = "rect";
 };
 
@@ -41,14 +38,28 @@ var repaint = function(g, $img) {
 
 // Annotation draw op
 var drawAtt = function(g) {
-  var dx = Math.abs(att.w);
-  var dy = Math.abs(att.h);
-  var x = Math.min(att.x, att.x+att.w);
-  var y = Math.min(att.y, att.y+att.h);
-
+  g.shadowBlur = 10;
   g.strokeStyle = "white";
   g.lineWidth = 2 / curScale;
-  g.strokeRect(x, y, dx, dy);
+
+  // Box drawing (2-point)
+  if (att.type == "rect") {
+    var x0 = att.pts[0].x;
+    var y0 = att.pts[0].y;
+    var x1 = att.pts[1].x;
+    var y1 = att.pts[1].y;
+
+    var dx = Math.abs(x1-x0);
+    var dy = Math.abs(y1-y0);
+    var x = Math.min(x0, x1);
+    var y = Math.min(y0, y1);
+
+    g.strokeRect(x, y, dx, dy);
+  }
+  // Polygon drawing (n-point)
+  else if (att.type == "poly") {
+    // TODO (!) 
+  }
 }
 
 // Transform info
@@ -230,14 +241,15 @@ var ptToImg = function($img, x, y) {
           }
           else if (op == "annotate") {
             // Annotation - in image space
-            var pt1 = ptToImg($img, x0, y0);
-            att.x = pt1.x;
-            att.y = pt1.y;
+            if (att.type == "rect") {
+              var pt1 = ptToImg($img, x0, y0);
+              att.pts[0] = pt1;
 
-            var pt2 = ptToImg($img, x1, y1);
-            att.w = pt2.x - pt1.x;
-            att.h = pt2.y - pt1.y;
+              var pt2 = ptToImg($img, x1, y1);
+              att.pts[1] = pt2;
+            }
 
+            // Redraw
             doTransform(g, $img);
           }
         });
