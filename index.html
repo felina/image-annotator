@@ -6,7 +6,16 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 			$div = $("div");
+
+			// Single instance test
 			$div.annotator("http://lorempixel.com/640/480/animals", 640, 480);
+
+			// Update test
+			/*window.setTimeout(function(){
+				$div.annotator("http://lorempixel.com/640/480/animals", 640, 480);
+			}, 3000);*/
+
+			// Large image test
 			//$div.annotator("http://lorempixel.com/1024/768/animals", 1024, 768);
 		});
 	</script>
