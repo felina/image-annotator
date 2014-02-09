@@ -14,13 +14,12 @@ var canvascss = {
 };
 
 var annotation = {
+  type : "rect",
   x : 0,
   y : 0,
   w : 0,
   h : 0
 };
-
-var list = '';
 
 // Canvas re-draw op
 var repaint = function(g, $img) {
@@ -93,12 +92,24 @@ var pan = function(g, $img, x, y) {
   doTransform(g, $img);
 };
 
+// Util - canvas to image space
+var ptToImg = function($img, x, y) {
+  var out = {
+    x : 0, y : 0
+  }
+
+  out.x = (x-$img.width()/2-xOffs)/curScale;
+  out.y = (y-$img.height()/2-yOffs)/curScale;
+
+  return out;
+};
+
 (function( $ ) {
   // The annotator function - appplicable to any jQuery object collection
   $.fn.annotator = function(src, width, height) {
     return this.each(function() {
       var $zoomin, $zoomout, $pan, $annotate,
-          $container, $img, $canvas, g;
+          $container, $img, $canvas, $type, g;
 
       // Check for annotator class
       $parent = $(this);
@@ -110,6 +121,8 @@ var pan = function(g, $img, x, y) {
         $zoomout    = $parent.find("#zoomin");
         $pan        = $parent.find("#pan");
         $annotate   = $parent.find("#annot");
+
+        $type       = $parent.find("#typesel");
 
         // Retrieve/resize container
         $container = $parent.find("div").width(width).height(height);
@@ -135,9 +148,9 @@ var pan = function(g, $img, x, y) {
         $pan       = $('<button id="pan">Pan</button>').appendTo($parent);
         $annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
 
-        // Control functionality
-        $zoomin.click(  function(){zoom(g, $img, 1.25 );});
-        $zoomout.click( function(){zoom(g, $img, 0.8  );});
+        $type      = $('<select id="typesel"></select>')
+                      .html('<option>Rect</option><option>Polygon</option>')
+                      .appendTo($parent);
 
         // Canvas container
         $container = $('<div></div>')
@@ -163,9 +176,13 @@ var pan = function(g, $img, x, y) {
           canvas = G_vmlCanvasManager.initElement(canvas);
         }
 
+        // Zoom control
+        $zoomin.click(function(){zoom(g, $img, 1.25 );});
+        $zoomout.click(function(){zoom(g, $img, 0.8  );});
+
         // Canvas operations
-        var x0;
-        var y0;
+        var x0, x1;
+        var y0, y1;
         var op = "pan";
         var active = false;
 
@@ -181,10 +198,12 @@ var pan = function(g, $img, x, y) {
 
         // Mouse down - start drawing or panning
         $canvas.mousedown(function(e){
-          var offset = $canvas.offset();
-          x0 = e.pageX - offset.left;
-          y0 = e.pageY - offset.top;
-          active = true;
+          if (!active) {
+            var offset = $canvas.offset();
+            x1 = x0 = e.pageX - offset.left;
+            y1 = y0 = e.pageY - offset.top;
+            active = true;
+          }
         });
 
         // Movement continues draw/pan as long as the mouse button is held
@@ -192,8 +211,8 @@ var pan = function(g, $img, x, y) {
           if (!active) return;
 
           var offset = $canvas.offset();
-          var x1 = e.pageX - offset.left;
-          var y1 = e.pageY - offset.top;
+          x1 = e.pageX - offset.left;
+          y1 = e.pageY - offset.top;
 
           var dx = x1 - x0;
           var dy = y1 - y0;
@@ -206,10 +225,13 @@ var pan = function(g, $img, x, y) {
           }
           else if (op == "annotate") {
             // Annotation - in image space
-            annotation.x = (x0-$img.width()/2-xOffs)/curScale;
-            annotation.y = (y0-$img.height()/2-yOffs)/curScale;
-            annotation.w = dx/curScale;
-            annotation.h = dy/curScale;
+            var pt1 = ptToImg($img, x0, y0);
+            annotation.x = pt1.x;
+            annotation.y = pt1.y;
+
+            var pt2 = ptToImg($img, x1, y1);
+            annotation.w = pt2.x - pt1.x;
+            annotation.h = pt2.y - pt1.y;
 
             doTransform(g, $img);
           }
@@ -217,7 +239,15 @@ var pan = function(g, $img, x, y) {
 
         // Operation end
         $canvas.mouseup(function(){
-          active = false;
+          // End ONLY if dragged
+          if (op == "annotate") {
+            if (x0 != x1 && y0 != y1) {
+              active = false;
+            }
+          }
+          else {
+            active = false;
+          }
         });
       } // end of conditional update
 
