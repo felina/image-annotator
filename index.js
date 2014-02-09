@@ -40,7 +40,7 @@ function repaint(g, $img) {
 function drawAtt(g) {
   g.shadowBlur = 10;
   g.strokeStyle = "white";
-  g.lineWidth = 2 / curScale;
+  g.lineWidth = 1 / curScale;
 
   // Box drawing (2-point)
   if (att.type == "rect") {
@@ -295,7 +295,7 @@ function ptToImg($img, x, y) {
                 polyC++;
               }
             }
-            else if (att.type == "poly") {
+            else if (att.type == "poly" && polyC > 1) {
               active = false;
             }
           }
