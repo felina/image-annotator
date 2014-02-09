@@ -21,7 +21,7 @@ function Annotation() {
 var att = new Annotation();
 
 // Canvas re-draw op
-var repaint = function(g, $img) {
+function repaint(g, $img) {
   var w = $img.width();
   var h = $img.height();
 
@@ -37,7 +37,7 @@ var repaint = function(g, $img) {
 };
 
 // Annotation draw op
-var drawAtt = function(g) {
+function drawAtt(g) {
   g.shadowBlur = 10;
   g.strokeStyle = "white";
   g.lineWidth = 2 / curScale;
@@ -58,7 +58,14 @@ var drawAtt = function(g) {
   }
   // Polygon drawing (n-point)
   else if (att.type == "poly") {
-    // TODO (!) 
+    g.beginPath();
+    g.moveTo(att.pts[0].x, att.pts[0].y);
+
+    for (var i = 1; i < att.pts.length; i++) {
+      g.lineTo(att.pts[i].x, att.pts[i].y);
+    }
+
+    g.stroke();
   }
 }
 
@@ -68,7 +75,7 @@ var xOffs = 0;
 var yOffs = 0;
 
 // General transform op
-var doTransform = function(g, $img) {
+function doTransform(g, $img) {
   var w = $img.width();
   var h = $img.height();
 
@@ -86,7 +93,7 @@ var doTransform = function(g, $img) {
 };
 
 // Zoom op
-var zoom = function(g, $img, scale) {
+function zoom(g, $img, scale) {
   // New scaling level
   curScale *= scale;
 
@@ -98,7 +105,7 @@ var zoom = function(g, $img, scale) {
 };
 
 // Pan op
-var pan = function(g, $img, x, y) {
+function pan(g, $img, x, y) {
   // New offset
   xOffs += x;
   yOffs += y;
@@ -106,7 +113,7 @@ var pan = function(g, $img, x, y) {
 };
 
 // Util - canvas to image space
-var ptToImg = function($img, x, y) {
+function ptToImg($img, x, y) {
   var out = {
     x : 0, y : 0
   }
@@ -201,8 +208,18 @@ var ptToImg = function($img, x, y) {
         var y0, y1;
         var op = "pan";
         var active = false;
+        var polyC = 0;
 
         // Operation selection
+        $type.change(function(){
+          var str = $(this).val();
+          if (str == "Rect") {
+            att.type = "rect";
+          }
+          else if (str == "Polygon") {
+            att.type = "poly";
+          }
+        });
         $pan.click(function(){
           op = "pan";
           $canvas.css("cursor", "move");
@@ -241,12 +258,15 @@ var ptToImg = function($img, x, y) {
           }
           else if (op == "annotate") {
             // Annotation - in image space
-            if (att.type == "rect") {
-              var pt1 = ptToImg($img, x0, y0);
-              att.pts[0] = pt1;
+            var pt1 = ptToImg($img, x0, y0);
+            var pt2 = ptToImg($img, x1, y1);
 
-              var pt2 = ptToImg($img, x1, y1);
+            if (att.type == "rect") {
+              att.pts[0] = pt1;
               att.pts[1] = pt2;
+            }
+            else if (att.type == "poly") {
+              att.pts[polyC] = pt2;
             }
 
             // Redraw
@@ -259,7 +279,12 @@ var ptToImg = function($img, x, y) {
           // End ONLY if dragged
           if (op == "annotate") {
             if (x0 != x1 && y0 != y1) {
-              active = false;
+              if (att.type == "rect") active = false;
+              else if (att.type == "poly") {
+                x0 = x1;
+                y0 = y1;
+                polyC++;
+              }
             }
           }
           else {
