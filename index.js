@@ -65,6 +65,7 @@ function drawAtt(g) {
       g.lineTo(att.pts[i].x, att.pts[i].y);
     }
 
+    g.lineTo(att.pts[0].x, att.pts[0].y);
     g.stroke();
   }
 }
@@ -236,6 +237,13 @@ function ptToImg($img, x, y) {
             x1 = x0 = e.pageX - offset.left;
             y1 = y0 = e.pageY - offset.top;
             active = true;
+
+            if (op == "annotate" && att.type == "poly") {
+              att = new Annotation();
+              att.type = "poly";
+              att.pts[0] = ptToImg($img, x0, y0);
+              polyC = 1;
+            }
           }
         });
 
@@ -266,6 +274,7 @@ function ptToImg($img, x, y) {
               att.pts[1] = pt2;
             }
             else if (att.type == "poly") {
+              // Save next point
               att.pts[polyC] = pt2;
             }
 
@@ -285,6 +294,9 @@ function ptToImg($img, x, y) {
                 y0 = y1;
                 polyC++;
               }
+            }
+            else if (att.type == "poly") {
+              active = false;
             }
           }
           else {
