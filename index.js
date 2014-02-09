@@ -192,7 +192,7 @@ function ptToImg($img, x, y) {
         yOffs = 0;
 
         // Reset annotation
-        att = new Annotation("rect");
+        att = new Annotation(att.type);
       }
       else {
         // Register and generate annotator components
