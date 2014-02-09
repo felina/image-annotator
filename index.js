@@ -19,7 +19,9 @@ function Annotation(type) {
   this.type = type;
 };
 
-var att = new Annotation("rect");
+var att;
+var atts = new Array();
+var selectedType = "rect";
 
 // Canvas re-draw op
 function repaint(g, $img) {
@@ -34,11 +36,13 @@ function repaint(g, $img) {
   g.drawImage($img[0], -w/2, -h/2);
 
   // Annotation
-  drawAtt(g);
+  for (var i = 0; i < atts.length; i++) {
+    drawAtt(g, atts[i]);
+  }
 };
 
 // Annotation draw op
-function drawAtt(g) {
+function drawAtt(g, att) {
   if (!att.valid) return;
 
   g.shadowColor = "#222";
@@ -192,7 +196,8 @@ function ptToImg($img, x, y) {
         yOffs = 0;
 
         // Reset annotation
-        att = new Annotation(att.type);
+        att = new Annotation(selectedType);
+        atts = [att];
       }
       else {
         // Register and generate annotator components
@@ -247,10 +252,10 @@ function ptToImg($img, x, y) {
         $type.change(function(){
           var str = $(this).val();
           if (str == "Box") {
-            att.type = "rect";
+            selectedType = "rect";
           }
           else if (str == "Polygon") {
-            att.type = "poly";
+            selectedType = "poly";
           }
         });
         $pan.click(function(){
@@ -271,8 +276,9 @@ function ptToImg($img, x, y) {
             active = true;
 
             if (op == "annotate") {
-              att = new Annotation(att.type);
+              att = new Annotation(selectedType);
               att.valid = true;
+              atts.push(att);
 
               if (att.type == "poly") {
                 att.pts[0] = ptToImg($img, x0, y0);
