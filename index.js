@@ -13,17 +13,15 @@ var canvascss = {
   cursor : "move"
 };
 
-var annotation = {
-  x : 0,
-  y : 0,
-  w : 0,
-  h : 0
+function Annotation() {
+  this.pts = [{x:0,y:0}, {x:0,y:0}];
+  this.type = "rect";
 };
 
-var list = '';
+var att = new Annotation();
 
 // Canvas re-draw op
-var repaint = function(g, $img) {
+function repaint(g, $img) {
   var w = $img.width();
   var h = $img.height();
 
@@ -39,15 +37,37 @@ var repaint = function(g, $img) {
 };
 
 // Annotation draw op
-var drawAtt = function(g) {
-  var dx = Math.abs(annotation.w);
-  var dy = Math.abs(annotation.h);
-  var x = Math.min(annotation.x, annotation.x+annotation.w);
-  var y = Math.min(annotation.y, annotation.y+annotation.h);
-
+function drawAtt(g) {
+  g.shadowBlur = 10;
   g.strokeStyle = "white";
-  g.lineWidth = 2 / curScale;
-  g.strokeRect(x, y, dx, dy);
+  g.lineWidth = 1 / curScale;
+
+  // Box drawing (2-point)
+  if (att.type == "rect") {
+    var x0 = att.pts[0].x;
+    var y0 = att.pts[0].y;
+    var x1 = att.pts[1].x;
+    var y1 = att.pts[1].y;
+
+    var dx = Math.abs(x1-x0);
+    var dy = Math.abs(y1-y0);
+    var x = Math.min(x0, x1);
+    var y = Math.min(y0, y1);
+
+    g.strokeRect(x, y, dx, dy);
+  }
+  // Polygon drawing (n-point)
+  else if (att.type == "poly") {
+    g.beginPath();
+    g.moveTo(att.pts[0].x, att.pts[0].y);
+
+    for (var i = 1; i < att.pts.length; i++) {
+      g.lineTo(att.pts[i].x, att.pts[i].y);
+    }
+
+    g.lineTo(att.pts[0].x, att.pts[0].y);
+    g.stroke();
+  }
 }
 
 // Transform info
@@ -56,7 +76,7 @@ var xOffs = 0;
 var yOffs = 0;
 
 // General transform op
-var doTransform = function(g, $img) {
+function doTransform(g, $img) {
   var w = $img.width();
   var h = $img.height();
 
@@ -74,7 +94,7 @@ var doTransform = function(g, $img) {
 };
 
 // Zoom op
-var zoom = function(g, $img, scale) {
+function zoom(g, $img, scale) {
   // New scaling level
   curScale *= scale;
 
@@ -86,11 +106,23 @@ var zoom = function(g, $img, scale) {
 };
 
 // Pan op
-var pan = function(g, $img, x, y) {
+function pan(g, $img, x, y) {
   // New offset
   xOffs += x;
   yOffs += y;
   doTransform(g, $img);
+};
+
+// Util - canvas to image space
+function ptToImg($img, x, y) {
+  var out = {
+    x : 0, y : 0
+  }
+
+  out.x = (x-$img.width()/2-xOffs)/curScale;
+  out.y = (y-$img.height()/2-yOffs)/curScale;
+
+  return out;
 };
 
 (function( $ ) {
@@ -98,7 +130,7 @@ var pan = function(g, $img, x, y) {
   $.fn.annotator = function(src, width, height) {
     return this.each(function() {
       var $zoomin, $zoomout, $pan, $annotate,
-          $container, $img, $canvas, g;
+          $container, $img, $canvas, $type, g;
 
       // Check for annotator class
       $parent = $(this);
@@ -110,6 +142,8 @@ var pan = function(g, $img, x, y) {
         $zoomout    = $parent.find("#zoomin");
         $pan        = $parent.find("#pan");
         $annotate   = $parent.find("#annot");
+
+        $type       = $parent.find("#typesel");
 
         // Retrieve/resize container
         $container = $parent.find("div").width(width).height(height);
@@ -124,6 +158,9 @@ var pan = function(g, $img, x, y) {
         curScale = 0.9;
         xOffs = 0;
         yOffs = 0;
+
+        // Reset annotation
+        att = new Annotation();
       }
       else {
         // Register and generate annotator components
@@ -135,9 +172,9 @@ var pan = function(g, $img, x, y) {
         $pan       = $('<button id="pan">Pan</button>').appendTo($parent);
         $annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
 
-        // Control functionality
-        $zoomin.click(  function(){zoom(g, $img, 1.25 );});
-        $zoomout.click( function(){zoom(g, $img, 0.8  );});
+        $type      = $('<select id="typesel"></select>')
+                      .html('<option>Rect</option><option>Polygon</option>')
+                      .appendTo($parent);
 
         // Canvas container
         $container = $('<div></div>')
@@ -163,13 +200,27 @@ var pan = function(g, $img, x, y) {
           canvas = G_vmlCanvasManager.initElement(canvas);
         }
 
+        // Zoom control
+        $zoomin.click(function(){zoom(g, $img, 1.25 );});
+        $zoomout.click(function(){zoom(g, $img, 0.8  );});
+
         // Canvas operations
-        var x0;
-        var y0;
+        var x0, x1;
+        var y0, y1;
         var op = "pan";
         var active = false;
+        var polyC = 0;
 
         // Operation selection
+        $type.change(function(){
+          var str = $(this).val();
+          if (str == "Rect") {
+            att.type = "rect";
+          }
+          else if (str == "Polygon") {
+            att.type = "poly";
+          }
+        });
         $pan.click(function(){
           op = "pan";
           $canvas.css("cursor", "move");
@@ -181,10 +232,19 @@ var pan = function(g, $img, x, y) {
 
         // Mouse down - start drawing or panning
         $canvas.mousedown(function(e){
-          var offset = $canvas.offset();
-          x0 = e.pageX - offset.left;
-          y0 = e.pageY - offset.top;
-          active = true;
+          if (!active) {
+            var offset = $canvas.offset();
+            x1 = x0 = e.pageX - offset.left;
+            y1 = y0 = e.pageY - offset.top;
+            active = true;
+
+            if (op == "annotate" && att.type == "poly") {
+              att = new Annotation();
+              att.type = "poly";
+              att.pts[0] = ptToImg($img, x0, y0);
+              polyC = 1;
+            }
+          }
         });
 
         // Movement continues draw/pan as long as the mouse button is held
@@ -192,8 +252,8 @@ var pan = function(g, $img, x, y) {
           if (!active) return;
 
           var offset = $canvas.offset();
-          var x1 = e.pageX - offset.left;
-          var y1 = e.pageY - offset.top;
+          x1 = e.pageX - offset.left;
+          y1 = e.pageY - offset.top;
 
           var dx = x1 - x0;
           var dy = y1 - y0;
@@ -206,18 +266,42 @@ var pan = function(g, $img, x, y) {
           }
           else if (op == "annotate") {
             // Annotation - in image space
-            annotation.x = (x0-$img.width()/2-xOffs)/curScale;
-            annotation.y = (y0-$img.height()/2-yOffs)/curScale;
-            annotation.w = dx/curScale;
-            annotation.h = dy/curScale;
+            var pt1 = ptToImg($img, x0, y0);
+            var pt2 = ptToImg($img, x1, y1);
 
+            if (att.type == "rect") {
+              att.pts[0] = pt1;
+              att.pts[1] = pt2;
+            }
+            else if (att.type == "poly") {
+              // Save next point
+              att.pts[polyC] = pt2;
+            }
+
+            // Redraw
             doTransform(g, $img);
           }
         });
 
         // Operation end
         $canvas.mouseup(function(){
-          active = false;
+          // End ONLY if dragged
+          if (op == "annotate") {
+            if (x0 != x1 && y0 != y1) {
+              if (att.type == "rect") active = false;
+              else if (att.type == "poly") {
+                x0 = x1;
+                y0 = y1;
+                polyC++;
+              }
+            }
+            else if (att.type == "poly" && polyC > 1) {
+              active = false;
+            }
+          }
+          else {
+            active = false;
+          }
         });
       } // end of conditional update
 
