@@ -35,15 +35,20 @@ var repaint = function(g, $img) {
   g.drawImage($img[0], -w/2, -h/2);
 
   // Annotation
-  var x = Math.min(annotation.x, annotation.x-annotation.w);
-  var y = Math.min(annotation.y, annotation.y-annotation.h);
-  var dx = annotation.w;
-  var dy = annotation.h;
+  drawAtt(g);
+};
+
+// Annotation draw op
+var drawAtt = function(g) {
+  var dx = Math.abs(annotation.w);
+  var dy = Math.abs(annotation.h);
+  var x = Math.min(annotation.x, annotation.x+annotation.w);
+  var y = Math.min(annotation.y, annotation.y+annotation.h);
 
   g.strokeStyle = "white";
   g.lineWidth = 2 / curScale;
   g.strokeRect(x, y, dx, dy);
-};
+}
 
 // Transform info
 var curScale = 0.9;
@@ -207,7 +212,6 @@ var pan = function(g, $img, x, y) {
             annotation.h = dy/curScale;
 
             doTransform(g, $img);
-            repaint(g, $img);
           }
         });
 
@@ -227,7 +231,6 @@ var pan = function(g, $img, x, y) {
       // We have to wait for the image to load before we can use it
       $img.load(function(){
         doTransform(g, $img);
-        repaint(g, $img);
       });
     });
   };
