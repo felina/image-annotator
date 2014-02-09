@@ -108,8 +108,19 @@ function zoom(g, $img, scale) {
 // Pan op
 function pan(g, $img, x, y) {
   // New offset
+  var margin = 100;
+
   xOffs += x;
   yOffs += y;
+
+  var xLim = ($img.width()/2)*curScale;
+  var yLim = ($img.height()/2)*curScale;
+
+  if (xOffs >  xLim) xOffs =  xLim;
+  if (xOffs < -xLim) xOffs = -xLim;
+  if (yOffs >  yLim) yOffs =  yLim;
+  if (yOffs < -yLim) yOffs = -yLim;
+
   doTransform(g, $img);
 };
 
@@ -173,7 +184,7 @@ function ptToImg($img, x, y) {
         $annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
 
         $type      = $('<select id="typesel"></select>')
-                      .html('<option>Rect</option><option>Polygon</option>')
+                      .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
         // Canvas container
@@ -214,7 +225,7 @@ function ptToImg($img, x, y) {
         // Operation selection
         $type.change(function(){
           var str = $(this).val();
-          if (str == "Rect") {
+          if (str == "Box") {
             att.type = "rect";
           }
           else if (str == "Polygon") {
