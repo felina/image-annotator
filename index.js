@@ -65,8 +65,32 @@ function Annotator(src, w, h) {
   this.active = false;
   this.polyC = 0;
 }
-
 Annotator.fn = Annotator.prototype;
+
+// Updates an existing annotator with a new image
+// (Also resets the pan/zoom and annotations)
+Annotator.fn.update = function(src, w, h) {
+  this.src = src;
+  this.w = w;
+  this.h = h;
+
+  // Reloading & resizing
+  this.container.width(w).height(h);
+  this.img.attr("src", src).width(w).height(h);
+
+  // Reset pan/zoom
+  this.curScale = 0.9;
+  this.xOffs = 0;
+  this.yOffs = 0;
+
+  // Reset annotation
+  this.att = null;
+  this.atts = new Array();
+
+  // Resize canvas
+  this.canvas[0].width = w;
+  this.canvas[0].height = h;
+}
 
 //////////////////////////////////////////////////////
 // Instantiates an annotator inside a DOM object
@@ -110,7 +134,7 @@ Annotator.fn.build = function($parent) {
   // Get the drawing context
   this.g = this.canvas[0].getContext("2d");
 
-  var a = this;
+  var a = this; // loss of context when defining callbacks
 
   // Zoom control
   this.zoomin.click(function(){a.zoom(1.25);});
@@ -174,7 +198,7 @@ Annotator.fn.mbDown = function(x, y) {
       this.atts.push(this.att);
 
       if (this.att.type == "poly") {
-        this.att.pts[0] = new ptToImg(this.x0, this.y0);
+        this.att.pts[0] = new ptToImg(this, this.x0, this.y0);
         this.polyC = 1;
       }
     }
@@ -236,30 +260,8 @@ Annotator.fn.mMove = function(x, y) {
   }
 }
 
-// Updates an existing annotator with a new image
-// (Also resets the pan/zoom and annotations)
-Annotator.fn.update = function(src, w, h) {
-  this.src = src;
-  this.w = w;
-  this.h = h;
-
-  // Reloading & resizing
-  this.container.width(w).height(h);
-  this.img.attr("src", src).width(w).height(h);
-
-  // Reset pan/zoom
-  this.curScale = 0.9;
-  this.xOffs = 0;
-  this.yOffs = 0;
-
-  // Reset annotation
-  this.att = null;
-  this.atts = new Array();
-
-  // Resize canvas
-  this.canvas[0].width = w;
-  this.canvas[0].height = h;
-}
+//////////////////////////////////////////////////////
+// Canvas Operations
 
 // Canvas re-draw op
 Annotator.fn.repaint = function() {
