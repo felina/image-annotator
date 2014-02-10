@@ -309,7 +309,6 @@ Annotator.fn.changeAtt = function(ind) {
   else if (ind == this.atts.length) {
     this.att = new Annotation(this.selectedType);
     this.atts.push(this.att);
-    this.ftr.atts.push(this.att);
   }
   else {
     this.att = this.atts[ind];
