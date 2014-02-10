@@ -105,7 +105,7 @@ Annotator.fn.dataIn = function(data) {
     a.ftrs.push(new Feature(f.name, f.required, f.shape));
   }
 
-  a.ftr = a.ftrs[0];
+  a.changeFtr();
 }
 
 // Updates an existing annotator with a new image
@@ -280,6 +280,10 @@ Annotator.fn.changeFtr = function() {
     this.ftr = this.ftrs[this.fInd];
   }
 
+  // Switch att correspondingly
+  this.atts = this.ftr.atts;
+  this.changeAtt(0);
+
   this.repaint();
 
   this.updateControls();
@@ -451,8 +455,11 @@ Annotator.fn.repaint = function() {
   g.drawImage(this.img[0], -this.w/2, -this.h/2);
 
   // Annotation
-  for (var i = 0; i < this.atts.length; i++) {
-    this.drawAtt(this.atts[i]);
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var ftr = this.ftrs[f];
+    for (var i = 0; i < ftr.atts.length; i++) {
+      this.drawAtt(ftr.atts[i]);
+    }
   }
 }
 
@@ -470,7 +477,7 @@ Annotator.fn.drawAtt = function(att) {
   g.shadowColor = "#222";
   g.shadowBlur = 5;
   g.strokeStyle = col;
-  g.lineWidth = 1 / this.curScale;
+  g.lineWidth = 1.5 / this.curScale;
   g.fillStyle = col;
 
   // Box drawing (2-point)
@@ -514,7 +521,7 @@ Annotator.fn.drawAtt = function(att) {
 Annotator.fn.drawPt = function(pt) {
   var g = this.g;
   g.beginPath();
-  g.arc(pt.x, pt.y, 2.5/this.curScale, 0, 2*Math.PI, false);
+  g.arc(pt.x, pt.y, 3/this.curScale, 0, 2*Math.PI, false);
   g.fill();
 }
 
