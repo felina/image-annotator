@@ -4,15 +4,17 @@
 	<script type="text/javascript" src="jquery-debug.js"></script>
 	<script type="text/javascript" src="index.js"></script>
 	<script type="text/javascript">
-	    var $div;
+	    var $div, $div2;
 	    var x = "640", y = "480";
 
 	    function reAnnot() {
 	    	$div.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x), parseInt(y));
+	    	$div2.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x), parseInt(y));
 	    }
 
 		$(document).ready(function(){
-			$div = $("div");
+			$div = $("#one");
+			$div2 = $("#two");
 			reAnnot();
 
 			$("#resSel").change(function(e){
@@ -33,6 +35,7 @@
 		<option>1024x768</option>
 	</select>
 	<hr/>
-	<div></div>
+	<div id="one"></div>
+	<div id="two"></div>
 </body>
 </html>
