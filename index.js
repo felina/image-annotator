@@ -308,10 +308,10 @@ Annotator.fn.drawAtt = function(att) {
 
     g.strokeRect(x, y, dx, dy);
 
-    this.drawPt(g, {x:x0, y:y0});
-    this.drawPt(g, {x:x0, y:y1});
-    this.drawPt(g, {x:x1, y:y0});
-    this.drawPt(g, {x:x1, y:y1});
+    this.drawPt({x:x0, y:y0});
+    this.drawPt({x:x0, y:y1});
+    this.drawPt({x:x1, y:y0});
+    this.drawPt({x:x1, y:y1});
   }
   // Polygon drawing (n-point)
   else if (att.type == "poly") {
