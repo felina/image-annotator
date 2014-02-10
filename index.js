@@ -67,6 +67,9 @@ function Annotator(src, w, h) {
 }
 Annotator.fn = Annotator.prototype;
 
+// Apply JSON import
+// TODO
+
 // Updates an existing annotator with a new image
 // (Also resets the pan/zoom and annotations)
 Annotator.fn.update = function(src, w, h) {
@@ -394,6 +397,11 @@ Annotator.fn.zoom = function(scale) {
 function ptToImg(a, x, y) {
   var x = (x-a.w/2-a.xOffs)/a.curScale;
   var y = (y-a.h/2-a.yOffs)/a.curScale;
+
+  if (x < -a.w/2) x = -a.w/2;
+  if (x >  a.w/2) x =  a.w/2;
+  if (y < -a.h/2) y = -a.h/2;
+  if (y >  a.h/2) y =  a.h/2;
 
   return {x:x,y:y};
 }
