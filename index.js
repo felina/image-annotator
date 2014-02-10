@@ -285,6 +285,20 @@ Annotator.fn.changeFtr = function() {
     this.ftr = this.ftrs[this.fInd];
   }
 
+  // Lock/unlock shape selection
+  var lock = this.ftr.shape != "any";
+  this.attType.prop('disabled', lock);
+
+  if (lock) {
+    this.selectedType = this.ftr.shape;
+    if (this.ftr.shape == "rect") {
+      this.attType.val('Box');
+    }
+    else {
+      this.attType.val('Polygon');
+    }
+  }
+
   // Switch att correspondingly
   this.atts = this.ftr.atts;
   this.changeAtt(0);
