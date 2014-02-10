@@ -61,6 +61,9 @@ function Annotator(src, w, h) {
   this.prevAtt = null;
   this.delAtt = null;
 
+  this.nextFtr = null;
+  this.prevFtr = null;
+
   this.title = null;
 
   // Components
@@ -144,14 +147,16 @@ Annotator.fn.build = function($parent) {
   this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent)
                     .css("margin-right", "20px");
 
-  this.prevAtt   = $('<button id="nextAtt">&lt</button>').appendTo($parent);
+  this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
+  this.prevAtt   = $('<button id="prevAtt">&lt</button>').appendTo($parent);
 
   this.attType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
   this.delAtt    = $('<button id="nextAtt">X</button>').appendTo($parent);
-  this.nextAtt   = $('<button id="nextAtt">&gt</button>').appendTo($parent)
+  this.nextAtt   = $('<button id="nextAtt">&gt</button>').appendTo($parent);
+  this.nextFtr   = $('<button id="nextAtt">&gt&gt</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
   this.title     = $('<label>Annotating:</label>').appendTo($parent)
@@ -217,6 +222,7 @@ Annotator.fn.build = function($parent) {
     a.repaint();
   });
 
+  // Annotations - next/prev
   this.prevAtt.click(function() {
     var ind = a.atts.indexOf(a.att) - 1;
     a.changeAtt(ind);
@@ -225,6 +231,17 @@ Annotator.fn.build = function($parent) {
   this.nextAtt.click(function() {
     var ind = a.atts.indexOf(a.att) + 1;
     a.changeAtt(ind);
+  });
+
+  // Features next/prev
+  this.prevFtr.click(function() {
+    a.fInd--;
+    a.changeFtr();
+  });
+
+  this.nextFtr.click(function() {
+    a.fInd++;
+    a.changeFtr();
   });
 
   // Mouse down - start drawing or panning
@@ -251,13 +268,44 @@ Annotator.fn.build = function($parent) {
 //////////////////////////////////////////////////////
 // Annotation control
 
+Annotator.fn.changeFtr = function() {
+  if (this.fInd < 0) {
+    this.fInd = 0;
+    return;
+  }
+  else if (this.fInd == this.ftrs.length) {
+    this.fInd = this.ftrs.length - 1;
+  }
+  else {
+    this.ftr = this.ftrs[this.fInd];
+  }
+
+  this.repaint();
+
+  this.updateControls();
+  this.updateTitle();
+}
+
 Annotator.fn.changeAtt = function(ind) {
+  // Remove redundant (invalid) annotations before we switch
+  for (var i = 0; i < this.atts.length; i++) {
+    var att = this.atts[i];
+    if (!att.valid) {
+      this.atts.splice(i, 1);
+
+      // Correct the index which was passed in
+      if (i <= ind) ind--;
+    }
+  }
+
+  // Make a valid change - either switch or add a new one
   if (ind < 0) {
     return;
   }
   else if (ind == this.atts.length) {
     this.att = new Annotation(this.selectedType);
     this.atts.push(this.att);
+    this.ftr.atts.push(this.att);
   }
   else {
     this.att = this.atts[ind];
@@ -270,8 +318,15 @@ Annotator.fn.changeAtt = function(ind) {
 }
 
 Annotator.fn.updateControls = function() {
+  this.prevFtr.prop('disabled', this.fInd == 0);
+  this.nextFtr.prop('disabled', this.fInd == this.ftrs.length - 1);
+
   this.prevAtt.prop('disabled', this.atts[0] == this.att);
-  this.nextAtt.prop('disabled', !this.att.valid);
+
+  var ind = this.atts.indexOf(this.att)+1;
+  var nextValid = false;
+  if (ind < this.atts.length) nextValid = this.atts[ind].valid;
+  this.nextAtt.prop('disabled', !this.att.valid && !nextValid);
   this.delAtt.prop('disabled', !this.att.valid || this.ftr.req);
 }
 
