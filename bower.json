@@ -4,7 +4,8 @@
     "homepage": "https://github.com/felina/image-annotator",
     "authors": [
         "Giles Lavelle <giles.lavelle@gmail.com>",
-        "Sahaj Sawhney <sahaj.sawhney@gmail.com>"
+        "Sahaj Sawhney <sahaj.sawhney@gmail.com>",
+	"Alistair Wick <alistair.wk@gmail.com>"
     ],
     "description": "JavaScript component for drawing arbitrary polygons over images and exporting them as JSON",
     "license": "MIT",
