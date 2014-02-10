@@ -457,27 +457,38 @@ Annotator.fn.repaint = function() {
   for (var f = 0; f < this.ftrs.length; f++) {
     var ftr = this.ftrs[f];
     for (var i = 0; i < ftr.atts.length; i++) {
-      this.drawAtt(ftr.atts[i]);
+      this.drawAtt(ftr.atts[i], f);
     }
   }
 }
 
 // Annotation draw op
-Annotator.fn.drawAtt = function(att) {
+Annotator.fn.drawAtt = function(att, fInd) {
   var g = this.g;
+
+  var cols = 
+  [
+    "rgb(255, 20, 20)",
+    "rgb(0, 200, 0)",
+    "rgb(00, 0, 255)",
+    "rgb(255, 255, 0)",
+    "rgb(50, 200, 200)"
+  ];
 
   if (!att.valid) return;
 
-  var col = "white";
+  var col = cols[fInd%cols.length];
+  var fillCol = col;
+
   if (att == this.att) {
-    col = "rgb(160, 160, 255)";
+    fillCol = "white";
   }
 
-  g.shadowColor = "#222";
-  g.shadowBlur = 5;
+  g.shadowColor = "#000";
+  g.shadowBlur = 3;
   g.strokeStyle = col;
   g.lineWidth = 1.5 / this.curScale;
-  g.fillStyle = col;
+  g.fillStyle = fillCol;
 
   // Box drawing (2-point)
   if (att.type == "rect") {
