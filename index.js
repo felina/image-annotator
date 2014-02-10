@@ -195,27 +195,25 @@ Annotator.fn.build = function($parent) {
 
     if (str == "Box") {
       a.selectedType = "rect";
-      a.curOp = "annotate";
+      a.switchOp("annotate");
     }
     else if (str == "Polygon") {
       a.selectedType = "poly";
-      a.curOp = "annotate";
+      a.switchOp("annotate");
     }
   });
 
   this.pan.click(function(){
-    a.curOp = "pan";
-    a.canvas.css("cursor", "move");
+    a.switchOp("pan");
   });
 
   this.annotate.click(function(){
-    a.curOp = "annotate";
-    a.canvas.css("cursor", "crosshair");
+    a.switchOp("annotate");
   });
 
   this.delAtt.click(function() {
     a.att.reset();
-    a.changeAtt();
+    a.updateControls();
     a.repaint();
   });
 
@@ -252,37 +250,48 @@ Annotator.fn.build = function($parent) {
 
 //////////////////////////////////////////////////////
 // Annotation control
-Annotator.fn.changeAtt = function(ind) {
-  if (ind == null) ind = this.atts.indexOf(this.att);
-  else {
-    if (ind < 0) {
-      return;
-    }
-    else if (ind == this.atts.length) {
-      this.att = new Annotation(this.selectedType);
-      this.atts.push(this.att);
-    }
-    else {
-      this.att = this.atts[ind];
-    }
 
-    this.repaint();
+Annotator.fn.changeAtt = function(ind) {
+  if (ind < 0) {
+    return;
+  }
+  else if (ind == this.atts.length) {
+    this.att = new Annotation(this.selectedType);
+    this.atts.push(this.att);
+  }
+  else {
+    this.att = this.atts[ind];
   }
 
-  // Update controls
-  this.prevAtt.prop('disabled', ind == 0);
-  this.nextAtt.prop('disabled', !this.att.valid);
-  this.delAtt.prop('disabled', !this.att.valid);
+  this.repaint();
 
+  this.updateControls();
   this.updateTitle();
 }
 
+Annotator.fn.updateControls = function() {
+  this.prevAtt.prop('disabled', this.atts[0] == this.att);
+  this.nextAtt.prop('disabled', !this.att.valid);
+  this.delAtt.prop('disabled', !this.att.valid || this.ftr.req);
+}
+
 Annotator.fn.updateTitle = function() {
-  this.title.text("Annotating: " + this.ftr.name);
+  this.title.text("Annotating: " + this.ftr.name + " (" + (this.fInd+1) + "/" + this.ftrs.length + ")");
 }
 
 //////////////////////////////////////////////////////
 // Mouse control
+
+Annotator.fn.switchOp = function(op) {
+  this.curOp = op;
+  if (op == "annotate") {
+    this.canvas.css("cursor", "crosshair");
+  }
+  else {
+    this.canvas.css("cursor", "move");
+  }
+}
+
 Annotator.fn.mbDown = function(x, y) {
   if (!this.active) {
     var offset = this.canvas.offset();
@@ -308,7 +317,7 @@ Annotator.fn.mbUp = function() {
     if (this.x0 != this.x1 && this.y0 != this.y1) {
       if (this.att.type == "rect") {
         this.active = false;
-        this.changeAtt();
+        this.updateControls();
       }
       else if (this.att.type == "poly") {
         this.x0 = this.x1;
@@ -318,12 +327,12 @@ Annotator.fn.mbUp = function() {
     }
     else if (this.att.type == "poly" && this.polyC > 1) {
       this.active = false;
-      this.changeAtt();
+      this.updateControls();
     }
   }
   else {
     this.active = false;
-    this.changeAtt();
+    this.updateControls();
   }
 }
 
@@ -518,6 +527,9 @@ function ptToImg(a, x, y) {
 
       // Apply input
       a.dataIn(input);
+
+      a.updateControls();
+      a.updateTitle();
     });
   };
 
