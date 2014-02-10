@@ -290,11 +290,16 @@ Annotator.fn.drawAtt = function(att) {
 
   if (!att.valid) return;
 
+  var col = "white";
+  if (att == this.att) {
+    col = "rgb(160, 160, 255)";
+  }
+
   g.shadowColor = "#222";
   g.shadowBlur = 5;
-  g.strokeStyle = "white";
+  g.strokeStyle = col;
   g.lineWidth = 1 / this.curScale;
-  g.fillStyle = "white";
+  g.fillStyle = col;
 
   // Box drawing (2-point)
   if (att.type == "rect") {
