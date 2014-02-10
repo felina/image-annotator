@@ -13,12 +13,27 @@ var canvascss = {
   cursor : "move"
 };
 
+// Features to be annotated
+function Feature(name, required, shape) {
+  this.name = name;
+  this.req = required;
+  this.shape = shape;
+  this.atts = new Array();
+  this.attC = 0;
+}
+
 // Annotations - as distinct on the canvas
 function Annotation(type) {
   this.valid = false;
   this.pts = [{x:0,y:0}, {x:0,y:0}];
   this.type = type;
 };
+
+Annotation.prototype.reset = function(type) {
+  this.valid = false;
+  this.pts = [{x:0,y:0}, {x:0,y:0}];
+  if (type != null) this.type = type;
+}
 
 
 //////////////////////////////////////////////////////
@@ -31,21 +46,30 @@ function Annotator(src, w, h) {
   this.w = w;
   this.h = h;
 
+  this.ftr = null;
+  this.ftrs = new Array();
+  this.fInd = 0;
+  this.attInd = 0;
+
   // Controls
   this.zoomin = null;
   this.zoomout = null;
   this.pan = null;
   this.annotate = null;
   this.attType = null;
+  this.nextAtt = null;
+  this.prevAtt = null;
+  this.delAtt = null;
+
+  this.title = null;
 
   // Components
   this.container = null
   this.canvas = null;
 
-
   // Annotations
-  this.att = null;
-  this.atts = new Array();
+  this.att = new Annotation("rect");
+  this.atts = [this.att];
   this.selectedType = "rect";
 
   // Drawing
@@ -67,8 +91,19 @@ function Annotator(src, w, h) {
 }
 Annotator.fn = Annotator.prototype;
 
-// Apply JSON import
-// TODO
+// Apply annotation data import
+Annotator.fn.dataIn = function(data) {
+  var a = this;
+  var input = data.features;
+
+  a.ftrs = new Array();
+  for (var i = 0; i < input.length; i++) {
+    var f = input[i];
+    a.ftrs.push(new Feature(f.name, f.required, f.shape));
+  }
+
+  a.ftr = a.ftrs[0];
+}
 
 // Updates an existing annotator with a new image
 // (Also resets the pan/zoom and annotations)
@@ -87,8 +122,8 @@ Annotator.fn.update = function(src, w, h) {
   this.yOffs = 0;
 
   // Reset annotation
-  this.att = null;
-  this.atts = new Array();
+  this.att = new Annotation(this.selectedType);
+  this.atts = [att];
 
   // Resize canvas
   this.canvas[0].width = w;
@@ -106,11 +141,22 @@ Annotator.fn.build = function($parent) {
   this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
   this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
   this.pan       = $('<button id="pan">Pan</button>').appendTo($parent);
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent)
+                    .css("margin-right", "20px");
 
-  this.attType      = $('<select id="typesel"></select>')
+  this.prevAtt   = $('<button id="nextAtt">&lt</button>').appendTo($parent);
+
+  this.attType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
+
+  this.delAtt    = $('<button id="nextAtt">X</button>').appendTo($parent);
+  this.nextAtt   = $('<button id="nextAtt">&gt</button>').appendTo($parent)
+                      .css("margin-right", "20px");
+
+  this.title     = $('<label>Annotating:</label>').appendTo($parent)
+                      .css("font-family", "sans-serif")
+                      .css("font-size", "12px");
 
   // Canvas container
   this.container = $('<div></div>')
@@ -149,9 +195,11 @@ Annotator.fn.build = function($parent) {
 
     if (str == "Box") {
       a.selectedType = "rect";
+      a.curOp = "annotate";
     }
     else if (str == "Polygon") {
       a.selectedType = "poly";
+      a.curOp = "annotate";
     }
   });
 
@@ -163,6 +211,22 @@ Annotator.fn.build = function($parent) {
   this.annotate.click(function(){
     a.curOp = "annotate";
     a.canvas.css("cursor", "crosshair");
+  });
+
+  this.delAtt.click(function() {
+    a.att.reset();
+    a.changeAtt();
+    a.repaint();
+  });
+
+  this.prevAtt.click(function() {
+    var ind = a.atts.indexOf(a.att) - 1;
+    a.changeAtt(ind);
+  });
+
+  this.nextAtt.click(function() {
+    var ind = a.atts.indexOf(a.att) + 1;
+    a.changeAtt(ind);
   });
 
   // Mouse down - start drawing or panning
@@ -182,8 +246,39 @@ Annotator.fn.build = function($parent) {
 
   // We have to wait for the image to load before we can use it
   this.img.load(function(){
-    a.doTransform();
+    a.repaint();
   });
+}
+
+//////////////////////////////////////////////////////
+// Annotation control
+Annotator.fn.changeAtt = function(ind) {
+  if (ind == null) ind = this.atts.indexOf(this.att);
+  else {
+    if (ind < 0) {
+      return;
+    }
+    else if (ind == this.atts.length) {
+      this.att = new Annotation(this.selectedType);
+      this.atts.push(this.att);
+    }
+    else {
+      this.att = this.atts[ind];
+    }
+
+    this.repaint();
+  }
+
+  // Update controls
+  this.prevAtt.prop('disabled', ind == 0);
+  this.nextAtt.prop('disabled', !this.att.valid);
+  this.delAtt.prop('disabled', !this.att.valid);
+
+  this.updateTitle();
+}
+
+Annotator.fn.updateTitle = function() {
+  this.title.text("Annotating: " + this.ftr.name);
 }
 
 //////////////////////////////////////////////////////
@@ -196,9 +291,8 @@ Annotator.fn.mbDown = function(x, y) {
     this.active = true;
 
     if (this.curOp == "annotate") {
-      this.att = new Annotation(this.selectedType);
+      this.att.reset(this.selectedType);
       this.att.valid = true;
-      this.atts.push(this.att);
 
       if (this.att.type == "poly") {
         this.att.pts[0] = new ptToImg(this, this.x0, this.y0);
@@ -212,7 +306,10 @@ Annotator.fn.mbUp = function() {
   // End ONLY if dragged
   if (this.curOp == "annotate") {
     if (this.x0 != this.x1 && this.y0 != this.y1) {
-      if (this.att.type == "rect") this.active = false;
+      if (this.att.type == "rect") {
+        this.active = false;
+        this.changeAtt();
+      }
       else if (this.att.type == "poly") {
         this.x0 = this.x1;
         this.y0 = this.y1;
@@ -221,10 +318,12 @@ Annotator.fn.mbUp = function() {
     }
     else if (this.att.type == "poly" && this.polyC > 1) {
       this.active = false;
+      this.changeAtt();
     }
   }
   else {
     this.active = false;
+    this.changeAtt();
   }
 }
 
@@ -259,7 +358,7 @@ Annotator.fn.mMove = function(x, y) {
     }
 
     // Redraw
-    this.doTransform();
+    this.repaint();
   }
 }
 
@@ -269,17 +368,23 @@ Annotator.fn.mMove = function(x, y) {
 // Canvas re-draw op
 Annotator.fn.repaint = function() {
   var g = this.g;
-  var $img = this.img;
 
-  var w = $img.width();
-  var h = $img.height();
+  // Reset xform & clear
+  g.setTransform(1,0,0,1,0,0);
+  g.clearRect(0, 0, this.w, this.h);
+
+  // To draw in position with scaling,
+  // move to position (translate), then
+  // scale before drawing at (0, 0)
+  g.translate(this.w/2 + this.xOffs, this.h/2 + this.yOffs);
+  g.scale(this.curScale, this.curScale);
 
   // Drop shadow
   g.shadowColor = "#555";
   g.shadowBlur = 40;
 
   // Draw the image
-  g.drawImage($img[0], -w/2, -h/2);
+  g.drawImage(this.img[0], -this.w/2, -this.h/2);
 
   // Annotation
   for (var i = 0; i < this.atts.length; i++) {
@@ -349,23 +454,6 @@ Annotator.fn.drawPt = function(pt) {
   g.fill();
 }
 
-// General transform op
-Annotator.fn.doTransform = function() {
-  var g = this.g;
-
-  // Reset xform & clear
-  g.setTransform(1,0,0,1,0,0);
-  g.clearRect(0, 0, this.w, this.h);
-
-  // To draw in position with scaling,
-  // move to position (translate), then
-  // scale before drawing at (0, 0)
-  g.translate(this.w/2 + this.xOffs, this.h/2 + this.yOffs);
-  g.scale(this.curScale, this.curScale);
-
-  this.repaint();
-}
-
 // Pan op
 Annotator.fn.doPan = function(x, y) {
   // New offset
@@ -382,7 +470,7 @@ Annotator.fn.doPan = function(x, y) {
   if (this.yOffs >  yLim) this.yOffs =  yLim;
   if (this.yOffs < -yLim) this.yOffs = -yLim;
 
-  this.doTransform();
+  this.repaint();
 }
 
 // Zoom op
@@ -390,7 +478,7 @@ Annotator.fn.zoom = function(scale) {
   // New scaling level
   this.curScale *= scale;
   if (this.curScale < 0.9) this.curScale = 0.9;
-  this.doTransform();
+  this.repaint();
 }
 
 // Util - canvas to image space
@@ -412,7 +500,7 @@ function ptToImg(a, x, y) {
 
 (function( $ ) {
   // The annotator function - appplicable to any jQuery object collection
-  $.fn.annotator = function(src, width, height) {
+  $.fn.annotator = function(src, width, height, input) {
     return this.each(function() {
       // Check for annotator class
       $parent = $(this);
@@ -427,6 +515,11 @@ function ptToImg(a, x, y) {
         a = new Annotator(src, width, height);
         a.build($parent);
       }
+
+      // Apply input
+      a.dataIn(input);
     });
   };
+
+  // Data retrieval... TODO
 }(jQuery));
