@@ -126,7 +126,12 @@ Annotator.fn.update = function(src, w, h) {
 
   // Reset annotation
   this.att = new Annotation(this.selectedType);
-  this.atts = [att];
+  this.atts = [this.att];
+
+  // Reset features
+  this.fInd = 0;
+  this.ftr = null;
+  this.ftrs = new Array();
 
   // Resize canvas
   this.canvas[0].width = w;
