@@ -1,24 +1,26 @@
 {
-    "name": "image-annotator",
-    "version": "2.0.0",
-    "homepage": "https://github.com/felina/image-annotator",
-    "authors": [
-        "Giles Lavelle <giles.lavelle@gmail.com>",
-        "Sahaj Sawhney <sahaj.sawhney@gmail.com>",
-	"Alistair Wick <alistair.wk@gmail.com>"
-    ],
-    "description": "JavaScript component for drawing arbitrary polygons over images and exporting them as JSON",
-    "license": "MIT",
-    "ignore": [
-        "**/.*",
-        "node_modules",
-        "bower_components",
-        "test",
-        "tests",
-        "**/vendor",
-        "**/index.html",
-        "**/style.css",
-        "**/LICENSE"
-    ],
-    "dependencies": {}
+  "name": "image-annotator",
+  "version": "2.0.0",
+  "homepage": "https://github.com/felina/image-annotator",
+  "authors": [
+    "Giles Lavelle <giles.lavelle@gmail.com>",
+    "Sahaj Sawhney <sahaj.sawhney@gmail.com>",
+    "Alistair Wick <alistair.wk@gmail.com>"
+  ],
+  "description": "JavaScript component for drawing arbitrary polygons over images and exporting them as JSON",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "**/vendor",
+    "**/index.html",
+    "**/style.css",
+    "**/LICENSE"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.0"
+  }
 }
