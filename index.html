@@ -9,6 +9,10 @@
 
     	// Test input
 	    var input = {
+	    	src : "http://lorempixel.com/"+x+"/"+y+"/animals",
+	    	width : parseInt(x),
+	    	height : parseInt(y),
+
 	    	features : [
 	    		{
 	    			name : "tail",
@@ -39,7 +43,10 @@
 	    }
 
 	    function reAnnot() {
-	    	$div.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x), parseInt(y), input);
+	    	input.width = parseInt(x);
+	    	input.height = parseInt(y);
+	    	input.src = "http://lorempixel.com/"+x+"/"+y+"/animals";
+	    	$div.annotator(input);
 	    	//$div2.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x)/2, parseInt(y)/2, input);
 	    }
 

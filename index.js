@@ -600,7 +600,27 @@ function ptToImg(a, x, y) {
 
 (function( $ ) {
   // The annotator function - appplicable to any jQuery object collection
-  $.fn.annotator = function(src, width, height, input) {
+  $.fn.annotator = function(input) {
+    var w, h;
+
+    if (typeof input.src == "undefined") {
+      throw "Error: Input src (image source) is required";
+    }
+
+    if (typeof input.features == "undefined") {
+      throw "Error: Input feature array is required";
+    }
+    else if (!input.features instanceof Array) {
+      throw "Error: input.features is not a valid Array instance";
+    }
+
+    if (typeof input.width == "undefined")  w = 640;
+    else                                    w = input.width;
+
+    if (typeof input.width == "undefined")  h = 480;
+    else                                    h = input.height;
+
+    // Iterate DOM objects
     return this.each(function() {
       // Check for annotator class
       $parent = $(this);
@@ -609,10 +629,10 @@ function ptToImg(a, x, y) {
       // Update if we're passed an existing annotator
       if ($parent.hasClass("annotator")) {
         a = $parent.data("Annotator");
-        a.update(src, width, height);
+        a.update(input.src, w, h);
       }
       else {
-        a = new Annotator(src, width, height);
+        a = new Annotator(input.src, w, h);
         a.build($parent);
       }
 
