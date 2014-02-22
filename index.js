@@ -94,8 +94,8 @@ function Annotator(src, w, h) {
 }
 Annotator.fn = Annotator.prototype;
 
-// Apply annotation data import
-Annotator.fn.dataIn = function(data) {
+// Apply feature data import
+Annotator.fn.featuresIn = function(data) {
   var a = this;
   var input = data.features;
 
@@ -103,6 +103,48 @@ Annotator.fn.dataIn = function(data) {
   for (var i = 0; i < input.length; i++) {
     var f = input[i];
     a.ftrs.push(new Feature(f.name, f.required, f.shape));
+  }
+
+  a.changeFtr();
+}
+
+// Apply annotation data import
+Annotator.fn.attsIn = function(data) {
+  if (typeof data.annotations === 'undefined') {
+    return; // No input provided
+  }
+
+  var a = this;
+  var atts = data.annotations;
+
+  // Iterate features
+  for (var i = 0; i < a.ftrs.length; i++) {
+    var f = a.ftrs[i];
+    f.atts = new Array();
+
+    if (typeof atts[f.name] === 'undefined') {
+      continue; // Skip feature if there was no input attribute data
+    }
+
+    var input = atts[f.name];
+    var shapes = input.shapes;
+    for (var j = 0; j < shapes.length; j++) {
+      var s = shapes[j];
+
+      // Generate each annotation from input data
+      var att = new Annotation(s.type);
+      att.valid = true;
+
+      if (s.type == 'rect') {
+        att.pts[0] = s.pos;
+        att.pts[1] = {x : s.pos.x+s.size.width, y : s.pos.y+s.size.height};
+      }
+      else {
+        att.pts = s.points;
+      }
+
+      f.atts.push(att);
+    }
   }
 
   a.changeFtr();
@@ -637,7 +679,8 @@ function ptToImg(a, x, y) {
       }
 
       // Apply input
-      a.dataIn(input);
+      a.featuresIn(input);
+      a.attsIn(input);
 
       a.updateControls();
       a.updateTitle();
