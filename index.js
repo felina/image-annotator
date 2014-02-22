@@ -150,6 +150,51 @@ Annotator.fn.attsIn = function(data) {
   a.changeFtr();
 }
 
+// Annotation export
+Annotator.fn.getExport = function() {
+  var a = this;
+  var out = {};
+
+  // Iterate features
+  for (var i = 0; i < a.ftrs.length; i++) {
+    var f = a.ftrs[i];
+
+    // Store shapes
+    var shapes = new Array();
+    for (var j = 0; j < f.atts; j++) {
+      var att = f.atts[i];
+      if (!att.valid) continue;
+      var s = {};
+
+      s.type = att.type;
+
+      if (s.type == 'rect') {
+        var x0 = att.pts[0].x;
+        var y0 = att.pts[0].y;
+        var x1 = att.pts[1].x;
+        var y1 = att.pts[1].y;
+
+        var dx = Math.abs(x1-x0);
+        var dy = Math.abs(y1-y0);
+        var x = Math.min(x0, x1);
+        var y = Math.min(y0, y1);
+
+        s.pos = {x : x, y : y};
+        s.size = {width : dx, height : dy};
+      }
+      else {
+        s.points = att.pts;
+      }
+
+      shapes.push(s);
+    }
+
+    out[f.name] = {shapes : shapes};
+  }
+
+  return out;
+}
+
 // Updates an existing annotator with a new image
 // (Also resets the pan/zoom and annotations)
 Annotator.fn.update = function(src, w, h) {

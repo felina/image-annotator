@@ -66,6 +66,11 @@
 	    	//$div2.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x)/2, parseInt(y)/2, input);
 	    }
 
+	    function doExport() {
+	    	var stuff = annotator.getExport();
+	    	console.log(stuff);
+	    }
+
 		$(document).ready(function() {
 			$div = $("#one");
 			$div2 = $("#two");
@@ -90,6 +95,7 @@
 		<option>800x600</option>
 		<option>1024x768</option>
 	</select>
+	<button onclick="doExport();">Export</button>
 	<hr/>
 	<div id="one"></div>
 	<div id="two"></div>
