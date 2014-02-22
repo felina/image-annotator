@@ -662,29 +662,28 @@ function ptToImg(a, x, y) {
     if (typeof input.width == "undefined")  h = 480;
     else                                    h = input.height;
 
-    // Iterate DOM objects
-    return this.each(function() {
-      // Check for annotator class
-      $parent = $(this);
-      var a;
+    // Check for annotator class
+    $parent = $(this);
+    var a;
 
-      // Update if we're passed an existing annotator
-      if ($parent.hasClass("annotator")) {
-        a = $parent.data("Annotator");
-        a.update(input.src, w, h);
-      }
-      else {
-        a = new Annotator(input.src, w, h);
-        a.build($parent);
-      }
+    // Update if we're passed an existing annotator
+    if ($parent.hasClass("annotator")) {
+      a = $parent.data("Annotator");
+      a.update(input.src, w, h);
+    }
+    else {
+      a = new Annotator(input.src, w, h);
+      a.build($parent);
+    }
 
-      // Apply input
-      a.featuresIn(input);
-      a.attsIn(input);
+    // Apply input
+    a.featuresIn(input);
+    a.attsIn(input);
 
-      a.updateControls();
-      a.updateTitle();
-    });
+    a.updateControls();
+    a.updateTitle();
+
+    return a;
   };
 
   // Data retrieval... TODO

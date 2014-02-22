@@ -6,6 +6,7 @@
 	<script type="text/javascript">
 	    var $div, $div2;
 	    var x = "640", y = "480";
+	    var annotator;
 
     	// Test input
 	    var input = {
@@ -61,7 +62,7 @@
 	    	input.width = parseInt(x);
 	    	input.height = parseInt(y);
 	    	input.src = "http://lorempixel.com/"+x+"/"+y+"/animals";
-	    	$div.annotator(input);
+	    	annotator = $div.annotator(input);
 	    	//$div2.annotator("http://lorempixel.com/"+x+"/"+y+"/animals", parseInt(x)/2, parseInt(y)/2, input);
 	    }
 
@@ -76,6 +77,8 @@
 				x = res[0];
 				y = res[1];
 			});
+
+			console.log(annotator);
 		});
 	</script>
 </head>
