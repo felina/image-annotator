@@ -160,10 +160,15 @@ Annotator.fn.getExport = function() {
     var f = a.ftrs[i];
 
     // Store shapes
-    var shapes = new Array();
-    for (var j = 0; j < f.atts; j++) {
+    out[f.name] = {};
+    out[f.name].shapes = new Array();
+    for (var j = 0; j < f.atts.length; j++) {
       var att = f.atts[i];
+
+      // Check it's a valid shape
+      if (typeof att === 'undefined') continue;
       if (!att.valid) continue;
+
       var s = {};
 
       s.type = att.type;
@@ -186,10 +191,8 @@ Annotator.fn.getExport = function() {
         s.points = att.pts;
       }
 
-      shapes.push(s);
+      out[f.name].shapes.push(s);
     }
-
-    out[f.name] = {shapes : shapes};
   }
 
   return out;
