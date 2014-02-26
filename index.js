@@ -67,6 +67,7 @@ function Annotator(src, w, h) {
   this.title = null;
 
   // Components
+  this.parent = null;
   this.container = null
   this.canvas = null;
 
@@ -148,6 +149,24 @@ Annotator.fn.attsIn = function(data) {
   }
 
   a.changeFtr();
+}
+
+// Apply css styling
+Annotator.fn.cssIn = function(data) {
+  if (typeof data.style === 'undefined') {
+    return; // No input provided
+  }
+
+  var style = data.style;
+  var btns  = this.parent.find('button');
+
+  if (typeof style.classes !== 'undefined') {
+    btns.addClass(style.classes);
+  }
+
+  if (typeof style.css !== 'undefined') {
+    btns.css(style.css);
+  }
 }
 
 // Annotation export
@@ -721,12 +740,14 @@ function ptToImg(a, x, y) {
     }
     else {
       a = new Annotator(input.src, w, h);
+      a.parent = $parent;
       a.build($parent);
     }
 
     // Apply input
     a.featuresIn(input);
     a.attsIn(input);
+    a.cssIn(input);
 
     a.updateControls();
     a.updateTitle();
