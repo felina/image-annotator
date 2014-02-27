@@ -1,13 +1,15 @@
 {
   "name": "image-annotator",
-  "version": "0.0.0",
-  "description": "## Intro",
+  "version": "3.2.0",
+  "description": "JavaScript component for drawing arbitrary polygons over images and exporting them as JSON",
   "main": "index.js",
   "dependencies": {
+    "jquery": "~2.1.0",
     "grunt": "~0.4.2",
     "grunt-contrib-jshint": "~0.8.0"
   },
   "devDependencies": {
+    "jquery": "~2.1.0",
     "grunt": "~0.4.2",
     "grunt-contrib-jshint": "~0.8.0"
   },
@@ -18,8 +20,8 @@
     "type": "git",
     "url": "https://github.com/felina/image-annotator.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Alistair Wick <alistair.wk@gmail.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/felina/image-annotator/issues"
   },
