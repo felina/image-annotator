@@ -1,0 +1,27 @@
+{
+  "name": "image-annotator",
+  "version": "0.0.0",
+  "description": "## Intro",
+  "main": "index.js",
+  "dependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-jshint": "~0.8.0"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "grunt-contrib-jshint": "~0.8.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/felina/image-annotator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/felina/image-annotator/issues"
+  },
+  "homepage": "https://github.com/felina/image-annotator"
+}
