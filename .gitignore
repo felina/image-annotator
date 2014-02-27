@@ -1,3 +1,4 @@
 vendor
 *.zip
 node_modules
+/test
