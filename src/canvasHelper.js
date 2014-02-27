@@ -3,7 +3,9 @@
 (function( $ ) {
 
   // Creates a new CanvasHelper
-  function CanvasHelper(canvas) {
+  function CanvasHelper(parent, canvas) {
+    this.parent = parent;
+
     // Drawing
     this.canvas = canvas;
     this.g = canvas[0].getContext("2d");
@@ -15,7 +17,7 @@
     // Transform info
     this.curScale = 0.9;
     this.xOffs = 0;
-    this.yOffs = 0;
+    this.yOffs = 0
   }
   CanvasHelper.fn = CanvasHelper.prototype;
 
@@ -66,10 +68,10 @@
       return;
     }
 
-    var col = cols[fInd%cols.length];
+    var col = cols[fInd % cols.length];
     var fillCol = col;
 
-    if (att === this.att) {
+    if (att === this.parent.att) {
       fillCol = "white";
     }
 

@@ -261,7 +261,7 @@
     this.canvas[0].height = this.h;
 
     // Generate the canvas helper
-    this.cHelper = new CanvasHelper(this.canvas);
+    this.cHelper = new CanvasHelper(this, this.canvas);
 
     var a = this; // loss of context when defining callbacks
 
@@ -294,7 +294,7 @@
     this.delAtt.click(function() {
       a.att.reset();
       a.updateControls();
-      a.repaint();
+      a.cHelper.repaint();
     });
 
     // Annotations - next/prev
@@ -373,7 +373,7 @@
     this.atts = this.ftr.atts;
     this.changeAtt(0);
 
-    this.repaint();
+    this.cHelper.repaint();
 
     this.updateControls();
     this.updateTitle();
@@ -405,7 +405,7 @@
       this.att = this.atts[ind];
     }
 
-    this.repaint();
+    this.cHelper.repaint();
 
     this.updateControls();
     this.updateTitle();
