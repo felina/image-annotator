@@ -151,8 +151,9 @@ Annotator.fn.getExport = function() {
     // Store shapes
     out[f.name] = {};
     out[f.name].shapes = [];
+
     for (var j = 0; j < f.atts.length; j++) {
-      var att = f.atts[i];
+      var att = f.atts[j];
 
       // Check it's a valid shape
       if (typeof att === 'undefined') {
@@ -259,9 +260,6 @@ Annotator.fn.build = function($parent) {
   this.canvas = $('<canvas>Unsupported browser.</canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
-  // Resize canvas
-  //this.canvas[0].width = this.w;
-  //this.canvas[0].height = this.h;
 
   // Generate the canvas helper
   this.cHelper = new CanvasHelper(this);
