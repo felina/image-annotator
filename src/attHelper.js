@@ -50,12 +50,15 @@ AttHelper.fn.importFeatures = function(input) {
   for (var i = 0; i < input.length; i++) {
     this.addFtrData(input[i]);
   }
+
+  this.curFtr = this.ftrs[0];
+  this.ftrChanged();
 };
 
 // Attribute import - Depends on previous feature import
 AttHelper.fn.importAtts = function(atts) {
   // Iterate features
-  for (var i = 0; i < a.ftrs.length; i++) {
+  for (var i = 0; i < this.ftrs.length; i++) {
     var f = this.ftrs[i];
     f.atts = [];
 
@@ -147,11 +150,11 @@ AttHelper.fn.exportAtts = function() {
 // Common to feature changes
 AttHelper.fn.ftrChanged = function() {
   // Lock/unlock shape selection
-  var lock = this.ftr.shape !== "any";
-  this.parent.lockSelect(this.ftr.shape, lock);
+  var lock = this.curFtr.shape !== "any";
+  this.parent.lockSelect(this.curFtr.shape, lock);
 
   if (lock) {
-    this.curType = this.ftr.shape;
+    this.curType = this.curFtr.shape;
   }
 
   // Update annotations to match
@@ -162,7 +165,7 @@ AttHelper.fn.ftrChanged = function() {
     this.atts.push(new Annotation(this.curType));
   }
 
-  this.curAtt = this.atts(this.aInd);
+  this.curAtt = this.atts[this.aInd];
 
   // Update UI
   this.parent.showChange();
@@ -172,7 +175,7 @@ AttHelper.fn.ftrChanged = function() {
 AttHelper.fn.nextFtr = function() {
   this.fInd++;
 
-  if (this.fInd >== this.ftrs.length) {
+  if (this.fInd >= this.ftrs.length) {
     this.fInd = this.ftrs.length - 1;
   }
 
@@ -238,21 +241,38 @@ AttHelper.fn.startAtt = function(pt) {
   this.curAtt.reset(this.selectedType);
   this.curAtt.valid = true;
   this.curAtt.pts[0] = pt;
-  this.pInd = 0;
+  this.pInd = 1;
 };
 
-// Plot the next point. Returns false
+// Update the next point
+AttHelper.fn.showPt = function(pt) {
+  if (this.curAtt.type === "rect") {
+    this.curAtt.pts[1] = pt;
+  }
+  else if (this.curAtt.type === "poly") {
+    this.curAtt.pts[this.pInd] = pt;
+  }
+}
+
+// Finalize the next point. Returns false
 // if the drawing is complete.
 AttHelper.fn.nextPt = function(pt) {
   if (this.curAtt.type === "rect") {
-    this.active = false;
-    this.updateControls();
+    this.curAtt.pts[1] = pt;
+    return false;
   }
-  else if (this.att.type === "poly") {
-    this.x0 = this.x1;
-    this.y0 = this.y1;
-    this.polyC++;
+  else if (this.curAtt.type === "poly") {
+    this.curAtt.pts[this.pInd] = pt;
+    this.pInd++;
+    return true;
   }
+
+  return false;
+};
+
+// Ends an annotation. Currently NOOP
+AttHelper.fn.endAtt = function() {
+
 };
 
 //////////////////////////////////////////////////////

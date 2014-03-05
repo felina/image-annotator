@@ -26,8 +26,8 @@ CanvasHelper.fn = CanvasHelper.prototype;
 
 // Canvas re-draw op
 CanvasHelper.fn.repaint = function() {
-  var a = this.parent;
   var g = this.g;
+  var ftrs = this.parent.getFeatures();
 
   // Reset xform & clear
   g.setTransform(1,0,0,1,0,0);
@@ -44,11 +44,11 @@ CanvasHelper.fn.repaint = function() {
   g.shadowBlur = 40;
 
   // Draw the image
-  g.drawImage(a.img[0], -this.w/2, -this.h/2);
+  g.drawImage(this.parent.img[0], -this.w/2, -this.h/2);
 
   // Annotation
-  for (var f = 0; f < a.ftrs.length; f++) {
-    var ftr = a.ftrs[f];
+  for (var f = 0; f < ftrs.length; f++) {
+    var ftr = ftrs[f];
     for (var i = 0; i < ftr.atts.length; i++) {
       this.drawAtt(ftr.atts[i], f);
     }

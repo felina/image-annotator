@@ -2,8 +2,6 @@
 
 var containercss = {
   position : "relative",
-  // "margin" : "20px 0 0 0",
-  // "background" : "gray",
   overflow : "hidden"
 };
 
@@ -58,6 +56,10 @@ function Annotator(src, w, h) {
 }
 Annotator.fn = Annotator.prototype;
 
+
+//////////////////////////////////////////////////////
+// Data import / export
+
 // Apply feature data import
 Annotator.fn.featuresIn = function(data) {
   if (typeof data.features === 'undefined') {
@@ -65,7 +67,7 @@ Annotator.fn.featuresIn = function(data) {
   }
 
   this.attHelper.importFeatures(data.features);
-  this.changeFtr();
+  this.showChange();
 };
 
 // Apply annotation data import
@@ -75,7 +77,7 @@ Annotator.fn.attsIn = function(data) {
   }
 
   this.attHelper.importAtts(data.annotations);
-  this.changeFtr();
+  this.showChange();
 };
 
 // Apply css styling
@@ -100,6 +102,14 @@ Annotator.fn.cssIn = function(data) {
 Annotator.fn.getExport = function() {
   return attHelper.exportAtts();
 };
+
+// Feature retrieval
+Annotator.fn.getFeatures = function() {
+  return this.attHelper.ftrs;
+};
+
+//////////////////////////////////////////////////////
+// Update / build functionality
 
 // Updates an existing annotator with a new image
 // (Also resets the pan/zoom and annotations)
@@ -209,10 +219,12 @@ Annotator.fn.build = function($parent) {
   this.canvas.mousedown(function(e){ a.mbDown(e.pageX, e.pageY); });
   this.canvas.mousemove(function(e){ a.mMove(e.pageX, e.pageY); });
   this.canvas.mouseup(function(){ a.mbUp(); });
+  this.canvas.dblclick(function(e){ a.mbDbl(e); });
 
   // We have to wait for the image to load before we can use it
   this.img.load(function(){ a.cHelper.repaint(); });
 };
+
 
 //////////////////////////////////////////////////////
 // Annotation UI
@@ -237,21 +249,22 @@ Annotator.fn.lockSelect = function(type, lock) {
 };
 
 Annotator.fn.updateControls = function() {
-  this.prevFtr.prop('disabled', this.fInd === 0);
-  this.nextFtr.prop('disabled', this.fInd === this.ftrs.length - 1);
+  var ath = this.attHelper;
+  this.prevFtr.prop('disabled', ath.fInd === 0);
+  this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1);
 
-  this.prevAtt.prop('disabled', this.atts[0] === this.att);
+  this.prevAtt.prop('disabled', ath.atts[0] === ath.curAtt);
 
   // Logic for enabling the 'next attribute' button
-  var ind = this.atts.indexOf(this.att)+1;
+  var ind = ath.atts.indexOf(ath.curAtt)+1;
   var nextValid = false;
 
-  if (ind < this.atts.length) {
-    nextValid = this.atts[ind].valid;
+  if (ind < ath.atts.length) {
+    nextValid = ath.atts[ind].valid;
   }
 
-  this.nextAtt.prop('disabled', !this.att.valid && !nextValid);
-  this.delAtt.prop('disabled', !this.att.valid || this.ftr.req);
+  this.nextAtt.prop('disabled', !ath.curAtt.valid && !nextValid);
+  this.delAtt.prop('disabled', !ath.curAtt.valid || ath.curFtr.req);
 };
 
 Annotator.fn.updateTitle = function() {
@@ -262,7 +275,7 @@ Annotator.fn.updateTitle = function() {
 };
 
 //////////////////////////////////////////////////////
-// Mouse control
+// Annotation & panning control
 
 Annotator.fn.switchOp = function(op) {
   this.curOp = op;
@@ -288,20 +301,27 @@ Annotator.fn.mbDown = function(x, y) {
 };
 
 Annotator.fn.mbUp = function() {
-  // End ONLY if dragged
-  if (this.curOp === "annotate") {
-    if (this.x0 !== this.x1 && this.y0 !== this.y1) {
-      var pt = ptToImg(this.cHelper, this.x0, this.y0);
-      this.active = this.attHelper.nextPt(pt);
-    }
-    else if (this.att.type === "poly" && this.polyC > 1) {
-      this.active = false;
-      this.updateControls();
-    }
+  // Plot the next point
+  if (this.active && this.curOp === "annotate") {
+    var pt = ptToImg(this.cHelper, this.x1, this.y1);
+    this.active = this.attHelper.nextPt(pt);
+    this.updateControls();
   }
   else {
+    this.active = false; // End pan
+  }
+};
+
+Annotator.fn.mbDbl = function(e) {
+  e.preventDefault();
+
+  if (this.active) {
     this.active = false;
-    this.updateControls();
+
+    if (this.curOp === 'annotate') {
+      this.attHelper.endAtt();
+      this.updateControls();
+    }
   }
 };
 
@@ -325,17 +345,8 @@ Annotator.fn.mMove = function(x, y) {
   }
   else if (this.curOp === "annotate") {
     // Annotation - in image space
-    var pt1 = ptToImg(this.cHelper, this.x0, this.y0);
-    var pt2 = ptToImg(this.cHelper, this.x1, this.y1);
-
-    if (this.att.type === "rect") {
-      this.att.pts[0] = pt1;
-      this.att.pts[1] = pt2;
-    }
-    else if (this.att.type === "poly") {
-      // Save next point
-      this.att.pts[this.polyC] = pt2;
-    }
+    var pt = ptToImg(this.cHelper, this.x1, this.y1);
+    this.attHelper.showPt(pt);
 
     // Redraw
     this.cHelper.repaint();
