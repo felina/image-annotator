@@ -22,11 +22,6 @@ function Annotator(src, w, h) {
   this.w = w;
   this.h = h;
 
-  this.ftr = null;
-  this.ftrs = [];
-  this.fInd = 0;
-  this.attInd = 0;
-
   // Controls
   this.zoomin = null;
   this.zoomout = null;
@@ -48,9 +43,7 @@ function Annotator(src, w, h) {
   this.canvas = null;
 
   // Annotations
-  this.att = new Annotation("rect");
-  this.atts = [this.att];
-  this.selectedType = "rect";
+  this.attHelper = new AttHelper(this);
 
   // Canvas ops
   this.cHelper = null;
@@ -67,16 +60,12 @@ Annotator.fn = Annotator.prototype;
 
 // Apply feature data import
 Annotator.fn.featuresIn = function(data) {
-  var a = this;
-  var input = data.features;
-
-  a.ftrs = [];
-  for (var i = 0; i < input.length; i++) {
-    var f = input[i];
-    a.ftrs.push(new Feature(f.name, f.required, f.shape));
+  if (typeof data.features === 'undefined') {
+    return; // No input provided
   }
 
-  a.changeFtr();
+  this.attHelper.importFeatures(data.features);
+  this.changeFtr();
 };
 
 // Apply annotation data import
@@ -85,40 +74,8 @@ Annotator.fn.attsIn = function(data) {
     return; // No input provided
   }
 
-  var a = this;
-  var atts = data.annotations;
-
-  // Iterate features
-  for (var i = 0; i < a.ftrs.length; i++) {
-    var f = a.ftrs[i];
-    f.atts = [];
-
-    if (typeof atts[f.name] === 'undefined') {
-      continue; // Skip feature if there was no input attribute data
-    }
-
-    var input = atts[f.name];
-    var shapes = input.shapes;
-    for (var j = 0; j < shapes.length; j++) {
-      var s = shapes[j];
-
-      // Generate each annotation from input data
-      var att = new Annotation(s.type);
-      att.valid = true;
-
-      if (s.type === 'rect') {
-        att.pts[0] = s.pos;
-        att.pts[1] = {x : s.pos.x+s.size.width, y : s.pos.y+s.size.height};
-      }
-      else {
-        att.pts = s.points;
-      }
-
-      f.atts.push(att);
-    }
-  }
-
-  a.changeFtr();
+  this.attHelper.importAtts(data.annotations);
+  this.changeFtr();
 };
 
 // Apply css styling
@@ -141,55 +98,7 @@ Annotator.fn.cssIn = function(data) {
 
 // Annotation export
 Annotator.fn.getExport = function() {
-  var a = this;
-  var out = {};
-
-  // Iterate features
-  for (var i = 0; i < a.ftrs.length; i++) {
-    var f = a.ftrs[i];
-
-    // Store shapes
-    out[f.name] = {};
-    out[f.name].shapes = [];
-
-    for (var j = 0; j < f.atts.length; j++) {
-      var att = f.atts[j];
-
-      // Check it's a valid shape
-      if (typeof att === 'undefined') {
-        continue;
-      }
-      else if (!att.valid) {
-        continue;
-      }
-
-      var s = {};
-
-      s.type = att.type;
-
-      if (s.type === 'rect') {
-        var x0 = att.pts[0].x;
-        var y0 = att.pts[0].y;
-        var x1 = att.pts[1].x;
-        var y1 = att.pts[1].y;
-
-        var dx = Math.abs(x1-x0);
-        var dy = Math.abs(y1-y0);
-        var x = Math.min(x0, x1);
-        var y = Math.min(y0, y1);
-
-        s.pos = {x : x, y : y};
-        s.size = {width : dx, height : dy};
-      }
-      else {
-        s.points = att.pts;
-      }
-
-      out[f.name].shapes.push(s);
-    }
-  }
-
-  return out;
+  return attHelper.exportAtts();
 };
 
 // Updates an existing annotator with a new image
@@ -206,14 +115,8 @@ Annotator.fn.update = function(src, w, h) {
   // Reset pan/zoom
   this.cHelper.reset(w, h);
 
-  // Reset annotation
-  this.att = new Annotation(this.selectedType);
-  this.atts = [this.att];
-
-  // Reset features
-  this.fInd = 0;
-  this.ftr = null;
-  this.ftrs = [];
+  // Reset annotations
+  this.attHelper.reset();
 };
 
 //////////////////////////////////////////////////////
@@ -270,75 +173,46 @@ Annotator.fn.build = function($parent) {
   this.zoomin.click(function(){a.cHelper.zoom(1.25);});
   this.zoomout.click(function(){a.cHelper.zoom(0.8);});
 
-  // Operation selection
+  // Switching annotation modes
   this.attType.change(function() {
     var str = $(this).val();
 
     if (str === "Box") {
-      a.selectedType = "rect";
+      a.attHelper.changeType("rect");
       a.switchOp("annotate");
     }
     else if (str === "Polygon") {
-      a.selectedType = "poly";
+      a.attHelper.changeType("poly");
       a.switchOp("annotate");
     }
   });
 
-  this.pan.click(function(){
-    a.switchOp("pan");
-  });
+  // Operation selection
+  this.pan.click(function(){ a.switchOp("pan"); });
+  this.annotate.click(function(){ a.switchOp("annotate"); });
 
-  this.annotate.click(function(){
-    a.switchOp("annotate");
-  });
-
+  // Annotation deletion
   this.delAtt.click(function() {
-    a.att.reset();
+    a.attHelper.delAtt();
     a.updateControls();
     a.cHelper.repaint();
   });
 
   // Annotations - next/prev
-  this.prevAtt.click(function() {
-    var ind = a.atts.indexOf(a.att) - 1;
-    a.changeAtt(ind);
-  });
-
-  this.nextAtt.click(function() {
-    var ind = a.atts.indexOf(a.att) + 1;
-    a.changeAtt(ind);
-  });
+  this.prevAtt.click(function() { a.attHelper.prevAtt(); });
+  this.nextAtt.click(function() { a.attHelper.nextAtt(); });
 
   // Features next/prev
-  this.prevFtr.click(function() {
-    a.fInd--;
-    a.changeFtr();
-  });
+  this.prevFtr.click(function() { a.attHelper.prevFtr(); });
+  this.nextFtr.click(function() { a.attHelper.nextFtr(); });
 
-  this.nextFtr.click(function() {
-    a.fInd++;
-    a.changeFtr();
-  });
-
-  // Mouse down - start drawing or panning
-  this.canvas.mousedown(function(e){
-    a.mbDown(e.pageX, e.pageY);
-  });
-
-  // Movement continues draw/pan as long as the mouse button is held
-  this.canvas.mousemove(function(e){
-    a.mMove(e.pageX, e.pageY);
-  });
-
-  // Operation end
-  this.canvas.mouseup(function(){
-    a.mbUp();
-  });
+  // Mouse operations
+  this.canvas.mousedown(function(e){ a.mbDown(e.pageX, e.pageY); });
+  this.canvas.mousemove(function(e){ a.mMove(e.pageX, e.pageY); });
+  this.canvas.mouseup(function(){ a.mbUp(); });
 
   // We have to wait for the image to load before we can use it
-  this.img.load(function(){
-    a.cHelper.repaint();
-  });
+  this.img.load(function(){ a.cHelper.repaint(); });
 };
 
 //////////////////////////////////////////////////////
