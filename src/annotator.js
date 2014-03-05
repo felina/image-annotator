@@ -119,7 +119,6 @@ Annotator.fn.update = function(src, w, h) {
   this.attHelper.reset();
 };
 
-//////////////////////////////////////////////////////
 // Instantiates an annotator inside a DOM object
 Annotator.fn.build = function($parent) {
   // Register and generate annotator components
@@ -216,74 +215,25 @@ Annotator.fn.build = function($parent) {
 };
 
 //////////////////////////////////////////////////////
-// Annotation control
+// Annotation UI
 
-Annotator.fn.changeFtr = function() {
-  if (this.fInd < 0) {
-    this.fInd = 0;
-    return;
-  }
-  else if (this.fInd === this.ftrs.length) {
-    this.fInd = this.ftrs.length - 1;
-  }
-  else {
-    this.ftr = this.ftrs[this.fInd];
-  }
+Annotator.fn.showChange = function() {
+  this.cHelper.repaint();
+  this.updateControls();
+  this.updateTitle();
+};
 
-  // Lock/unlock shape selection
-  var lock = this.ftr.shape !== "any";
+Annotator.fn.lockSelect = function(type, lock) {
   this.attType.prop('disabled', lock);
 
   if (lock) {
-    this.selectedType = this.ftr.shape;
-    if (this.ftr.shape === "rect") {
+    if (type === "rect") {
       this.attType.val('Box');
     }
     else {
       this.attType.val('Polygon');
     }
   }
-
-  // Switch att correspondingly
-  this.atts = this.ftr.atts;
-  this.changeAtt(0);
-
-  this.cHelper.repaint();
-
-  this.updateControls();
-  this.updateTitle();
-};
-
-Annotator.fn.changeAtt = function(ind) {
-  // Remove redundant (invalid) annotations before we switch
-  for (var i = 0; i < this.atts.length; i++) {
-    var att = this.atts[i];
-    if (!att.valid) {
-      this.atts.splice(i, 1);
-
-      // Correct the index which was passed in
-      if (i <= ind) {
-        ind--;
-      }
-    }
-  }
-
-  // Make a valid change - either switch or add a new one
-  if (ind < 0) {
-    return;
-  }
-  else if (ind === this.atts.length) {
-    this.att = new Annotation(this.selectedType);
-    this.atts.push(this.att);
-  }
-  else {
-    this.att = this.atts[ind];
-  }
-
-  this.cHelper.repaint();
-
-  this.updateControls();
-  this.updateTitle();
 };
 
 Annotator.fn.updateControls = function() {
@@ -305,7 +255,10 @@ Annotator.fn.updateControls = function() {
 };
 
 Annotator.fn.updateTitle = function() {
-  this.title.text("Annotating: " + this.ftr.name + " (" + (this.fInd+1) + "/" + this.ftrs.length + ")");
+  var name = this.attHelper.curFtr.name;
+  var ind  = this.attHelper.fInd;
+  var len  = this.attHelper.ftrs.length;
+  this.title.text("Annotating: " + name + " (" + (ind+1) + "/" + len + ")");
 };
 
 //////////////////////////////////////////////////////
@@ -329,13 +282,7 @@ Annotator.fn.mbDown = function(x, y) {
     this.active = true;
 
     if (this.curOp === "annotate") {
-      this.att.reset(this.selectedType);
-      this.att.valid = true;
-
-      if (this.att.type === "poly") {
-        this.att.pts[0] = ptToImg(this.cHelper, this.x0, this.y0);
-        this.polyC = 1;
-      }
+      this.attHelper.startAtt(ptToImg(this.cHelper, this.x0, this.y0));
     }
   }
 };
@@ -344,15 +291,8 @@ Annotator.fn.mbUp = function() {
   // End ONLY if dragged
   if (this.curOp === "annotate") {
     if (this.x0 !== this.x1 && this.y0 !== this.y1) {
-      if (this.att.type === "rect") {
-        this.active = false;
-        this.updateControls();
-      }
-      else if (this.att.type === "poly") {
-        this.x0 = this.x1;
-        this.y0 = this.y1;
-        this.polyC++;
-      }
+      var pt = ptToImg(this.cHelper, this.x0, this.y0);
+      this.active = this.attHelper.nextPt(pt);
     }
     else if (this.att.type === "poly" && this.polyC > 1) {
       this.active = false;

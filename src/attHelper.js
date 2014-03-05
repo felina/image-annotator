@@ -16,6 +16,9 @@ function AttHelper(parent) {
   this.curAtt = new Annotation("rect");
   this.atts = [this.curAtt];
   this.curType = "rect";
+
+  // Drawing
+  this.pInd = 0;
 }
 AttHelper.fn = AttHelper.prototype;
 
@@ -31,6 +34,9 @@ AttHelper.fn.reset = function() {
   this.curFtr = null;
   this.ftrs = [];
 };
+
+//////////////////////////////////////////////////////
+// Data import / export
 
 // Feature import
 AttHelper.fn.addFtrData = function(ftr) {
@@ -134,6 +140,125 @@ AttHelper.fn.exportAtts = function() {
   return out;
 };
 
+
+//////////////////////////////////////////////////////
+// Feature selection
+
+// Common to feature changes
+AttHelper.fn.ftrChanged = function() {
+  // Lock/unlock shape selection
+  var lock = this.ftr.shape !== "any";
+  this.parent.lockSelect(this.ftr.shape, lock);
+
+  if (lock) {
+    this.curType = this.ftr.shape;
+  }
+
+  // Update annotations to match
+  this.atts = this.curFtr.atts;
+  this.aInd = 0;
+
+  if (this.atts.length === 0) {
+    this.atts.push(new Annotation(this.curType));
+  }
+
+  this.curAtt = this.atts(this.aInd);
+
+  // Update UI
+  this.parent.showChange();
+};
+
+// Select the next feature
+AttHelper.fn.nextFtr = function() {
+  this.fInd++;
+
+  if (this.fInd >== this.ftrs.length) {
+    this.fInd = this.ftrs.length - 1;
+  }
+
+  this.curFtr = this.ftrs[this.fInd];
+  this.ftrChanged();
+};
+
+// Select the previous feature
+AttHelper.fn.prevFtr = function() {
+  this.fInd--;
+
+  if (this.fInd < 0) {
+    this.fInd = 0;
+  }
+
+  this.curFtr = this.ftrs[this.fInd];
+  this.ftrChanged();
+};
+
+
+//////////////////////////////////////////////////////
+// Annotation selection
+
+// Invalidates the current annotation -
+// it will be removed when the next switch
+// occurs
+AttHelper.fn.delAtt = function() {
+  this.curAtt.reset();
+};
+
+// Select next annotation/start a new one
+AttHelper.fn.nextAtt = function() {
+  this.aInd++;
+
+  if (this.aInd === this.atts.length) {
+    this.curAtt = new Annotation(this.curType);
+    this.atts.push(this.curAtt);
+  }
+  else {
+    this.curAtt = this.atts[this.aInd];
+  }
+
+  this.parent.showChange();
+};
+
+// Select previous annotation, if one exists
+AttHelper.fn.prevAtt = function() {
+  this.aInd--;
+
+  if (this.aInd < 0) {
+    this.aInd = 0;
+  }
+
+  this.curAtt = this.atts[this.aInd];
+  this.parent.showChange();
+};
+
+
+//////////////////////////////////////////////////////
+// Annotation generation
+
+AttHelper.fn.startAtt = function(pt) {
+  this.curAtt.reset(this.selectedType);
+  this.curAtt.valid = true;
+  this.curAtt.pts[0] = pt;
+  this.pInd = 0;
+};
+
+// Plot the next point. Returns false
+// if the drawing is complete.
+AttHelper.fn.nextPt = function(pt) {
+  if (this.curAtt.type === "rect") {
+    this.active = false;
+    this.updateControls();
+  }
+  else if (this.att.type === "poly") {
+    this.x0 = this.x1;
+    this.y0 = this.y1;
+    this.polyC++;
+  }
+};
+
+//////////////////////////////////////////////////////
+// Misc functions
+
+// Type selection
 AttHelper.fn.changeType = function(type) {
   this.curType = type;
 };
@@ -146,26 +271,4 @@ AttHelper.fn.clrInvalid = function() {
       this.atts.splice(i, 1);
     }
   }
-};
-
-AttHelper.fn.nextFtr = function() {
-
-};
-
-AttHelper.fn.prevFtr = function() {
-
-};
-
-AttHelper.fn.delAtt = function() {
-  this.curAtt.reset();
-};
-
-AttHelper.fn.nextAtt = function() {
-  //var ind = a.atts.indexOf(a.att) + 1;
-  //a.changeAtt(ind);
-};
-
-AttHelper.fn.prevAtt = function() {
-  //var ind = a.atts.indexOf(a.att) - 1;
-  //a.changeAtt(ind);
 };
