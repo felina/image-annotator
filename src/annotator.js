@@ -253,22 +253,22 @@ Annotator.fn.updateControls = function() {
   this.prevFtr.prop('disabled', ath.fInd === 0);
   this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1);
 
-  this.prevAtt.prop('disabled', ath.atts[0] === ath.curAtt);
+  this.prevAtt.prop('disabled', ath.aInd === 0);
 
   // Logic for enabling the 'next attribute' button
-  var ind = ath.atts.indexOf(ath.curAtt)+1;
+  var ind = ath.atts.indexOf(ath.getAtt())+1;
   var nextValid = false;
 
   if (ind < ath.atts.length) {
     nextValid = ath.atts[ind].valid;
   }
 
-  this.nextAtt.prop('disabled', !ath.curAtt.valid && !nextValid);
-  this.delAtt.prop('disabled', !ath.curAtt.valid || ath.curFtr.req);
+  this.nextAtt.prop('disabled', !ath.getAtt().valid && !nextValid);
+  this.delAtt.prop('disabled', !ath.getAtt().valid || ath.getFtr().req);
 };
 
 Annotator.fn.updateTitle = function() {
-  var name = this.attHelper.curFtr.name;
+  var name = this.attHelper.getFtr().name;
   var ind  = this.attHelper.fInd;
   var len  = this.attHelper.ftrs.length;
   this.title.text("Annotating: " + name + " (" + (ind+1) + "/" + len + ")");

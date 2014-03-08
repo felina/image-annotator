@@ -7,14 +7,12 @@ function AttHelper(parent) {
   this.parent = parent;
 
   // Features
-  this.curFtr = null;
   this.ftrs = [];
   this.fInd = 0;
   this.aInd = 0;
 
   // Annotations
-  this.curAtt = new Annotation("rect");
-  this.atts = [this.curAtt];
+  this.atts = [new Annotation("rect")];
   this.curType = "rect";
 
   // Drawing
@@ -22,16 +20,22 @@ function AttHelper(parent) {
 }
 AttHelper.fn = AttHelper.prototype;
 
+AttHelper.fn.getAtt = function() {
+  return this.atts[this.aInd];
+};
+
+AttHelper.fn.getFtr = function() {
+  return this.ftrs[this.fInd];
+};
+
 // Resets to default state
 AttHelper.fn.reset = function() {
   // Reset annotation
-  this.curAtt = new Annotation(this.curType);
-  this.atts = [this.curAtt];
+  this.atts = [new Annotation(this.curType)];
   this.aInd = 0;
 
   // Reset features
   this.fInd = 0;
-  this.curFtr = null;
   this.ftrs = [];
 };
 
@@ -51,7 +55,6 @@ AttHelper.fn.importFeatures = function(input) {
     this.addFtrData(input[i]);
   }
 
-  this.curFtr = this.ftrs[0];
   this.ftrChanged();
 };
 
@@ -89,8 +92,7 @@ AttHelper.fn.importAtts = function(atts) {
   }
 
   // Recapture current feature/annotation
-  this.atts = this.curFtr.atts;
-  this.curAtt = this.atts[this.aInd];
+  this.atts = this.getFtr().atts;
   this.parent.showChange();
 };
 
@@ -155,22 +157,20 @@ AttHelper.fn.exportAtts = function() {
 // Common to feature changes
 AttHelper.fn.ftrChanged = function() {
   // Lock/unlock shape selection
-  var lock = this.curFtr.shape !== "any";
-  this.parent.lockSelect(this.curFtr.shape, lock);
+  var lock = this.getFtr().shape !== "any";
+  this.parent.lockSelect(this.getFtr().shape, lock);
 
   if (lock) {
-    this.curType = this.curFtr.shape;
+    this.curType = this.getFtr().shape;
   }
 
   // Update annotations to match
-  this.atts = this.curFtr.atts;
+  this.atts = this.getFtr().atts;
   this.aInd = 0;
 
   if (this.atts.length === 0) {
     this.atts.push(new Annotation(this.curType));
   }
-
-  this.curAtt = this.atts[this.aInd];
 
   // Update UI
   this.parent.showChange();
@@ -184,7 +184,6 @@ AttHelper.fn.nextFtr = function() {
     this.fInd = this.ftrs.length - 1;
   }
 
-  this.curFtr = this.ftrs[this.fInd];
   this.ftrChanged();
 };
 
@@ -196,7 +195,6 @@ AttHelper.fn.prevFtr = function() {
     this.fInd = 0;
   }
 
-  this.curFtr = this.ftrs[this.fInd];
   this.ftrChanged();
 };
 
@@ -208,21 +206,20 @@ AttHelper.fn.prevFtr = function() {
 // it will be removed when the next switch
 // occurs
 AttHelper.fn.delAtt = function() {
-  this.curAtt.reset();
+  this.getAtt().reset();
 };
 
 // Select next annotation/start a new one
+// Jumps to next att index, creates a new annotation
+// if we hit the end of the list
 AttHelper.fn.nextAtt = function() {
   this.aInd++;
 
   if (this.aInd === this.atts.length) {
-    this.curAtt = new Annotation(this.curType);
-    this.atts.push(this.curAtt);
-  }
-  else {
-    this.curAtt = this.atts[this.aInd];
+    this.atts.push(new Annotation(this.curType));
   }
 
+  this.clrInvalid();
   this.parent.showChange();
 };
 
@@ -234,7 +231,7 @@ AttHelper.fn.prevAtt = function() {
     this.aInd = 0;
   }
 
-  this.curAtt = this.atts[this.aInd];
+  this.clrInvalid();
   this.parent.showChange();
 };
 
@@ -243,31 +240,31 @@ AttHelper.fn.prevAtt = function() {
 // Annotation generation
 
 AttHelper.fn.startAtt = function(pt) {
-  this.curAtt.reset(this.selectedType);
-  this.curAtt.valid = true;
-  this.curAtt.pts[0] = pt;
+  this.getAtt().reset(this.selectedType);
+  this.getAtt().valid = true;
+  this.getAtt().pts[0] = pt;
   this.pInd = 1;
 };
 
 // Update the next point
 AttHelper.fn.showPt = function(pt) {
-  if (this.curAtt.type === "rect") {
-    this.curAtt.pts[1] = pt;
+  if (this.getAtt().type === "rect") {
+    this.getAtt().pts[1] = pt;
   }
-  else if (this.curAtt.type === "poly") {
-    this.curAtt.pts[this.pInd] = pt;
+  else if (this.getAtt().type === "poly") {
+    this.getAtt().pts[this.pInd] = pt;
   }
 }
 
 // Finalize the next point. Returns false
 // if the drawing is complete.
 AttHelper.fn.nextPt = function(pt) {
-  if (this.curAtt.type === "rect") {
-    this.curAtt.pts[1] = pt;
+  if (this.getAtt().type === "rect") {
+    this.getAtt().pts[1] = pt;
     return false;
   }
-  else if (this.curAtt.type === "poly") {
-    this.curAtt.pts[this.pInd] = pt;
+  else if (this.getAtt().type === "poly") {
+    this.getAtt().pts[this.pInd] = pt;
     this.pInd++;
     return true;
   }
@@ -291,9 +288,17 @@ AttHelper.fn.changeType = function(type) {
 // Clears invalid annotations
 AttHelper.fn.clrInvalid = function() {
   for (var i = 0; i < this.atts.length; i++) {
+    if (i === this.aInd) {
+      continue;
+    }
+    
     var att = this.atts[i];
+
     if (!att.valid) {
       this.atts.splice(i, 1);
+      if (this.aInd > i) {
+        this.aInd--;
+      }
     }
   }
 };
