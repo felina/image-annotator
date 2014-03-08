@@ -87,6 +87,11 @@ AttHelper.fn.importAtts = function(atts) {
       f.atts.push(att);
     }
   }
+
+  // Recapture current feature/annotation
+  this.atts = this.curFtr.atts;
+  this.curAtt = this.atts[this.aInd];
+  this.parent.showChange();
 };
 
 // Annotation export

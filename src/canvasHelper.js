@@ -75,7 +75,7 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
   var col = cols[fInd % cols.length];
   var fillCol = col;
 
-  if (att === this.parent.att) {
+  if (att === this.parent.attHelper.curAtt) {
     fillCol = "white";
   }
 
