@@ -2,8 +2,11 @@
 $.fn.annotator = function(input) {
   var w, h;
 
-  if (typeof input.src === "undefined") {
-    throw "Error: Input src (image source) is required";
+  if (typeof input.src !== "undefined") {
+    input.img = $('<img src="'+input.src+'"></img>').hide();
+  }
+  else if (typeof input.img === "undefined") {
+    input.img = null;
   }
 
   if (typeof input.features === "undefined") {
@@ -26,10 +29,10 @@ $.fn.annotator = function(input) {
   // Update if we're passed an existing annotator
   if ($parent.hasClass("annotator")) {
     a = $parent.data("Annotator");
-    a.update(input.src, w, h);
+    a.update(input.img, w, h);
   }
   else {
-    a = new Annotator(input.src, w, h);
+    a = new Annotator(input.img, w, h);
     a.parent = $parent;
     a.build($parent);
   }
