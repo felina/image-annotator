@@ -254,7 +254,7 @@ AttHelper.fn.showPt = function(pt) {
   else if (this.getAtt().type === "poly") {
     this.getAtt().pts[this.pInd] = pt;
   }
-}
+};
 
 // Finalize the next point. Returns false
 // if the drawing is complete.
@@ -298,7 +298,7 @@ AttHelper.fn.clrInvalid = function() {
     if (i === this.aInd) {
       continue;
     }
-    
+
     var att = this.atts[i];
 
     if (!att.valid) {

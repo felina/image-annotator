@@ -20,8 +20,9 @@ function CanvasHelper(parent) {
   this.defScale = 0.9; // TODO: Correct for size
   this.curScale = this.defScale;
   this.xOffs = 0;
-  this.yOffs = 0
+  this.yOffs = 0;
 }
+
 CanvasHelper.fn = CanvasHelper.prototype;
 
 // Canvas re-draw op
@@ -59,7 +60,7 @@ CanvasHelper.fn.repaint = function() {
 CanvasHelper.fn.drawAtt = function(att, fInd) {
   var g = this.g;
 
-  var cols = 
+  var cols =
   [
     "rgb(255, 20, 20)",
     "rgb(0, 200, 0)",
