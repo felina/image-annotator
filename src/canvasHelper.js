@@ -45,7 +45,18 @@ CanvasHelper.fn.repaint = function() {
   g.shadowBlur = 40;
 
   // Draw the image
-  g.drawImage(this.parent.img[0], -this.w/2, -this.h/2);
+  if (this.parent.img !== null) {
+    g.drawImage(this.parent.img[0], -this.w/2, -this.h/2);
+  }
+  else {
+    g.fillStyle = "rgb(220, 220, 220)";
+    g.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+
+    g.shadowBlur = 0;
+    g.fillStyle = "white";
+    g.font = "22px sans-serif";
+    g.fillText("No Image", -40, -8);
+  }
 
   // Annotation
   for (var f = 0; f < ftrs.length; f++) {

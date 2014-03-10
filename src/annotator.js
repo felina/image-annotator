@@ -14,9 +14,9 @@ var canvascss = {
 };
 
 // Creates a new annotator (to be bound to a DOM object)
-function Annotator(src, w, h) {
+function Annotator(img, w, h) {
   // Parameters
-  this.src = src;
+  this.img = img;
   this.w = w;
   this.h = h;
 
@@ -113,14 +113,20 @@ Annotator.fn.getFeatures = function() {
 
 // Updates an existing annotator with a new image
 // (Also resets the pan/zoom and annotations)
-Annotator.fn.update = function(src, w, h) {
-  this.src = src;
+Annotator.fn.update = function(img, w, h) {
+  if (this.img !== img) {
+    var a = this;
+    this.img = img;
+
+    if (this.img !== null) {
+      this.img.load(function(){ a.cHelper.repaint(); });
+    }
+  }
   this.w = w;
   this.h = h;
 
   // Reloading & resizing
   this.container.width(w).height(h);
-  this.img.attr("src", src).width(w).height(h);
 
   // Reset pan/zoom
   this.cHelper.reset(w, h);
@@ -165,13 +171,11 @@ Annotator.fn.build = function($parent) {
                       .height(this.h)
                       .appendTo($parent);
 
-  // Load the image
-  this.img = $('<img src="'+this.src+'"></img>').hide();
-
   // The drawing canvas
   this.canvas = $('<canvas>Unsupported browser.</canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
+  this.canvas[0].onselectstart = function(){return false;};
 
   // Generate the canvas helper
   this.cHelper = new CanvasHelper(this);
@@ -219,10 +223,15 @@ Annotator.fn.build = function($parent) {
   this.canvas.mousedown(function(e){ a.mbDown(e.pageX, e.pageY); });
   this.canvas.mousemove(function(e){ a.mMove(e.pageX, e.pageY); });
   this.canvas.mouseup(function(){ a.mbUp(); });
-  this.canvas.dblclick(function(e){ a.mbDbl(e); });
+  this.canvas.dblclick(function(e){
+    a.mbDbl(e);
+    return false;
+  });
 
   // We have to wait for the image to load before we can use it
-  this.img.load(function(){ a.cHelper.repaint(); });
+  if (this.img !== null) {
+    this.img.load(function(){ a.cHelper.repaint(); });
+  }
 };
 
 
