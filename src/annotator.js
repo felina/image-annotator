@@ -100,7 +100,7 @@ Annotator.fn.cssIn = function(data) {
 
 // Annotation export
 Annotator.fn.getExport = function() {
-  return attHelper.exportAtts();
+  return this.attHelper.exportAtts();
 };
 
 // Feature retrieval
