@@ -264,17 +264,24 @@ AttHelper.fn.nextPt = function(pt) {
     return false;
   }
   else if (this.getAtt().type === "poly") {
-    this.getAtt().pts[this.pInd] = pt;
-    this.pInd++;
+    var lastPt = this.getAtt().pts[this.pInd-1];
+
+    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
+      this.getAtt().pts[this.pInd] = pt;
+      this.pInd++;
+    }
+
     return true;
   }
 
   return false;
 };
 
-// Ends an annotation. Currently NOOP
+// Ends an annotation - remove duplicate point
 AttHelper.fn.endAtt = function() {
-
+  if (this.getAtt().type === 'poly') {
+    this.getAtt().pts.pop();
+  }
 };
 
 //////////////////////////////////////////////////////
