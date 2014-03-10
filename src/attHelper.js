@@ -240,7 +240,7 @@ AttHelper.fn.prevAtt = function() {
 // Annotation generation
 
 AttHelper.fn.startAtt = function(pt) {
-  this.getAtt().reset(this.selectedType);
+  this.getAtt().reset(this.curType);
   this.getAtt().valid = true;
   this.getAtt().pts[0] = pt;
   this.pInd = 1;
