@@ -264,7 +264,7 @@ Annotator.fn.updateControls = function() {
   }
 
   this.nextAtt.prop('disabled', !ath.getAtt().valid && !nextValid);
-  this.delAtt.prop('disabled', !ath.getAtt().valid || ath.getFtr().req);
+  this.delAtt.prop('disabled', !ath.getAtt().valid);
 };
 
 Annotator.fn.updateTitle = function() {
