@@ -259,12 +259,21 @@ AttHelper.fn.showPt = function(pt) {
 // Finalize the next point. Returns false
 // if the drawing is complete.
 AttHelper.fn.nextPt = function(pt) {
+  var lastPt;
+
   if (this.getAtt().type === "rect") {
-    this.getAtt().pts[1] = pt;
-    return false;
+    lastPt = this.getAtt().pts[0];
+
+    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
+      this.getAtt().pts[1] = pt;
+      return false;
+    }
+    else {
+      return true;
+    }
   }
   else if (this.getAtt().type === "poly") {
-    var lastPt = this.getAtt().pts[this.pInd-1];
+    lastPt = this.getAtt().pts[this.pInd-1];
 
     if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
       this.getAtt().pts[this.pInd] = pt;
