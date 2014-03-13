@@ -5,10 +5,10 @@ function ptToImg(a, xin, yin) {
   var x = (xin-a.w/2-a.xOffs)/a.curScale;
   var y = (yin-a.h/2-a.yOffs)/a.curScale;
 
-  if (x < -a.w/2) {x = -a.w/2;}
-  if (x >  a.w/2) {x =  a.w/2;}
-  if (y < -a.h/2) {y = -a.h/2;}
-  if (y >  a.h/2) {y =  a.h/2;}
+  if (x < -a.imgW/2) {x = -a.imgW/2;}
+  if (x >  a.imgW/2) {x =  a.imgW/2;}
+  if (y < -a.imgH/2) {y = -a.imgH/2;}
+  if (y >  a.imgH/2) {y =  a.imgH/2;}
 
   var out = {x:x,y:y};
 

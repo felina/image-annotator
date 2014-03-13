@@ -1,4 +1,4 @@
-/*! penguinator - v3.2.1 - 2014-03-10
+/*! penguinator - v3.4.0 - 2014-03-13
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
@@ -24,6 +24,8 @@ function Annotator(img, w, h) {
   this.img = img;
   this.w = w;
   this.h = h;
+  this.imgW = img[0].width;
+  this.imgH = img[0].height;
 
   // Controls
   this.zoomin = null;
@@ -124,7 +126,9 @@ Annotator.fn.update = function(img, w, h) {
     this.img = img;
 
     if (this.img !== null) {
-      this.img.load(function(){ a.cHelper.repaint(); });
+      this.img.load(function(){
+        a.cHelper.imgLoaded(a.img);
+      });
     }
   }
   this.w = w;
@@ -235,7 +239,9 @@ Annotator.fn.build = function($parent) {
 
   // We have to wait for the image to load before we can use it
   if (this.img !== null) {
-    this.img.load(function(){ a.cHelper.repaint(); });
+    this.img.load(function(){
+      a.cHelper.imgLoaded(a.img);
+    });
   }
 };
 
@@ -678,12 +684,21 @@ AttHelper.fn.showPt = function(pt) {
 // Finalize the next point. Returns false
 // if the drawing is complete.
 AttHelper.fn.nextPt = function(pt) {
+  var lastPt;
+
   if (this.getAtt().type === "rect") {
-    this.getAtt().pts[1] = pt;
-    return false;
+    lastPt = this.getAtt().pts[0];
+
+    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
+      this.getAtt().pts[1] = pt;
+      return false;
+    }
+    else {
+      return true;
+    }
   }
   else if (this.getAtt().type === "poly") {
-    var lastPt = this.getAtt().pts[this.pInd-1];
+    lastPt = this.getAtt().pts[this.pInd-1];
 
     if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
       this.getAtt().pts[this.pInd] = pt;
@@ -746,9 +761,11 @@ function CanvasHelper(parent) {
   this.canvas[0].height = h;
   this.w = w;
   this.h = h;
+  this.imgW = 0;
+  this.imgH = 0;
 
   // Transform info
-  this.defScale = 0.9; // TODO: Correct for size
+  this.defScale = 1.0; // TODO: Correct for size
   this.curScale = this.defScale;
   this.xOffs = 0;
   this.yOffs = 0;
@@ -777,7 +794,7 @@ CanvasHelper.fn.repaint = function() {
 
   // Draw the image
   if (this.parent.img !== null) {
-    g.drawImage(this.parent.img[0], -this.w/2, -this.h/2);
+    g.drawImage(this.parent.img[0], -this.imgW/2, -this.imgH/2);
   }
   else {
     g.fillStyle = "rgb(220, 220, 220)";
@@ -879,8 +896,8 @@ CanvasHelper.fn.doPan = function(x, y) {
   this.xOffs += x;
   this.yOffs += y;
 
-  var xLim = (this.w/2)*this.curScale;
-  var yLim = (this.h/2)*this.curScale;
+  var xLim = (this.imgW/2)*this.curScale;
+  var yLim = (this.imgH/2)*this.curScale;
 
   if (this.xOffs >  xLim) {this.xOffs =  xLim;}
   if (this.xOffs < -xLim) {this.xOffs = -xLim;}
@@ -895,8 +912,8 @@ CanvasHelper.fn.zoom = function(scale) {
   // New scaling level
   this.curScale *= scale;
 
-  if (this.curScale < 0.9) {
-    this.curScale = 0.9;
+  if (this.curScale < this.defScale) {
+    this.curScale = this.defScale;
   }
 
   this.repaint();
@@ -909,9 +926,31 @@ CanvasHelper.fn.reset = function(w, h) {
   this.w = w;
   this.h = h;
 
+  this.imgW = parent.imgW;
+  this.imgH = parent.imgH;
+
   this.xOffs = 0;
   this.yOffs = 0;
   this.curScale = this.defScale;
+};
+
+// Called when the image finishes loading
+CanvasHelper.fn.imgLoaded = function(img) {
+  // Grab the image dimensions. These are only available
+  // once the image is fully loaded
+  this.imgW = img[0].width;
+  this.imgH = img[0].height;
+
+  // We can use the dimensions and the available canvas
+  // area to work out a good zoom level
+  var xRatio = this.w / this.imgW;
+  var yRatio = this.h / this.imgH;
+  var absRatio = Math.min(xRatio, yRatio);
+
+  this.defScale = absRatio * 0.9;
+  this.curScale = this.defScale;
+
+  this.repaint();
 };
 
 // Util.js: Functions and small classes helpful elsewhere //
@@ -921,10 +960,10 @@ function ptToImg(a, xin, yin) {
   var x = (xin-a.w/2-a.xOffs)/a.curScale;
   var y = (yin-a.h/2-a.yOffs)/a.curScale;
 
-  if (x < -a.w/2) {x = -a.w/2;}
-  if (x >  a.w/2) {x =  a.w/2;}
-  if (y < -a.h/2) {y = -a.h/2;}
-  if (y >  a.h/2) {y =  a.h/2;}
+  if (x < -a.imgW/2) {x = -a.imgW/2;}
+  if (x >  a.imgW/2) {x =  a.imgW/2;}
+  if (y < -a.imgH/2) {y = -a.imgH/2;}
+  if (y >  a.imgH/2) {y =  a.imgH/2;}
 
   var out = {x:x,y:y};
 

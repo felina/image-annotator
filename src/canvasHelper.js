@@ -15,9 +15,11 @@ function CanvasHelper(parent) {
   this.canvas[0].height = h;
   this.w = w;
   this.h = h;
+  this.imgW = 0;
+  this.imgH = 0;
 
   // Transform info
-  this.defScale = 0.9; // TODO: Correct for size
+  this.defScale = 1.0; // TODO: Correct for size
   this.curScale = this.defScale;
   this.xOffs = 0;
   this.yOffs = 0;
@@ -46,7 +48,7 @@ CanvasHelper.fn.repaint = function() {
 
   // Draw the image
   if (this.parent.img !== null) {
-    g.drawImage(this.parent.img[0], -this.w/2, -this.h/2);
+    g.drawImage(this.parent.img[0], -this.imgW/2, -this.imgH/2);
   }
   else {
     g.fillStyle = "rgb(220, 220, 220)";
@@ -148,8 +150,8 @@ CanvasHelper.fn.doPan = function(x, y) {
   this.xOffs += x;
   this.yOffs += y;
 
-  var xLim = (this.w/2)*this.curScale;
-  var yLim = (this.h/2)*this.curScale;
+  var xLim = (this.imgW/2)*this.curScale;
+  var yLim = (this.imgH/2)*this.curScale;
 
   if (this.xOffs >  xLim) {this.xOffs =  xLim;}
   if (this.xOffs < -xLim) {this.xOffs = -xLim;}
@@ -164,8 +166,8 @@ CanvasHelper.fn.zoom = function(scale) {
   // New scaling level
   this.curScale *= scale;
 
-  if (this.curScale < 0.9) {
-    this.curScale = 0.9;
+  if (this.curScale < this.defScale) {
+    this.curScale = this.defScale;
   }
 
   this.repaint();
@@ -178,7 +180,29 @@ CanvasHelper.fn.reset = function(w, h) {
   this.w = w;
   this.h = h;
 
+  this.imgW = parent.imgW;
+  this.imgH = parent.imgH;
+
   this.xOffs = 0;
   this.yOffs = 0;
   this.curScale = this.defScale;
+};
+
+// Called when the image finishes loading
+CanvasHelper.fn.imgLoaded = function(img) {
+  // Grab the image dimensions. These are only available
+  // once the image is fully loaded
+  this.imgW = img[0].width;
+  this.imgH = img[0].height;
+
+  // We can use the dimensions and the available canvas
+  // area to work out a good zoom level
+  var xRatio = this.w / this.imgW;
+  var yRatio = this.h / this.imgH;
+  var absRatio = Math.min(xRatio, yRatio);
+
+  this.defScale = absRatio * 0.9;
+  this.curScale = this.defScale;
+
+  this.repaint();
 };
