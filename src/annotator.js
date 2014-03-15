@@ -19,8 +19,8 @@ function Annotator(img, w, h) {
   this.img = img;
   this.w = w;
   this.h = h;
-  this.imgW = img[0].width;
-  this.imgH = img[0].height;
+  this.imgW = img ? img[0].width : w;
+  this.imgH = img ? img[0].height : h;
 
   // Controls
   this.zoomin = null;
