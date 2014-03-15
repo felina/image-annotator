@@ -1,6 +1,6 @@
 {
   "name": "penguinator",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "description": "JavaScript component for drawing arbitrary polygons over images and exporting them as JSON",
   "main": "src/main.js",
   "dependencies": {

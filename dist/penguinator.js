@@ -1,4 +1,4 @@
-/*! penguinator - v3.4.0 - 2014-03-13
+/*! penguinator - v3.4.1 - 2014-03-15
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
@@ -24,8 +24,8 @@ function Annotator(img, w, h) {
   this.img = img;
   this.w = w;
   this.h = h;
-  this.imgW = img[0].width;
-  this.imgH = img[0].height;
+  this.imgW = img ? img[0].width : w;
+  this.imgH = img ? img[0].height : h;
 
   // Controls
   this.zoomin = null;
