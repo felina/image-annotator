@@ -44,7 +44,7 @@ CanvasHelper.fn.repaint = function() {
 
   // Drop shadow
   g.shadowColor = "#555";
-  g.shadowBlur = 40;
+  g.shadowBlur = 20;
 
   // Draw the image
   if (this.parent.img !== null) {
@@ -94,7 +94,7 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
   }
 
   g.shadowColor = "#000";
-  g.shadowBlur = 3;
+  g.shadowBlur = 1;
   g.strokeStyle = col;
   g.lineWidth = 1.5 / this.curScale;
   g.fillStyle = fillCol;

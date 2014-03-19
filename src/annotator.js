@@ -42,19 +42,14 @@ function Annotator(img, w, h) {
   this.container = null;
   this.canvas = null;
 
+  // Tools
+  this.curTool = new AttTool(this);
+
   // Annotations
   this.attHelper = new AttHelper(this);
 
   // Canvas ops
   this.cHelper = null;
-
-  this.x0 = 0;
-  this.x1 = 0;
-  this.y0 = 0;
-  this.y1 = 0;
-  this.curOp = "pan";
-  this.active = false;
-  this.polyC = 0;
 }
 Annotator.fn = Annotator.prototype;
 
@@ -223,12 +218,14 @@ Annotator.fn.build = function($parent) {
   this.prevFtr.click(function() { a.attHelper.prevFtr(); });
   this.nextFtr.click(function() { a.attHelper.nextFtr(); });
 
-  // Mouse operations
-  this.canvas.mousedown(function(e){ a.mbDown(e.pageX, e.pageY); });
-  this.canvas.mousemove(function(e){ a.mMove(e.pageX, e.pageY); });
-  this.canvas.mouseup(function(){ a.mbUp(); });
+  // Mouse operations - call the tool handlers
+  this.canvas.mousedown(function(e){ a.curTool.lbDown(e.pageX, e.pageY); });
+  this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
+  this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
+  
   this.canvas.dblclick(function(e){
-    a.mbDbl(e);
+    a.curTool.mbDbl(e.pageX, e.pageY);
+    e.preventDefault();
     return false;
   });
 
@@ -293,77 +290,12 @@ Annotator.fn.updateTitle = function() {
 // Annotation & panning control
 
 Annotator.fn.switchOp = function(op) {
-  this.curOp = op;
   if (op === "annotate") {
+    this.curTool = new AttTool(this);
     this.canvas.css("cursor", "crosshair");
   }
-  else {
+  else if (op === "pan") {
+    this.curTool = new PanTool(this);
     this.canvas.css("cursor", "move");
-  }
-};
-
-Annotator.fn.mbDown = function(x, y) {
-  if (!this.active) {
-    var offset = this.canvas.offset();
-    this.x1 = this.x0 = x - offset.left;
-    this.y1 = this.y0 = y - offset.top;
-    this.active = true;
-
-    if (this.curOp === "annotate") {
-      this.attHelper.startAtt(ptToImg(this.cHelper, this.x0, this.y0));
-    }
-  }
-};
-
-Annotator.fn.mbUp = function() {
-  // Plot the next point
-  if (this.active && this.curOp === "annotate") {
-    var pt = ptToImg(this.cHelper, this.x1, this.y1);
-    this.active = this.attHelper.nextPt(pt);
-    this.updateControls();
-  }
-  else {
-    this.active = false; // End pan
-  }
-};
-
-Annotator.fn.mbDbl = function(e) {
-  e.preventDefault();
-
-  if (this.active) {
-    this.active = false;
-
-    if (this.curOp === 'annotate') {
-      this.attHelper.endAtt();
-      this.updateControls();
-    }
-  }
-};
-
-Annotator.fn.mMove = function(x, y) {
-  if (!this.active) {
-    return;
-  }
-
-  var offset = this.canvas.offset();
-  this.x1 = x - offset.left;
-  this.y1 = y - offset.top;
-
-  var dx = this.x1 - this.x0;
-  var dy = this.y1 - this.y0;
-
-  if (this.curOp === "pan") {
-    // Panning the image
-    this.cHelper.doPan(dx, dy);
-    this.x0 = this.x1;
-    this.y0 = this.y1;
-  }
-  else if (this.curOp === "annotate") {
-    // Annotation - in image space
-    var pt = ptToImg(this.cHelper, this.x1, this.y1);
-    this.attHelper.showPt(pt);
-
-    // Redraw
-    this.cHelper.repaint();
   }
 };

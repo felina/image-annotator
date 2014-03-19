@@ -291,6 +291,10 @@ AttHelper.fn.endAtt = function() {
   if (this.getAtt().type === 'poly') {
     this.getAtt().pts.pop();
   }
+
+  // Start next annotation
+  
+  this.nextAtt();
 };
 
 //////////////////////////////////////////////////////
