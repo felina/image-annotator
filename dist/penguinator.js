@@ -1,4 +1,4 @@
-/*! penguinator - v3.4.1 - 2014-03-15
+/*! penguinator - v3.4.3 - 2014-03-19
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
@@ -47,19 +47,14 @@ function Annotator(img, w, h) {
   this.container = null;
   this.canvas = null;
 
+  // Tools
+  this.curTool = new PanTool(this);
+
   // Annotations
   this.attHelper = new AttHelper(this);
 
   // Canvas ops
   this.cHelper = null;
-
-  this.x0 = 0;
-  this.x1 = 0;
-  this.y0 = 0;
-  this.y1 = 0;
-  this.curOp = "pan";
-  this.active = false;
-  this.polyC = 0;
 }
 Annotator.fn = Annotator.prototype;
 
@@ -228,12 +223,14 @@ Annotator.fn.build = function($parent) {
   this.prevFtr.click(function() { a.attHelper.prevFtr(); });
   this.nextFtr.click(function() { a.attHelper.nextFtr(); });
 
-  // Mouse operations
-  this.canvas.mousedown(function(e){ a.mbDown(e.pageX, e.pageY); });
-  this.canvas.mousemove(function(e){ a.mMove(e.pageX, e.pageY); });
-  this.canvas.mouseup(function(){ a.mbUp(); });
+  // Mouse operations - call the tool handlers
+  this.canvas.mousedown(function(e){ a.curTool.lbDown(e.pageX, e.pageY); });
+  this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
+  this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
+
   this.canvas.dblclick(function(e){
-    a.mbDbl(e);
+    a.curTool.lbDbl(e.pageX, e.pageY);
+    e.preventDefault();
     return false;
   });
 
@@ -295,81 +292,16 @@ Annotator.fn.updateTitle = function() {
 };
 
 //////////////////////////////////////////////////////
-// Annotation & panning control
+// Tool switching
 
 Annotator.fn.switchOp = function(op) {
-  this.curOp = op;
   if (op === "annotate") {
+    this.curTool = new AttTool(this);
     this.canvas.css("cursor", "crosshair");
   }
-  else {
+  else if (op === "pan") {
+    this.curTool = new PanTool(this);
     this.canvas.css("cursor", "move");
-  }
-};
-
-Annotator.fn.mbDown = function(x, y) {
-  if (!this.active) {
-    var offset = this.canvas.offset();
-    this.x1 = this.x0 = x - offset.left;
-    this.y1 = this.y0 = y - offset.top;
-    this.active = true;
-
-    if (this.curOp === "annotate") {
-      this.attHelper.startAtt(ptToImg(this.cHelper, this.x0, this.y0));
-    }
-  }
-};
-
-Annotator.fn.mbUp = function() {
-  // Plot the next point
-  if (this.active && this.curOp === "annotate") {
-    var pt = ptToImg(this.cHelper, this.x1, this.y1);
-    this.active = this.attHelper.nextPt(pt);
-    this.updateControls();
-  }
-  else {
-    this.active = false; // End pan
-  }
-};
-
-Annotator.fn.mbDbl = function(e) {
-  e.preventDefault();
-
-  if (this.active) {
-    this.active = false;
-
-    if (this.curOp === 'annotate') {
-      this.attHelper.endAtt();
-      this.updateControls();
-    }
-  }
-};
-
-Annotator.fn.mMove = function(x, y) {
-  if (!this.active) {
-    return;
-  }
-
-  var offset = this.canvas.offset();
-  this.x1 = x - offset.left;
-  this.y1 = y - offset.top;
-
-  var dx = this.x1 - this.x0;
-  var dy = this.y1 - this.y0;
-
-  if (this.curOp === "pan") {
-    // Panning the image
-    this.cHelper.doPan(dx, dy);
-    this.x0 = this.x1;
-    this.y0 = this.y1;
-  }
-  else if (this.curOp === "annotate") {
-    // Annotation - in image space
-    var pt = ptToImg(this.cHelper, this.x1, this.y1);
-    this.attHelper.showPt(pt);
-
-    // Redraw
-    this.cHelper.repaint();
   }
 };
 
@@ -691,6 +623,7 @@ AttHelper.fn.nextPt = function(pt) {
 
     if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
       this.getAtt().pts[1] = pt;
+      this.endAtt();
       return false;
     }
     else {
@@ -716,6 +649,10 @@ AttHelper.fn.endAtt = function() {
   if (this.getAtt().type === 'poly') {
     this.getAtt().pts.pop();
   }
+
+  // Start next annotation
+
+  this.nextAtt();
 };
 
 //////////////////////////////////////////////////////
@@ -790,7 +727,7 @@ CanvasHelper.fn.repaint = function() {
 
   // Drop shadow
   g.shadowColor = "#555";
-  g.shadowBlur = 40;
+  g.shadowBlur = 20;
 
   // Draw the image
   if (this.parent.img !== null) {
@@ -840,7 +777,7 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
   }
 
   g.shadowColor = "#000";
-  g.shadowBlur = 3;
+  g.shadowBlur = 1;
   g.strokeStyle = col;
   g.lineWidth = 1.5 / this.curScale;
   g.fillStyle = fillCol;
@@ -916,6 +853,7 @@ CanvasHelper.fn.zoom = function(scale) {
     this.curScale = this.defScale;
   }
 
+  this.doPan(0, 0);
   this.repaint();
 };
 
@@ -952,6 +890,128 @@ CanvasHelper.fn.imgLoaded = function(img) {
 
   this.repaint();
 };
+
+// Base tool class defn //
+
+function SuperTool() {
+  this.x0 = 0;
+  this.x1 = 0;
+  this.y0 = 0;
+  this.y1 = 0;
+
+  this.active = false;
+
+}
+
+SuperTool.fn = SuperTool.prototype;
+
+/*jshint unused:vars*/
+SuperTool.fn.lbDown = function(x, y) {};
+SuperTool.fn.lbUp   = function(x, y) {};
+SuperTool.fn.lbDbl  = function(x, y) {};
+SuperTool.fn.mMove  = function(x, y) {};
+
+
+// Pan tool class definition //
+
+function PanTool(parent) {
+  SuperTool.call(this);
+  this.parent = parent;
+}
+PanTool.prototype = Object.create(SuperTool.prototype);
+PanTool.fn = PanTool.prototype;
+
+PanTool.fn.lbDown = function(x, y) {
+  if (!this.active) {
+    this.x0 = x;
+    this.y0 = y;
+    this.active = true;
+  }
+};
+
+PanTool.fn.lbUp = function(x, y) {
+  this.active = false;
+};
+
+PanTool.fn.mMove = function(x, y) {
+  if (this.active) {
+    var dx = x - this.x0;
+    var dy = y - this.y0;
+
+    // Panning the image
+    this.parent.cHelper.doPan(dx, dy);
+    this.x0 = x;
+    this.y0 = y;
+  }
+};
+
+
+// Annotation tool class definition //
+// This accepts user input to generate a *new* Annotation
+
+function AttTool(parent) {
+  SuperTool.call(this);
+  this.parent = parent;
+}
+AttTool.prototype = Object.create(SuperTool.prototype);
+AttTool.fn = AttTool.prototype;
+
+// Mouse down - start an annotation if we're not already making one
+AttTool.fn.lbDown = function(x, y) {
+  if (!this.active) {
+    var a = this.parent;
+    var offset = a.canvas.offset();
+
+    this.x1 = this.x0 = x - offset.left;
+    this.y1 = this.y0 = y - offset.top;
+
+    var pt = ptToImg(a.cHelper, this.x0, this.y0);
+    a.attHelper.startAtt(pt);
+
+    this.active = true;
+  }
+};
+
+// Mouse up - add a point to the annotation
+AttTool.fn.lbUp = function(x, y) {
+  if (this.active) {
+    var a = this.parent;
+    var pt = ptToImg(a.cHelper, this.x1, this.y1);
+    this.active = a.attHelper.nextPt(pt);
+    a.updateControls();
+  }
+};
+
+// Double click - finish a polygon annotation
+AttTool.fn.lbDbl = function(x, y) {
+  if (this.active) {
+    var a = this.parent;
+    this.active = false;
+
+    a.attHelper.endAtt();
+    a.updateControls();
+  }
+};
+
+// Mouse move - update current point
+AttTool.fn.mMove = function(x, y) {
+  if (this.active) {
+    var a = this.parent;
+    var offset = a.canvas.offset();
+    this.x1 = x - offset.left;
+    this.y1 = y - offset.top;
+
+    // Annotation - in image space
+    var pt = ptToImg(a.cHelper, this.x1, this.y1);
+    a.attHelper.showPt(pt);
+
+    // Redraw
+    a.cHelper.repaint();
+  }
+};
+
+
+/*jshint unused:true*/
 
 // Util.js: Functions and small classes helpful elsewhere //
 
