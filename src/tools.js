@@ -1,5 +1,3 @@
-/*jshint unused:vars*/
-
 // Base tool class defn //
 
 function SuperTool() {
@@ -14,6 +12,7 @@ function SuperTool() {
 
 SuperTool.fn = SuperTool.prototype;
 
+/*jshint unused:vars*/
 SuperTool.fn.lbDown = function(x, y) {};
 SuperTool.fn.lbUp   = function(x, y) {};
 SuperTool.fn.lbDbl  = function(x, y) {};
@@ -37,11 +36,11 @@ PanTool.fn.lbDown = function(x, y) {
   }
 };
 
-PanTool.lbUp = function(x, y) {
+PanTool.fn.lbUp = function(x, y) {
   this.active = false;
 };
 
-PanTool.mMove = function(x, y) {
+PanTool.fn.mMove = function(x, y) {
   if (this.active) {
     var dx = x - this.x0;
     var dy = y - this.y0;
@@ -118,3 +117,5 @@ AttTool.fn.mMove = function(x, y) {
   }
 };
 
+
+/*jshint unused:true*/

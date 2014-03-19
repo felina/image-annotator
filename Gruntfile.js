@@ -43,7 +43,8 @@ module.exports = function(grunt) {
           jQuery: true,
           $: true,
           module: true,
-          require: true
+          require: true,
+          console: true
         }
       },
       gruntfile: {

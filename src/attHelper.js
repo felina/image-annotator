@@ -266,6 +266,7 @@ AttHelper.fn.nextPt = function(pt) {
 
     if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
       this.getAtt().pts[1] = pt;
+      this.endAtt();
       return false;
     }
     else {
@@ -293,7 +294,7 @@ AttHelper.fn.endAtt = function() {
   }
 
   // Start next annotation
-  
+
   this.nextAtt();
 };
 

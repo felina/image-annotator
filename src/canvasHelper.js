@@ -170,6 +170,7 @@ CanvasHelper.fn.zoom = function(scale) {
     this.curScale = this.defScale;
   }
 
+  this.doPan(0, 0);
   this.repaint();
 };
 

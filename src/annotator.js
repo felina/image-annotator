@@ -43,7 +43,7 @@ function Annotator(img, w, h) {
   this.canvas = null;
 
   // Tools
-  this.curTool = new AttTool(this);
+  this.curTool = new PanTool(this);
 
   // Annotations
   this.attHelper = new AttHelper(this);
@@ -222,9 +222,9 @@ Annotator.fn.build = function($parent) {
   this.canvas.mousedown(function(e){ a.curTool.lbDown(e.pageX, e.pageY); });
   this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
   this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
-  
+
   this.canvas.dblclick(function(e){
-    a.curTool.mbDbl(e.pageX, e.pageY);
+    a.curTool.lbDbl(e.pageX, e.pageY);
     e.preventDefault();
     return false;
   });
@@ -287,7 +287,7 @@ Annotator.fn.updateTitle = function() {
 };
 
 //////////////////////////////////////////////////////
-// Annotation & panning control
+// Tool switching
 
 Annotator.fn.switchOp = function(op) {
   if (op === "annotate") {

@@ -48,7 +48,7 @@ function Annotator(img, w, h) {
   this.canvas = null;
 
   // Tools
-  this.curTool = new AttTool(this);
+  this.curTool = new PanTool(this);
 
   // Annotations
   this.attHelper = new AttHelper(this);
@@ -227,9 +227,9 @@ Annotator.fn.build = function($parent) {
   this.canvas.mousedown(function(e){ a.curTool.lbDown(e.pageX, e.pageY); });
   this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
   this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
-  
+
   this.canvas.dblclick(function(e){
-    a.curTool.mbDbl(e.pageX, e.pageY);
+    a.curTool.lbDbl(e.pageX, e.pageY);
     e.preventDefault();
     return false;
   });
@@ -292,7 +292,7 @@ Annotator.fn.updateTitle = function() {
 };
 
 //////////////////////////////////////////////////////
-// Annotation & panning control
+// Tool switching
 
 Annotator.fn.switchOp = function(op) {
   if (op === "annotate") {
@@ -623,6 +623,7 @@ AttHelper.fn.nextPt = function(pt) {
 
     if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
       this.getAtt().pts[1] = pt;
+      this.endAtt();
       return false;
     }
     else {
@@ -650,7 +651,7 @@ AttHelper.fn.endAtt = function() {
   }
 
   // Start next annotation
-  
+
   this.nextAtt();
 };
 
@@ -852,6 +853,7 @@ CanvasHelper.fn.zoom = function(scale) {
     this.curScale = this.defScale;
   }
 
+  this.doPan(0, 0);
   this.repaint();
 };
 
@@ -903,6 +905,7 @@ function SuperTool() {
 
 SuperTool.fn = SuperTool.prototype;
 
+/*jshint unused:vars*/
 SuperTool.fn.lbDown = function(x, y) {};
 SuperTool.fn.lbUp   = function(x, y) {};
 SuperTool.fn.lbDbl  = function(x, y) {};
@@ -926,11 +929,11 @@ PanTool.fn.lbDown = function(x, y) {
   }
 };
 
-PanTool.lbUp = function(x, y) {
+PanTool.fn.lbUp = function(x, y) {
   this.active = false;
 };
 
-PanTool.mMove = function(x, y) {
+PanTool.fn.mMove = function(x, y) {
   if (this.active) {
     var dx = x - this.x0;
     var dy = y - this.y0;
@@ -1007,6 +1010,8 @@ AttTool.fn.mMove = function(x, y) {
   }
 };
 
+
+/*jshint unused:true*/
 
 // Util.js: Functions and small classes helpful elsewhere //
 
