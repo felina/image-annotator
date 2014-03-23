@@ -19,8 +19,6 @@ function Annotator(img, w, h) {
   this.img = img;
   this.w = w;
   this.h = h;
-  this.imgW = img ? img[0].width : w;
-  this.imgH = img ? img[0].height : h;
 
   // Controls
   this.zoomin = null;
@@ -121,6 +119,7 @@ Annotator.fn.update = function(img, w, h) {
       });
     }
   }
+  
   this.w = w;
   this.h = h;
 
@@ -229,12 +228,8 @@ Annotator.fn.build = function($parent) {
     return false;
   });
 
-  // We have to wait for the image to load before we can use it
-  if (this.img !== null) {
-    this.img.load(function(){
-      a.cHelper.imgLoaded(a.img);
-    });
-  }
+  // Call the normal update
+  this.update(this.img, this.w, this.h);
 };
 
 

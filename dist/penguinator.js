@@ -1,4 +1,4 @@
-/*! penguinator - v3.4.3 - 2014-03-19
+/*! penguinator - v3.4.4 - 2014-03-23
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
@@ -24,8 +24,6 @@ function Annotator(img, w, h) {
   this.img = img;
   this.w = w;
   this.h = h;
-  this.imgW = img ? img[0].width : w;
-  this.imgH = img ? img[0].height : h;
 
   // Controls
   this.zoomin = null;
@@ -126,6 +124,7 @@ Annotator.fn.update = function(img, w, h) {
       });
     }
   }
+  
   this.w = w;
   this.h = h;
 
@@ -234,12 +233,8 @@ Annotator.fn.build = function($parent) {
     return false;
   });
 
-  // We have to wait for the image to load before we can use it
-  if (this.img !== null) {
-    this.img.load(function(){
-      a.cHelper.imgLoaded(a.img);
-    });
-  }
+  // Call the normal update
+  this.update(this.img, this.w, this.h);
 };
 
 
@@ -698,8 +693,8 @@ function CanvasHelper(parent) {
   this.canvas[0].height = h;
   this.w = w;
   this.h = h;
-  this.imgW = 0;
-  this.imgH = 0;
+  this.imgW = w;
+  this.imgH = h;
 
   // Transform info
   this.defScale = 1.0; // TODO: Correct for size
@@ -717,7 +712,8 @@ CanvasHelper.fn.repaint = function() {
 
   // Reset xform & clear
   g.setTransform(1,0,0,1,0,0);
-  g.clearRect(0, 0, this.w, this.h);
+  g.fillStyle = "rgb(240, 240, 240)";
+  g.fillRect(0, 0, this.w, this.h);
 
   // To draw in position with scaling,
   // move to position (translate), then
@@ -735,7 +731,7 @@ CanvasHelper.fn.repaint = function() {
   }
   else {
     g.fillStyle = "rgb(220, 220, 220)";
-    g.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+    g.fillRect(-this.imgW/2, -this.imgH/2, this.imgW, this.imgH);
 
     g.shadowBlur = 0;
     g.fillStyle = "white";
@@ -864,11 +860,20 @@ CanvasHelper.fn.reset = function(w, h) {
   this.w = w;
   this.h = h;
 
-  this.imgW = parent.imgW;
-  this.imgH = parent.imgH;
+  if (this.parent.img) {
+    var img = this.parent.img;
+    this.imgW = img[0].width;
+    this.imgH = img[0].height;
+  }
+  else {
+    this.imgW = w;
+    this.imgH = h;
+  }
 
   this.xOffs = 0;
   this.yOffs = 0;
+
+  this.calcZoom();
   this.curScale = this.defScale;
 };
 
@@ -879,6 +884,15 @@ CanvasHelper.fn.imgLoaded = function(img) {
   this.imgW = img[0].width;
   this.imgH = img[0].height;
 
+  console.log("" + this.imgW + ", " + this.imgH);
+  this.calcZoom();
+  this.curScale = this.defScale;
+
+  this.repaint();
+};
+
+// Calculates the correct default zoom level
+CanvasHelper.fn.calcZoom = function() {
   // We can use the dimensions and the available canvas
   // area to work out a good zoom level
   var xRatio = this.w / this.imgW;
@@ -886,9 +900,6 @@ CanvasHelper.fn.imgLoaded = function(img) {
   var absRatio = Math.min(xRatio, yRatio);
 
   this.defScale = absRatio * 0.9;
-  this.curScale = this.defScale;
-
-  this.repaint();
 };
 
 // Base tool class defn //
