@@ -109,15 +109,13 @@ Annotator.fn.getFeatures = function() {
 // Updates an existing annotator with a new image
 // (Also resets the pan/zoom and annotations)
 Annotator.fn.update = function(img, w, h) {
-  if (this.img !== img) {
-    var a = this;
-    this.img = img;
+  var a = this;
+  this.img = img;
 
-    if (this.img !== null) {
-      this.img.load(function(){
-        a.cHelper.imgLoaded(a.img);
-      });
-    }
+  if (this.img !== null) {
+    this.img.load(function(){
+      a.cHelper.imgLoaded(a.img);
+    });
   }
   
   this.w = w;
