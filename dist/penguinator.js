@@ -17,7 +17,7 @@ function AnnHelper(parent) {
   this.aInd = 0;
 
   // Annotations
-  this.anns = [new Annotation("rect")];
+  this.anns = [createAnnotation("rect")];
   this.curType = "rect";
 
   // Drawing
@@ -29,6 +29,10 @@ AnnHelper.fn.getAnn = function() {
   return this.anns[this.aInd];
 };
 
+AnnHelper.fn.setAnn = function(ann) {
+  this.anns[this.aInd] = ann;
+};
+
 AnnHelper.fn.getFtr = function() {
   return this.ftrs[this.fInd];
 };
@@ -36,7 +40,7 @@ AnnHelper.fn.getFtr = function() {
 // Resets to default state
 AnnHelper.fn.reset = function() {
   // Reset annotation
-  this.anns = [new Annotation(this.curType)];
+  this.anns = [createAnnotation(this.curType)];
   this.aInd = 0;
 
   // Reset features
@@ -81,7 +85,7 @@ AnnHelper.fn.importAnns = function(anns) {
       var s = shapes[j];
 
       // Generate each annotation from input data
-      var ann = new Annotation(s.type);
+      var ann = createAnnotation(s.type);
       ann.valid = true;
 
       if (s.type === 'rect') {
@@ -173,8 +177,9 @@ AnnHelper.fn.ftrChanged = function() {
   this.anns = this.getFtr().anns;
   this.aInd = 0;
 
+  // Create an empty shape if there is none
   if (this.anns.length === 0) {
-    this.anns.push(new Annotation(this.curType));
+    this.anns.push(createAnnotation(this.curType));
   }
 
   // Update UI
@@ -221,7 +226,7 @@ AnnHelper.fn.nextAnn = function() {
   this.aInd++;
 
   if (this.aInd === this.anns.length) {
-    this.anns.push(new Annotation(this.curType));
+    this.anns.push(createAnnotation(this.curType));
   }
 
   this.clrInvalid();
@@ -244,63 +249,11 @@ AnnHelper.fn.prevAnn = function() {
 //////////////////////////////////////////////////////
 // Annotation generation
 
-AnnHelper.fn.startAnn = function(pt) {
-  this.getAnn().reset(this.curType);
-  this.getAnn().valid = true;
-  this.getAnn().pts[0] = pt;
-  this.pInd = 1;
-};
+AnnHelper.fn.newAnn = function() {
+  var ann = createAnnotation(this.curType);
+  this.setAnn(ann);
 
-// Update the next point
-AnnHelper.fn.showPt = function(pt) {
-  if (this.getAnn().type === "rect") {
-    this.getAnn().pts[1] = pt;
-  }
-  else if (this.getAnn().type === "poly") {
-    this.getAnn().pts[this.pInd] = pt;
-  }
-};
-
-// Finalize the next point. Returns false
-// if the drawing is complete.
-AnnHelper.fn.nextPt = function(pt) {
-  var lastPt;
-
-  if (this.getAnn().type === "rect") {
-    lastPt = this.getAnn().pts[0];
-
-    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
-      this.getAnn().pts[1] = pt;
-      this.endAnn();
-      return false;
-    }
-    else {
-      return true;
-    }
-  }
-  else if (this.getAnn().type === "poly") {
-    lastPt = this.getAnn().pts[this.pInd-1];
-
-    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
-      this.getAnn().pts[this.pInd] = pt;
-      this.pInd++;
-    }
-
-    return true;
-  }
-
-  return false;
-};
-
-// Ends an annotation - remove duplicate point
-AnnHelper.fn.endAnn = function() {
-  if (this.getAnn().type === 'poly') {
-    this.getAnn().pts.pop();
-  }
-
-  // Start next annotation
-
-  this.nextAnn();
+  return ann;
 };
 
 //////////////////////////////////////////////////////
@@ -797,40 +750,21 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   g.lineWidth = 1.5 / this.curScale;
   g.fillStyle = fillCol;
 
-  // Box drawing (2-point)
-  if (ann.type === "rect") {
-    var x0 = ann.pts[0].x;
-    var y0 = ann.pts[0].y;
-    var x1 = ann.pts[1].x;
-    var y1 = ann.pts[1].y;
+  // Shape drawing (n-point)
+  var pts = ann.getDrawPts();
+  
+  g.beginPath();
+  g.moveTo(pts[0].x, pts[0].y);
 
-    var dx = Math.abs(x1-x0);
-    var dy = Math.abs(y1-y0);
-    var x = Math.min(x0, x1);
-    var y = Math.min(y0, y1);
-
-    g.strokeRect(x, y, dx, dy);
-
-    this.drawPt({x:x0, y:y0});
-    this.drawPt({x:x0, y:y1});
-    this.drawPt({x:x1, y:y0});
-    this.drawPt({x:x1, y:y1});
+  for (var i = 1; i < pts.length; i++) {
+    g.lineTo(pts[i].x, pts[i].y);
   }
-  // Polygon drawing (n-point)
-  else if (ann.type === "poly") {
-    g.beginPath();
-    g.moveTo(ann.pts[0].x, ann.pts[0].y);
 
-    for (var i = 1; i < ann.pts.length; i++) {
-      g.lineTo(ann.pts[i].x, ann.pts[i].y);
-    }
+  g.lineTo(pts[0].x, pts[0].y);
+  g.stroke();
 
-    g.lineTo(ann.pts[0].x, ann.pts[0].y);
-    g.stroke();
-
-    for (i = 0; i < ann.pts.length; i++) {
-      this.drawPt(ann.pts[i]);
-    }
+  for (i = 0; i < pts.length; i++) {
+    this.drawPt(pts[i]);
   }
 };
 
@@ -921,6 +855,106 @@ CanvasHelper.fn.calcZoom = function() {
   this.defScale = absRatio * 0.9;
 };
 
+// Annotations - as distinct on the canvas
+function createAnnotation(type) {
+  //this.valid = false;
+  //this.pts = [{x:0,y:0}, {x:0,y:0}];
+  //this.type = type;
+
+  switch (type) {
+    case 'rect':
+      return new RectAnn();
+    case 'poly':
+      return new PolyAnn();
+  }
+}
+
+// TODO: Something with this
+// Annotation.prototype.reset = function(type) {
+//   this.valid = false;
+//   this.pts = [{x:0,y:0}, {x:0,y:0}];
+
+//   if (type != null) {
+//     this.type = type;
+//   }
+// };
+
+// Shape superclass
+function SuperShape() {
+  this.valid = false;
+  this.type = 'none';
+}
+
+SuperShape.fn = SuperShape.prototype;
+
+/*jshint unused:vars*/
+// Available functions for shapes with default/empty defns
+SuperShape.fn.invalidate = function() {this.valid = false;};
+SuperShape.fn.addPt = function(pt) {};
+SuperShape.fn.modLastPt = function(pt) {};
+SuperShape.fn.modPt = function(ind, pt) {};
+SuperShape.fn.insPt = function(ind, pt) {};
+SuperShape.fn.delPt = function(ind) {};
+SuperShape.fn.getDrawPts = function() {return [];};
+SuperShape.fn.getExport = function() {return {};};
+
+
+// Rect shape definition //
+function RectAnn() {
+  SuperShape.call(this);
+
+  this.pts = [];
+}
+RectAnn.prototype = Object.create(SuperShape.prototype);
+RectAnn.fn = RectAnn.prototype;
+
+RectAnn.fn.addPt = function(newPt) {
+  // Init
+  if (this.pts.length === 0) {
+    this.pts.push(newPt);
+    this.pts.push(newPt);
+    this.valid = true;
+    return true;
+  }
+  else {
+    // Set the second point
+    this.pts[1] = newPt;
+    return false;
+  }
+};
+
+RectAnn.fn.modLastPt = function(pt) {
+  if (this.pts.length === 2) {
+    this.pts[1] = pt;
+  }
+};
+
+RectAnn.fn.getDrawPts = function() {
+  var res = [];
+
+  var x0 = this.pts[0].x;
+  var y0 = this.pts[0].y;
+  var x1 = this.pts[1].x;
+  var y1 = this.pts[1].y;
+
+  res.push({x:x0, y:y0});
+  res.push({x:x1, y:y0});
+  res.push({x:x1, y:y1});
+  res.push({x:x0, y:y1});
+  res.push({x:x0, y:y0});
+
+  return res;
+};
+
+
+// Polygon shape definition //
+function PolyAnn() {
+  SuperShape.call(this);
+  // TODO
+}
+
+/*jshint unused:true*/
+
 // Base tool class defn //
 
 function SuperTool() {
@@ -982,60 +1016,53 @@ PanTool.fn.mMove = function(x, y) {
 function AnnTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
+  this.ann = null;
 }
 AnnTool.prototype = Object.create(SuperTool.prototype);
 AnnTool.fn = AnnTool.prototype;
 
-// Mouse down - start an annotation if we're not already making one
-AnnTool.fn.lbDown = function(x, y) {
-  if (!this.active) {
-    var a = this.parent;
-    var offset = a.canvas.offset();
-
-    this.x1 = this.x0 = x - offset.left;
-    this.y1 = this.y0 = y - offset.top;
-
-    var pt = ptToImg(a.cHelper, this.x0, this.y0);
-    a.annHelper.startAnn(pt);
-
-    this.active = true;
-  }
-};
-
 // Mouse up - add a point to the annotation
 AnnTool.fn.lbUp = function(x, y) {
-  if (this.active) {
-    var a = this.parent;
-    var pt = ptToImg(a.cHelper, this.x1, this.y1);
-    this.active = a.annHelper.nextPt(pt);
-    a.updateControls();
+  var a = this.parent;
+
+  // Create annotation if we're not already making
+  // one
+  if (!this.active) {
+    this.active = true;
+    this.ann = a.annHelper.newAnn();
   }
+
+  var offset = a.canvas.offset();
+  x -= offset.left;
+  y -= offset.top;
+  var pt = ptToImg(a.cHelper, x, y);
+
+  this.active = this.ann.addPt(pt);
+  a.updateControls();
 };
 
 // Double click - finish a polygon annotation
+// TODO!
 AnnTool.fn.lbDbl = function(x, y) {
-  if (this.active) {
-    var a = this.parent;
-    this.active = false;
+  // if (this.active) {
+  //   var a = this.parent;
+  //   this.active = false;
 
-    a.annHelper.endAnn();
-    a.updateControls();
-  }
+  //   a.annHelper.endAnn();
+  //   a.updateControls();
+  // }
 };
 
-// Mouse move - update current point
+// Mouse move - update last point
 AnnTool.fn.mMove = function(x, y) {
   if (this.active) {
     var a = this.parent;
     var offset = a.canvas.offset();
-    this.x1 = x - offset.left;
-    this.y1 = y - offset.top;
+    x -= offset.left;
+    y -= offset.top;
+    var pt = ptToImg(a.cHelper, x, y);
 
-    // Annotation - in image space
-    var pt = ptToImg(a.cHelper, this.x1, this.y1);
-    a.annHelper.showPt(pt);
-
-    // Redraw
+    this.ann.modLastPt(pt);
     a.cHelper.repaint();
   }
 };
@@ -1069,19 +1096,4 @@ function Feature(name, required, shape) {
   this.annC = 0;
 }
 
-// Annotations - as distinct on the canvas
-function Annotation(type) {
-  this.valid = false;
-  this.pts = [{x:0,y:0}, {x:0,y:0}];
-  this.type = type;
-}
-
-Annotation.prototype.reset = function(type) {
-  this.valid = false;
-  this.pts = [{x:0,y:0}, {x:0,y:0}];
-
-  if (type != null) {
-    this.type = type;
-  }
-};
 }(jQuery));

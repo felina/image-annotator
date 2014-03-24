@@ -12,7 +12,7 @@ function AnnHelper(parent) {
   this.aInd = 0;
 
   // Annotations
-  this.anns = [new Annotation("rect")];
+  this.anns = [createAnnotation("rect")];
   this.curType = "rect";
 
   // Drawing
@@ -24,6 +24,10 @@ AnnHelper.fn.getAnn = function() {
   return this.anns[this.aInd];
 };
 
+AnnHelper.fn.setAnn = function(ann) {
+  this.anns[this.aInd] = ann;
+};
+
 AnnHelper.fn.getFtr = function() {
   return this.ftrs[this.fInd];
 };
@@ -31,7 +35,7 @@ AnnHelper.fn.getFtr = function() {
 // Resets to default state
 AnnHelper.fn.reset = function() {
   // Reset annotation
-  this.anns = [new Annotation(this.curType)];
+  this.anns = [createAnnotation(this.curType)];
   this.aInd = 0;
 
   // Reset features
@@ -76,7 +80,7 @@ AnnHelper.fn.importAnns = function(anns) {
       var s = shapes[j];
 
       // Generate each annotation from input data
-      var ann = new Annotation(s.type);
+      var ann = createAnnotation(s.type);
       ann.valid = true;
 
       if (s.type === 'rect') {
@@ -168,8 +172,9 @@ AnnHelper.fn.ftrChanged = function() {
   this.anns = this.getFtr().anns;
   this.aInd = 0;
 
+  // Create an empty shape if there is none
   if (this.anns.length === 0) {
-    this.anns.push(new Annotation(this.curType));
+    this.anns.push(createAnnotation(this.curType));
   }
 
   // Update UI
@@ -216,7 +221,7 @@ AnnHelper.fn.nextAnn = function() {
   this.aInd++;
 
   if (this.aInd === this.anns.length) {
-    this.anns.push(new Annotation(this.curType));
+    this.anns.push(createAnnotation(this.curType));
   }
 
   this.clrInvalid();
@@ -239,63 +244,11 @@ AnnHelper.fn.prevAnn = function() {
 //////////////////////////////////////////////////////
 // Annotation generation
 
-AnnHelper.fn.startAnn = function(pt) {
-  this.getAnn().reset(this.curType);
-  this.getAnn().valid = true;
-  this.getAnn().pts[0] = pt;
-  this.pInd = 1;
-};
+AnnHelper.fn.newAnn = function() {
+  var ann = createAnnotation(this.curType);
+  this.setAnn(ann);
 
-// Update the next point
-AnnHelper.fn.showPt = function(pt) {
-  if (this.getAnn().type === "rect") {
-    this.getAnn().pts[1] = pt;
-  }
-  else if (this.getAnn().type === "poly") {
-    this.getAnn().pts[this.pInd] = pt;
-  }
-};
-
-// Finalize the next point. Returns false
-// if the drawing is complete.
-AnnHelper.fn.nextPt = function(pt) {
-  var lastPt;
-
-  if (this.getAnn().type === "rect") {
-    lastPt = this.getAnn().pts[0];
-
-    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
-      this.getAnn().pts[1] = pt;
-      this.endAnn();
-      return false;
-    }
-    else {
-      return true;
-    }
-  }
-  else if (this.getAnn().type === "poly") {
-    lastPt = this.getAnn().pts[this.pInd-1];
-
-    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
-      this.getAnn().pts[this.pInd] = pt;
-      this.pInd++;
-    }
-
-    return true;
-  }
-
-  return false;
-};
-
-// Ends an annotation - remove duplicate point
-AnnHelper.fn.endAnn = function() {
-  if (this.getAnn().type === 'poly') {
-    this.getAnn().pts.pop();
-  }
-
-  // Start next annotation
-
-  this.nextAnn();
+  return ann;
 };
 
 //////////////////////////////////////////////////////

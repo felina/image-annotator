@@ -100,40 +100,21 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   g.lineWidth = 1.5 / this.curScale;
   g.fillStyle = fillCol;
 
-  // Box drawing (2-point)
-  if (ann.type === "rect") {
-    var x0 = ann.pts[0].x;
-    var y0 = ann.pts[0].y;
-    var x1 = ann.pts[1].x;
-    var y1 = ann.pts[1].y;
+  // Shape drawing (n-point)
+  var pts = ann.getDrawPts();
+  
+  g.beginPath();
+  g.moveTo(pts[0].x, pts[0].y);
 
-    var dx = Math.abs(x1-x0);
-    var dy = Math.abs(y1-y0);
-    var x = Math.min(x0, x1);
-    var y = Math.min(y0, y1);
-
-    g.strokeRect(x, y, dx, dy);
-
-    this.drawPt({x:x0, y:y0});
-    this.drawPt({x:x0, y:y1});
-    this.drawPt({x:x1, y:y0});
-    this.drawPt({x:x1, y:y1});
+  for (var i = 1; i < pts.length; i++) {
+    g.lineTo(pts[i].x, pts[i].y);
   }
-  // Polygon drawing (n-point)
-  else if (ann.type === "poly") {
-    g.beginPath();
-    g.moveTo(ann.pts[0].x, ann.pts[0].y);
 
-    for (var i = 1; i < ann.pts.length; i++) {
-      g.lineTo(ann.pts[i].x, ann.pts[i].y);
-    }
+  g.lineTo(pts[0].x, pts[0].y);
+  g.stroke();
 
-    g.lineTo(ann.pts[0].x, ann.pts[0].y);
-    g.stroke();
-
-    for (i = 0; i < ann.pts.length; i++) {
-      this.drawPt(ann.pts[i]);
-    }
+  for (i = 0; i < pts.length; i++) {
+    this.drawPt(pts[i]);
   }
 };
 

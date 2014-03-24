@@ -23,19 +23,3 @@ function Feature(name, required, shape) {
   this.anns = [];
   this.annC = 0;
 }
-
-// Annotations - as distinct on the canvas
-function Annotation(type) {
-  this.valid = false;
-  this.pts = [{x:0,y:0}, {x:0,y:0}];
-  this.type = type;
-}
-
-Annotation.prototype.reset = function(type) {
-  this.valid = false;
-  this.pts = [{x:0,y:0}, {x:0,y:0}];
-
-  if (type != null) {
-    this.type = type;
-  }
-};
