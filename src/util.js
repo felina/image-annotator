@@ -20,8 +20,8 @@ function Feature(name, required, shape) {
   this.name = name;
   this.req = required;
   this.shape = shape;
-  this.atts = [];
-  this.attC = 0;
+  this.anns = [];
+  this.annC = 0;
 }
 
 // Annotations - as distinct on the canvas

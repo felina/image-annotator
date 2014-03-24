@@ -25,10 +25,10 @@ function Annotator(img, w, h) {
   this.zoomout = null;
   this.pan = null;
   this.annotate = null;
-  this.attType = null;
-  this.nextAtt = null;
-  this.prevAtt = null;
-  this.delAtt = null;
+  this.annType = null;
+  this.nextAnn = null;
+  this.prevAnn = null;
+  this.delAnn = null;
 
   this.nextFtr = null;
   this.prevFtr = null;
@@ -44,7 +44,7 @@ function Annotator(img, w, h) {
   this.curTool = new PanTool(this);
 
   // Annotations
-  this.attHelper = new AttHelper(this);
+  this.annHelper = new AnnHelper(this);
 
   // Canvas ops
   this.cHelper = null;
@@ -61,17 +61,17 @@ Annotator.fn.featuresIn = function(data) {
     return; // No input provided
   }
 
-  this.attHelper.importFeatures(data.features);
+  this.annHelper.importFeatures(data.features);
   this.showChange();
 };
 
 // Apply annotation data import
-Annotator.fn.attsIn = function(data) {
+Annotator.fn.annsIn = function(data) {
   if (typeof data.annotations === 'undefined') {
     return; // No input provided
   }
 
-  this.attHelper.importAtts(data.annotations);
+  this.annHelper.importAnns(data.annotations);
   this.showChange();
 };
 
@@ -95,12 +95,12 @@ Annotator.fn.cssIn = function(data) {
 
 // Annotation export
 Annotator.fn.getExport = function() {
-  return this.attHelper.exportAtts();
+  return this.annHelper.exportAnns();
 };
 
 // Feature retrieval
 Annotator.fn.getFeatures = function() {
-  return this.attHelper.ftrs;
+  return this.annHelper.ftrs;
 };
 
 //////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ Annotator.fn.update = function(img, w, h) {
   this.cHelper.reset(w, h);
 
   // Reset annotations
-  this.attHelper.reset();
+  this.annHelper.reset();
 };
 
 // Instantiates an annotator inside a DOM object
@@ -147,15 +147,15 @@ Annotator.fn.build = function($parent) {
                     .css("margin-right", "20px");
 
   this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
-  this.prevAtt   = $('<button id="prevAtt">&lt</button>').appendTo($parent);
+  this.prevAnn   = $('<button id="prevAnn">&lt</button>').appendTo($parent);
 
-  this.attType   = $('<select id="typesel"></select>')
+  this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
-  this.delAtt    = $('<button id="nextAtt">X</button>').appendTo($parent);
-  this.nextAtt   = $('<button id="nextAtt">&gt</button>').appendTo($parent);
-  this.nextFtr   = $('<button id="nextAtt">&gt&gt</button>').appendTo($parent)
+  this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent);
+  this.nextAnn   = $('<button id="nextAnn">&gt</button>').appendTo($parent);
+  this.nextFtr   = $('<button id="nextAnn">&gt&gt</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
   this.title     = $('<label>Annotating:</label>').appendTo($parent)
@@ -185,15 +185,15 @@ Annotator.fn.build = function($parent) {
   this.zoomout.click(function(){a.cHelper.zoom(0.8);});
 
   // Switching annotation modes
-  this.attType.change(function() {
+  this.annType.change(function() {
     var str = $(this).val();
 
     if (str === "Box") {
-      a.attHelper.changeType("rect");
+      a.annHelper.changeType("rect");
       a.switchOp("annotate");
     }
     else if (str === "Polygon") {
-      a.attHelper.changeType("poly");
+      a.annHelper.changeType("poly");
       a.switchOp("annotate");
     }
   });
@@ -203,22 +203,26 @@ Annotator.fn.build = function($parent) {
   this.annotate.click(function(){ a.switchOp("annotate"); });
 
   // Annotation deletion
-  this.delAtt.click(function() {
-    a.attHelper.delAtt();
+  this.delAnn.click(function() {
+    a.annHelper.delAnn();
     a.updateControls();
     a.cHelper.repaint();
   });
 
   // Annotations - next/prev
-  this.prevAtt.click(function() { a.attHelper.prevAtt(); });
-  this.nextAtt.click(function() { a.attHelper.nextAtt(); });
+  this.prevAnn.click(function() { a.annHelper.prevAnn(); });
+  this.nextAnn.click(function() { a.annHelper.nextAnn(); });
 
   // Features next/prev
-  this.prevFtr.click(function() { a.attHelper.prevFtr(); });
-  this.nextFtr.click(function() { a.attHelper.nextFtr(); });
+  this.prevFtr.click(function() { a.annHelper.prevFtr(); });
+  this.nextFtr.click(function() { a.annHelper.nextFtr(); });
 
   // Mouse operations - call the tool handlers
-  this.canvas.mousedown(function(e){ a.curTool.lbDown(e.pageX, e.pageY); });
+  this.canvas.mousedown(function(e){ 
+    if (a.img) {
+      a.curTool.lbDown(e.pageX, e.pageY);
+    }
+  });
   this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
   this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
 
@@ -236,57 +240,72 @@ Annotator.fn.build = function($parent) {
 //////////////////////////////////////////////////////
 // Annotation UI
 
+// Shows a sate change in the canvas and UI elements
 Annotator.fn.showChange = function() {
   this.cHelper.repaint();
   this.updateControls();
   this.updateTitle();
 };
 
+// Select annotation type with lock/disable lock
 Annotator.fn.lockSelect = function(type, lock) {
-  this.attType.prop('disabled', lock);
+  if (!this.img) {
+    this.annType.prop('disabled', true);
+  }
+  else {
+    this.annType.prop('disabled', lock);
 
-  if (lock) {
-    if (type === "rect") {
-      this.attType.val('Box');
-    }
-    else {
-      this.attType.val('Polygon');
+    if (lock) {
+      if (type === "rect") {
+        this.annType.val('Box');
+      }
+      else {
+        this.annType.val('Polygon');
+      }
     }
   }
 };
 
 Annotator.fn.updateControls = function() {
-  var ath = this.attHelper;
-  this.prevFtr.prop('disabled', ath.fInd === 0);
-  this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1);
+  var ath = this.annHelper;
 
-  this.prevAtt.prop('disabled', ath.aInd === 0);
+  this.prevFtr.prop('disabled', ath.fInd === 0 || !this.img);
+  this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1 || !this.img);
+  this.prevAnn.prop('disabled', ath.aInd === 0 || !this.img);
 
-  // Logic for enabling the 'next attribute' button
-  var ind = ath.atts.indexOf(ath.getAtt())+1;
+  // Logic for enabling the 'next annribute' button
+  var ind = ath.anns.indexOf(ath.getAnn())+1;
   var nextValid = false;
 
-  if (ind < ath.atts.length) {
-    nextValid = ath.atts[ind].valid;
+  if (ind < ath.anns.length) {
+    nextValid = ath.anns[ind].valid;
   }
 
-  this.nextAtt.prop('disabled', !ath.getAtt().valid && !nextValid);
-  this.delAtt.prop('disabled', !ath.getAtt().valid);
+  this.nextAnn.prop('disabled', !ath.getAnn().valid && !nextValid || !this.img);
+  this.delAnn.prop('disabled', !ath.getAnn().valid || !this.img);
+
+  this.zoomin.prop('disabled', !this.img);
+  this.zoomout.prop('disabled', !this.img);
+  this.pan.prop('disabled', !this.img);
+  this.annotate.prop('disabled', !this.img);
 };
 
 Annotator.fn.updateTitle = function() {
-  var name = this.attHelper.getFtr().name;
-  var ind  = this.attHelper.fInd;
-  var len  = this.attHelper.ftrs.length;
+  var name = this.annHelper.getFtr().name;
+  var ind  = this.annHelper.fInd;
+  var len  = this.annHelper.ftrs.length;
   this.title.text("Annotating: " + name + " (" + (ind+1) + "/" + len + ")");
 };
 
 //////////////////////////////////////////////////////
 // Tool switching
 
+// Switches between the main annotation tools:
+// Annotation ('annotate')
+// Panning ('pan')
 Annotator.fn.switchOp = function(op) {
   if (op === "annotate") {
-    this.curTool = new AttTool(this);
+    this.curTool = new AnnTool(this);
     this.canvas.css("cursor", "crosshair");
   }
   else if (op === "pan") {

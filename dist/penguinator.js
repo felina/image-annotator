@@ -1,7 +1,333 @@
-/*! penguinator - v3.4.4 - 2014-03-23
+/*! penguinator - v3.4.5 - 2014-03-24
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
+
+// Annotation helper class definition //
+
+// This deals with managing the annotation data,
+// doing import/export etc
+
+function AnnHelper(parent) {
+  this.parent = parent;
+
+  // Features
+  this.ftrs = [];
+  this.fInd = 0;
+  this.aInd = 0;
+
+  // Annotations
+  this.anns = [new Annotation("rect")];
+  this.curType = "rect";
+
+  // Drawing
+  this.pInd = 0;
+}
+AnnHelper.fn = AnnHelper.prototype;
+
+AnnHelper.fn.getAnn = function() {
+  return this.anns[this.aInd];
+};
+
+AnnHelper.fn.getFtr = function() {
+  return this.ftrs[this.fInd];
+};
+
+// Resets to default state
+AnnHelper.fn.reset = function() {
+  // Reset annotation
+  this.anns = [new Annotation(this.curType)];
+  this.aInd = 0;
+
+  // Reset features
+  this.fInd = 0;
+  this.ftrs = [];
+};
+
+//////////////////////////////////////////////////////
+// Data import / export
+
+// Feature import
+AnnHelper.fn.addFtrData = function(ftr) {
+    this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
+};
+
+AnnHelper.fn.importFeatures = function(input) {
+  // Clear existing
+  this.ftrs = [];
+
+  for (var i = 0; i < input.length; i++) {
+    this.addFtrData(input[i]);
+  }
+
+  this.ftrChanged();
+};
+
+// Annribute import - Depends on previous feature import
+AnnHelper.fn.importAnns = function(anns) {
+  // Iterate features
+  for (var i = 0; i < this.ftrs.length; i++) {
+    var f = this.ftrs[i];
+    f.anns = [];
+
+    if (typeof anns[f.name] === 'undefined') {
+      continue; // Skip feature if there was no input annribute data
+    }
+
+    var input = anns[f.name];
+    var shapes = input.shapes;
+
+    for (var j = 0; j < shapes.length; j++) {
+      var s = shapes[j];
+
+      // Generate each annotation from input data
+      var ann = new Annotation(s.type);
+      ann.valid = true;
+
+      if (s.type === 'rect') {
+        ann.pts[0] = s.pos;
+        ann.pts[1] = {x : s.pos.x+s.size.width, y : s.pos.y+s.size.height};
+      }
+      else {
+        ann.pts = s.points;
+      }
+
+      f.anns.push(ann);
+    }
+  }
+
+  // Recapture current feature/annotation
+  this.anns = this.getFtr().anns;
+  this.parent.showChange();
+};
+
+// Annotation export
+AnnHelper.fn.exportAnns = function() {
+  // Empty output object
+  var out = {};
+
+  // Iterate the features
+  for (var i = 0; i < this.ftrs.length; i++) {
+    var f = this.ftrs[i];
+
+    // Store shapes
+    out[f.name] = {};
+    out[f.name].shapes = [];
+
+    // Iterate the annotatons for the feature
+    for (var j = 0; j < f.anns.length; j++) {
+      var ann = f.anns[j];
+
+      // Check it's a valid shape
+      if (typeof ann === 'undefined') {
+        continue;
+      }
+      else if (!ann.valid) {
+        continue;
+      }
+
+      // The shape as it's output
+      var s = {};
+      s.type = ann.type;
+
+      if (s.type === 'rect') {
+        var x0 = ann.pts[0].x;
+        var y0 = ann.pts[0].y;
+        var x1 = ann.pts[1].x;
+        var y1 = ann.pts[1].y;
+
+        var dx = Math.abs(x1-x0);
+        var dy = Math.abs(y1-y0);
+        var x = Math.min(x0, x1);
+        var y = Math.min(y0, y1);
+
+        s.pos = {x : x, y : y};
+        s.size = {width : dx, height : dy};
+      }
+      else {
+        s.points = ann.pts;
+      }
+
+      out[f.name].shapes.push(s);
+    }
+  }
+
+  return out;
+};
+
+
+//////////////////////////////////////////////////////
+// Feature selection
+
+// Common to feature changes
+AnnHelper.fn.ftrChanged = function() {
+  // Lock/unlock shape selection
+  var lock = this.getFtr().shape !== "any";
+  this.parent.lockSelect(this.getFtr().shape, lock);
+
+  if (lock) {
+    this.curType = this.getFtr().shape;
+  }
+
+  // Update annotations to match
+  this.anns = this.getFtr().anns;
+  this.aInd = 0;
+
+  if (this.anns.length === 0) {
+    this.anns.push(new Annotation(this.curType));
+  }
+
+  // Update UI
+  this.parent.showChange();
+};
+
+// Select the next feature
+AnnHelper.fn.nextFtr = function() {
+  this.fInd++;
+
+  if (this.fInd >= this.ftrs.length) {
+    this.fInd = this.ftrs.length - 1;
+  }
+
+  this.ftrChanged();
+};
+
+// Select the previous feature
+AnnHelper.fn.prevFtr = function() {
+  this.fInd--;
+
+  if (this.fInd < 0) {
+    this.fInd = 0;
+  }
+
+  this.ftrChanged();
+};
+
+
+//////////////////////////////////////////////////////
+// Annotation selection
+
+// Invalidates the current annotation -
+// it will be removed when the next switch
+// occurs
+AnnHelper.fn.delAnn = function() {
+  this.getAnn().reset();
+};
+
+// Select next annotation/start a new one
+// Jumps to next ann index, creates a new annotation
+// if we hit the end of the list
+AnnHelper.fn.nextAnn = function() {
+  this.aInd++;
+
+  if (this.aInd === this.anns.length) {
+    this.anns.push(new Annotation(this.curType));
+  }
+
+  this.clrInvalid();
+  this.parent.showChange();
+};
+
+// Select previous annotation, if one exists
+AnnHelper.fn.prevAnn = function() {
+  this.aInd--;
+
+  if (this.aInd < 0) {
+    this.aInd = 0;
+  }
+
+  this.clrInvalid();
+  this.parent.showChange();
+};
+
+
+//////////////////////////////////////////////////////
+// Annotation generation
+
+AnnHelper.fn.startAnn = function(pt) {
+  this.getAnn().reset(this.curType);
+  this.getAnn().valid = true;
+  this.getAnn().pts[0] = pt;
+  this.pInd = 1;
+};
+
+// Update the next point
+AnnHelper.fn.showPt = function(pt) {
+  if (this.getAnn().type === "rect") {
+    this.getAnn().pts[1] = pt;
+  }
+  else if (this.getAnn().type === "poly") {
+    this.getAnn().pts[this.pInd] = pt;
+  }
+};
+
+// Finalize the next point. Returns false
+// if the drawing is complete.
+AnnHelper.fn.nextPt = function(pt) {
+  var lastPt;
+
+  if (this.getAnn().type === "rect") {
+    lastPt = this.getAnn().pts[0];
+
+    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
+      this.getAnn().pts[1] = pt;
+      this.endAnn();
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+  else if (this.getAnn().type === "poly") {
+    lastPt = this.getAnn().pts[this.pInd-1];
+
+    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
+      this.getAnn().pts[this.pInd] = pt;
+      this.pInd++;
+    }
+
+    return true;
+  }
+
+  return false;
+};
+
+// Ends an annotation - remove duplicate point
+AnnHelper.fn.endAnn = function() {
+  if (this.getAnn().type === 'poly') {
+    this.getAnn().pts.pop();
+  }
+
+  // Start next annotation
+
+  this.nextAnn();
+};
+
+//////////////////////////////////////////////////////
+// Misc functions
+
+// Type selection
+AnnHelper.fn.changeType = function(type) {
+  this.curType = type;
+};
+
+// Clears invalid annotations
+AnnHelper.fn.clrInvalid = function() {
+  for (var i = 0; i < this.anns.length; i++) {
+    if (i === this.aInd) {
+      continue;
+    }
+
+    var ann = this.anns[i];
+
+    if (!ann.valid) {
+      this.anns.splice(i, 1);
+      if (this.aInd > i) {
+        this.aInd--;
+      }
+    }
+  }
+};
 
 // Annotator class definition //
 
@@ -30,10 +356,10 @@ function Annotator(img, w, h) {
   this.zoomout = null;
   this.pan = null;
   this.annotate = null;
-  this.attType = null;
-  this.nextAtt = null;
-  this.prevAtt = null;
-  this.delAtt = null;
+  this.annType = null;
+  this.nextAnn = null;
+  this.prevAnn = null;
+  this.delAnn = null;
 
   this.nextFtr = null;
   this.prevFtr = null;
@@ -49,7 +375,7 @@ function Annotator(img, w, h) {
   this.curTool = new PanTool(this);
 
   // Annotations
-  this.attHelper = new AttHelper(this);
+  this.annHelper = new AnnHelper(this);
 
   // Canvas ops
   this.cHelper = null;
@@ -66,17 +392,17 @@ Annotator.fn.featuresIn = function(data) {
     return; // No input provided
   }
 
-  this.attHelper.importFeatures(data.features);
+  this.annHelper.importFeatures(data.features);
   this.showChange();
 };
 
 // Apply annotation data import
-Annotator.fn.attsIn = function(data) {
+Annotator.fn.annsIn = function(data) {
   if (typeof data.annotations === 'undefined') {
     return; // No input provided
   }
 
-  this.attHelper.importAtts(data.annotations);
+  this.annHelper.importAnns(data.annotations);
   this.showChange();
 };
 
@@ -100,12 +426,12 @@ Annotator.fn.cssIn = function(data) {
 
 // Annotation export
 Annotator.fn.getExport = function() {
-  return this.attHelper.exportAtts();
+  return this.annHelper.exportAnns();
 };
 
 // Feature retrieval
 Annotator.fn.getFeatures = function() {
-  return this.attHelper.ftrs;
+  return this.annHelper.ftrs;
 };
 
 //////////////////////////////////////////////////////
@@ -135,7 +461,7 @@ Annotator.fn.update = function(img, w, h) {
   this.cHelper.reset(w, h);
 
   // Reset annotations
-  this.attHelper.reset();
+  this.annHelper.reset();
 };
 
 // Instantiates an annotator inside a DOM object
@@ -152,15 +478,15 @@ Annotator.fn.build = function($parent) {
                     .css("margin-right", "20px");
 
   this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
-  this.prevAtt   = $('<button id="prevAtt">&lt</button>').appendTo($parent);
+  this.prevAnn   = $('<button id="prevAnn">&lt</button>').appendTo($parent);
 
-  this.attType   = $('<select id="typesel"></select>')
+  this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
-  this.delAtt    = $('<button id="nextAtt">X</button>').appendTo($parent);
-  this.nextAtt   = $('<button id="nextAtt">&gt</button>').appendTo($parent);
-  this.nextFtr   = $('<button id="nextAtt">&gt&gt</button>').appendTo($parent)
+  this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent);
+  this.nextAnn   = $('<button id="nextAnn">&gt</button>').appendTo($parent);
+  this.nextFtr   = $('<button id="nextAnn">&gt&gt</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
   this.title     = $('<label>Annotating:</label>').appendTo($parent)
@@ -190,15 +516,15 @@ Annotator.fn.build = function($parent) {
   this.zoomout.click(function(){a.cHelper.zoom(0.8);});
 
   // Switching annotation modes
-  this.attType.change(function() {
+  this.annType.change(function() {
     var str = $(this).val();
 
     if (str === "Box") {
-      a.attHelper.changeType("rect");
+      a.annHelper.changeType("rect");
       a.switchOp("annotate");
     }
     else if (str === "Polygon") {
-      a.attHelper.changeType("poly");
+      a.annHelper.changeType("poly");
       a.switchOp("annotate");
     }
   });
@@ -208,22 +534,26 @@ Annotator.fn.build = function($parent) {
   this.annotate.click(function(){ a.switchOp("annotate"); });
 
   // Annotation deletion
-  this.delAtt.click(function() {
-    a.attHelper.delAtt();
+  this.delAnn.click(function() {
+    a.annHelper.delAnn();
     a.updateControls();
     a.cHelper.repaint();
   });
 
   // Annotations - next/prev
-  this.prevAtt.click(function() { a.attHelper.prevAtt(); });
-  this.nextAtt.click(function() { a.attHelper.nextAtt(); });
+  this.prevAnn.click(function() { a.annHelper.prevAnn(); });
+  this.nextAnn.click(function() { a.annHelper.nextAnn(); });
 
   // Features next/prev
-  this.prevFtr.click(function() { a.attHelper.prevFtr(); });
-  this.nextFtr.click(function() { a.attHelper.nextFtr(); });
+  this.prevFtr.click(function() { a.annHelper.prevFtr(); });
+  this.nextFtr.click(function() { a.annHelper.nextFtr(); });
 
   // Mouse operations - call the tool handlers
-  this.canvas.mousedown(function(e){ a.curTool.lbDown(e.pageX, e.pageY); });
+  this.canvas.mousedown(function(e){ 
+    if (a.img) {
+      a.curTool.lbDown(e.pageX, e.pageY);
+    }
+  });
   this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
   this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
 
@@ -241,57 +571,72 @@ Annotator.fn.build = function($parent) {
 //////////////////////////////////////////////////////
 // Annotation UI
 
+// Shows a sate change in the canvas and UI elements
 Annotator.fn.showChange = function() {
   this.cHelper.repaint();
   this.updateControls();
   this.updateTitle();
 };
 
+// Select annotation type with lock/disable lock
 Annotator.fn.lockSelect = function(type, lock) {
-  this.attType.prop('disabled', lock);
+  if (!this.img) {
+    this.annType.prop('disabled', true);
+  }
+  else {
+    this.annType.prop('disabled', lock);
 
-  if (lock) {
-    if (type === "rect") {
-      this.attType.val('Box');
-    }
-    else {
-      this.attType.val('Polygon');
+    if (lock) {
+      if (type === "rect") {
+        this.annType.val('Box');
+      }
+      else {
+        this.annType.val('Polygon');
+      }
     }
   }
 };
 
 Annotator.fn.updateControls = function() {
-  var ath = this.attHelper;
-  this.prevFtr.prop('disabled', ath.fInd === 0);
-  this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1);
+  var ath = this.annHelper;
 
-  this.prevAtt.prop('disabled', ath.aInd === 0);
+  this.prevFtr.prop('disabled', ath.fInd === 0 || !this.img);
+  this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1 || !this.img);
+  this.prevAnn.prop('disabled', ath.aInd === 0 || !this.img);
 
-  // Logic for enabling the 'next attribute' button
-  var ind = ath.atts.indexOf(ath.getAtt())+1;
+  // Logic for enabling the 'next annribute' button
+  var ind = ath.anns.indexOf(ath.getAnn())+1;
   var nextValid = false;
 
-  if (ind < ath.atts.length) {
-    nextValid = ath.atts[ind].valid;
+  if (ind < ath.anns.length) {
+    nextValid = ath.anns[ind].valid;
   }
 
-  this.nextAtt.prop('disabled', !ath.getAtt().valid && !nextValid);
-  this.delAtt.prop('disabled', !ath.getAtt().valid);
+  this.nextAnn.prop('disabled', !ath.getAnn().valid && !nextValid || !this.img);
+  this.delAnn.prop('disabled', !ath.getAnn().valid || !this.img);
+
+  this.zoomin.prop('disabled', !this.img);
+  this.zoomout.prop('disabled', !this.img);
+  this.pan.prop('disabled', !this.img);
+  this.annotate.prop('disabled', !this.img);
 };
 
 Annotator.fn.updateTitle = function() {
-  var name = this.attHelper.getFtr().name;
-  var ind  = this.attHelper.fInd;
-  var len  = this.attHelper.ftrs.length;
+  var name = this.annHelper.getFtr().name;
+  var ind  = this.annHelper.fInd;
+  var len  = this.annHelper.ftrs.length;
   this.title.text("Annotating: " + name + " (" + (ind+1) + "/" + len + ")");
 };
 
 //////////////////////////////////////////////////////
 // Tool switching
 
+// Switches between the main annotation tools:
+// Annotation ('annotate')
+// Panning ('pan')
 Annotator.fn.switchOp = function(op) {
   if (op === "annotate") {
-    this.curTool = new AttTool(this);
+    this.curTool = new AnnTool(this);
     this.canvas.css("cursor", "crosshair");
   }
   else if (op === "pan") {
@@ -341,339 +686,13 @@ $.fn.annotator = function(input) {
 
   // Apply input
   a.featuresIn(input);
-  a.attsIn(input);
+  a.annsIn(input);
   a.cssIn(input);
 
   a.updateControls();
   a.updateTitle();
 
   return a;
-};
-
-// Annotation helper class definition //
-
-// This deals with managing the annotation data,
-// doing import/export etc
-
-function AttHelper(parent) {
-  this.parent = parent;
-
-  // Features
-  this.ftrs = [];
-  this.fInd = 0;
-  this.aInd = 0;
-
-  // Annotations
-  this.atts = [new Annotation("rect")];
-  this.curType = "rect";
-
-  // Drawing
-  this.pInd = 0;
-}
-AttHelper.fn = AttHelper.prototype;
-
-AttHelper.fn.getAtt = function() {
-  return this.atts[this.aInd];
-};
-
-AttHelper.fn.getFtr = function() {
-  return this.ftrs[this.fInd];
-};
-
-// Resets to default state
-AttHelper.fn.reset = function() {
-  // Reset annotation
-  this.atts = [new Annotation(this.curType)];
-  this.aInd = 0;
-
-  // Reset features
-  this.fInd = 0;
-  this.ftrs = [];
-};
-
-//////////////////////////////////////////////////////
-// Data import / export
-
-// Feature import
-AttHelper.fn.addFtrData = function(ftr) {
-    this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
-};
-
-AttHelper.fn.importFeatures = function(input) {
-  // Clear existing
-  this.ftrs = [];
-
-  for (var i = 0; i < input.length; i++) {
-    this.addFtrData(input[i]);
-  }
-
-  this.ftrChanged();
-};
-
-// Attribute import - Depends on previous feature import
-AttHelper.fn.importAtts = function(atts) {
-  // Iterate features
-  for (var i = 0; i < this.ftrs.length; i++) {
-    var f = this.ftrs[i];
-    f.atts = [];
-
-    if (typeof atts[f.name] === 'undefined') {
-      continue; // Skip feature if there was no input attribute data
-    }
-
-    var input = atts[f.name];
-    var shapes = input.shapes;
-
-    for (var j = 0; j < shapes.length; j++) {
-      var s = shapes[j];
-
-      // Generate each annotation from input data
-      var att = new Annotation(s.type);
-      att.valid = true;
-
-      if (s.type === 'rect') {
-        att.pts[0] = s.pos;
-        att.pts[1] = {x : s.pos.x+s.size.width, y : s.pos.y+s.size.height};
-      }
-      else {
-        att.pts = s.points;
-      }
-
-      f.atts.push(att);
-    }
-  }
-
-  // Recapture current feature/annotation
-  this.atts = this.getFtr().atts;
-  this.parent.showChange();
-};
-
-// Annotation export
-AttHelper.fn.exportAtts = function() {
-  // Empty output object
-  var out = {};
-
-  // Iterate the features
-  for (var i = 0; i < this.ftrs.length; i++) {
-    var f = this.ftrs[i];
-
-    // Store shapes
-    out[f.name] = {};
-    out[f.name].shapes = [];
-
-    // Iterate the annotatons for the feature
-    for (var j = 0; j < f.atts.length; j++) {
-      var att = f.atts[j];
-
-      // Check it's a valid shape
-      if (typeof att === 'undefined') {
-        continue;
-      }
-      else if (!att.valid) {
-        continue;
-      }
-
-      // The shape as it's output
-      var s = {};
-      s.type = att.type;
-
-      if (s.type === 'rect') {
-        var x0 = att.pts[0].x;
-        var y0 = att.pts[0].y;
-        var x1 = att.pts[1].x;
-        var y1 = att.pts[1].y;
-
-        var dx = Math.abs(x1-x0);
-        var dy = Math.abs(y1-y0);
-        var x = Math.min(x0, x1);
-        var y = Math.min(y0, y1);
-
-        s.pos = {x : x, y : y};
-        s.size = {width : dx, height : dy};
-      }
-      else {
-        s.points = att.pts;
-      }
-
-      out[f.name].shapes.push(s);
-    }
-  }
-
-  return out;
-};
-
-
-//////////////////////////////////////////////////////
-// Feature selection
-
-// Common to feature changes
-AttHelper.fn.ftrChanged = function() {
-  // Lock/unlock shape selection
-  var lock = this.getFtr().shape !== "any";
-  this.parent.lockSelect(this.getFtr().shape, lock);
-
-  if (lock) {
-    this.curType = this.getFtr().shape;
-  }
-
-  // Update annotations to match
-  this.atts = this.getFtr().atts;
-  this.aInd = 0;
-
-  if (this.atts.length === 0) {
-    this.atts.push(new Annotation(this.curType));
-  }
-
-  // Update UI
-  this.parent.showChange();
-};
-
-// Select the next feature
-AttHelper.fn.nextFtr = function() {
-  this.fInd++;
-
-  if (this.fInd >= this.ftrs.length) {
-    this.fInd = this.ftrs.length - 1;
-  }
-
-  this.ftrChanged();
-};
-
-// Select the previous feature
-AttHelper.fn.prevFtr = function() {
-  this.fInd--;
-
-  if (this.fInd < 0) {
-    this.fInd = 0;
-  }
-
-  this.ftrChanged();
-};
-
-
-//////////////////////////////////////////////////////
-// Annotation selection
-
-// Invalidates the current annotation -
-// it will be removed when the next switch
-// occurs
-AttHelper.fn.delAtt = function() {
-  this.getAtt().reset();
-};
-
-// Select next annotation/start a new one
-// Jumps to next att index, creates a new annotation
-// if we hit the end of the list
-AttHelper.fn.nextAtt = function() {
-  this.aInd++;
-
-  if (this.aInd === this.atts.length) {
-    this.atts.push(new Annotation(this.curType));
-  }
-
-  this.clrInvalid();
-  this.parent.showChange();
-};
-
-// Select previous annotation, if one exists
-AttHelper.fn.prevAtt = function() {
-  this.aInd--;
-
-  if (this.aInd < 0) {
-    this.aInd = 0;
-  }
-
-  this.clrInvalid();
-  this.parent.showChange();
-};
-
-
-//////////////////////////////////////////////////////
-// Annotation generation
-
-AttHelper.fn.startAtt = function(pt) {
-  this.getAtt().reset(this.curType);
-  this.getAtt().valid = true;
-  this.getAtt().pts[0] = pt;
-  this.pInd = 1;
-};
-
-// Update the next point
-AttHelper.fn.showPt = function(pt) {
-  if (this.getAtt().type === "rect") {
-    this.getAtt().pts[1] = pt;
-  }
-  else if (this.getAtt().type === "poly") {
-    this.getAtt().pts[this.pInd] = pt;
-  }
-};
-
-// Finalize the next point. Returns false
-// if the drawing is complete.
-AttHelper.fn.nextPt = function(pt) {
-  var lastPt;
-
-  if (this.getAtt().type === "rect") {
-    lastPt = this.getAtt().pts[0];
-
-    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
-      this.getAtt().pts[1] = pt;
-      this.endAtt();
-      return false;
-    }
-    else {
-      return true;
-    }
-  }
-  else if (this.getAtt().type === "poly") {
-    lastPt = this.getAtt().pts[this.pInd-1];
-
-    if (lastPt.x !== pt.x || lastPt.y !== pt.y) {
-      this.getAtt().pts[this.pInd] = pt;
-      this.pInd++;
-    }
-
-    return true;
-  }
-
-  return false;
-};
-
-// Ends an annotation - remove duplicate point
-AttHelper.fn.endAtt = function() {
-  if (this.getAtt().type === 'poly') {
-    this.getAtt().pts.pop();
-  }
-
-  // Start next annotation
-
-  this.nextAtt();
-};
-
-//////////////////////////////////////////////////////
-// Misc functions
-
-// Type selection
-AttHelper.fn.changeType = function(type) {
-  this.curType = type;
-};
-
-// Clears invalid annotations
-AttHelper.fn.clrInvalid = function() {
-  for (var i = 0; i < this.atts.length; i++) {
-    if (i === this.aInd) {
-      continue;
-    }
-
-    var att = this.atts[i];
-
-    if (!att.valid) {
-      this.atts.splice(i, 1);
-      if (this.aInd > i) {
-        this.aInd--;
-      }
-    }
-  }
 };
 
 // Canvas helper class definition //
@@ -742,14 +761,14 @@ CanvasHelper.fn.repaint = function() {
   // Annotation
   for (var f = 0; f < ftrs.length; f++) {
     var ftr = ftrs[f];
-    for (var i = 0; i < ftr.atts.length; i++) {
-      this.drawAtt(ftr.atts[i], f);
+    for (var i = 0; i < ftr.anns.length; i++) {
+      this.drawAnn(ftr.anns[i], f);
     }
   }
 };
 
 // Annotation draw op
-CanvasHelper.fn.drawAtt = function(att, fInd) {
+CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var g = this.g;
 
   var cols =
@@ -761,14 +780,14 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
     "rgb(50, 200, 200)"
   ];
 
-  if (!att.valid) {
+  if (!ann.valid) {
     return;
   }
 
   var col = cols[fInd % cols.length];
   var fillCol = col;
 
-  if (att === this.parent.attHelper.getAtt()) {
+  if (ann === this.parent.annHelper.getAnn()) {
     fillCol = "white";
   }
 
@@ -779,11 +798,11 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
   g.fillStyle = fillCol;
 
   // Box drawing (2-point)
-  if (att.type === "rect") {
-    var x0 = att.pts[0].x;
-    var y0 = att.pts[0].y;
-    var x1 = att.pts[1].x;
-    var y1 = att.pts[1].y;
+  if (ann.type === "rect") {
+    var x0 = ann.pts[0].x;
+    var y0 = ann.pts[0].y;
+    var x1 = ann.pts[1].x;
+    var y1 = ann.pts[1].y;
 
     var dx = Math.abs(x1-x0);
     var dy = Math.abs(y1-y0);
@@ -798,19 +817,19 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
     this.drawPt({x:x1, y:y1});
   }
   // Polygon drawing (n-point)
-  else if (att.type === "poly") {
+  else if (ann.type === "poly") {
     g.beginPath();
-    g.moveTo(att.pts[0].x, att.pts[0].y);
+    g.moveTo(ann.pts[0].x, ann.pts[0].y);
 
-    for (var i = 1; i < att.pts.length; i++) {
-      g.lineTo(att.pts[i].x, att.pts[i].y);
+    for (var i = 1; i < ann.pts.length; i++) {
+      g.lineTo(ann.pts[i].x, ann.pts[i].y);
     }
 
-    g.lineTo(att.pts[0].x, att.pts[0].y);
+    g.lineTo(ann.pts[0].x, ann.pts[0].y);
     g.stroke();
 
-    for (i = 0; i < att.pts.length; i++) {
-      this.drawPt(att.pts[i]);
+    for (i = 0; i < ann.pts.length; i++) {
+      this.drawPt(ann.pts[i]);
     }
   }
 };
@@ -960,15 +979,15 @@ PanTool.fn.mMove = function(x, y) {
 // Annotation tool class definition //
 // This accepts user input to generate a *new* Annotation
 
-function AttTool(parent) {
+function AnnTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
 }
-AttTool.prototype = Object.create(SuperTool.prototype);
-AttTool.fn = AttTool.prototype;
+AnnTool.prototype = Object.create(SuperTool.prototype);
+AnnTool.fn = AnnTool.prototype;
 
 // Mouse down - start an annotation if we're not already making one
-AttTool.fn.lbDown = function(x, y) {
+AnnTool.fn.lbDown = function(x, y) {
   if (!this.active) {
     var a = this.parent;
     var offset = a.canvas.offset();
@@ -977,35 +996,35 @@ AttTool.fn.lbDown = function(x, y) {
     this.y1 = this.y0 = y - offset.top;
 
     var pt = ptToImg(a.cHelper, this.x0, this.y0);
-    a.attHelper.startAtt(pt);
+    a.annHelper.startAnn(pt);
 
     this.active = true;
   }
 };
 
 // Mouse up - add a point to the annotation
-AttTool.fn.lbUp = function(x, y) {
+AnnTool.fn.lbUp = function(x, y) {
   if (this.active) {
     var a = this.parent;
     var pt = ptToImg(a.cHelper, this.x1, this.y1);
-    this.active = a.attHelper.nextPt(pt);
+    this.active = a.annHelper.nextPt(pt);
     a.updateControls();
   }
 };
 
 // Double click - finish a polygon annotation
-AttTool.fn.lbDbl = function(x, y) {
+AnnTool.fn.lbDbl = function(x, y) {
   if (this.active) {
     var a = this.parent;
     this.active = false;
 
-    a.attHelper.endAtt();
+    a.annHelper.endAnn();
     a.updateControls();
   }
 };
 
 // Mouse move - update current point
-AttTool.fn.mMove = function(x, y) {
+AnnTool.fn.mMove = function(x, y) {
   if (this.active) {
     var a = this.parent;
     var offset = a.canvas.offset();
@@ -1014,7 +1033,7 @@ AttTool.fn.mMove = function(x, y) {
 
     // Annotation - in image space
     var pt = ptToImg(a.cHelper, this.x1, this.y1);
-    a.attHelper.showPt(pt);
+    a.annHelper.showPt(pt);
 
     // Redraw
     a.cHelper.repaint();
@@ -1046,8 +1065,8 @@ function Feature(name, required, shape) {
   this.name = name;
   this.req = required;
   this.shape = shape;
-  this.atts = [];
-  this.attC = 0;
+  this.anns = [];
+  this.annC = 0;
 }
 
 // Annotations - as distinct on the canvas

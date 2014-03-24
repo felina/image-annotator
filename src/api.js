@@ -39,7 +39,7 @@ $.fn.annotator = function(input) {
 
   // Apply input
   a.featuresIn(input);
-  a.attsIn(input);
+  a.annsIn(input);
   a.cssIn(input);
 
   a.updateControls();

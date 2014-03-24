@@ -56,15 +56,15 @@ PanTool.fn.mMove = function(x, y) {
 // Annotation tool class definition //
 // This accepts user input to generate a *new* Annotation
 
-function AttTool(parent) {
+function AnnTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
 }
-AttTool.prototype = Object.create(SuperTool.prototype);
-AttTool.fn = AttTool.prototype;
+AnnTool.prototype = Object.create(SuperTool.prototype);
+AnnTool.fn = AnnTool.prototype;
 
 // Mouse down - start an annotation if we're not already making one
-AttTool.fn.lbDown = function(x, y) {
+AnnTool.fn.lbDown = function(x, y) {
   if (!this.active) {
     var a = this.parent;
     var offset = a.canvas.offset();
@@ -73,35 +73,35 @@ AttTool.fn.lbDown = function(x, y) {
     this.y1 = this.y0 = y - offset.top;
 
     var pt = ptToImg(a.cHelper, this.x0, this.y0);
-    a.attHelper.startAtt(pt);
+    a.annHelper.startAnn(pt);
 
     this.active = true;
   }
 };
 
 // Mouse up - add a point to the annotation
-AttTool.fn.lbUp = function(x, y) {
+AnnTool.fn.lbUp = function(x, y) {
   if (this.active) {
     var a = this.parent;
     var pt = ptToImg(a.cHelper, this.x1, this.y1);
-    this.active = a.attHelper.nextPt(pt);
+    this.active = a.annHelper.nextPt(pt);
     a.updateControls();
   }
 };
 
 // Double click - finish a polygon annotation
-AttTool.fn.lbDbl = function(x, y) {
+AnnTool.fn.lbDbl = function(x, y) {
   if (this.active) {
     var a = this.parent;
     this.active = false;
 
-    a.attHelper.endAtt();
+    a.annHelper.endAnn();
     a.updateControls();
   }
 };
 
 // Mouse move - update current point
-AttTool.fn.mMove = function(x, y) {
+AnnTool.fn.mMove = function(x, y) {
   if (this.active) {
     var a = this.parent;
     var offset = a.canvas.offset();
@@ -110,7 +110,7 @@ AttTool.fn.mMove = function(x, y) {
 
     // Annotation - in image space
     var pt = ptToImg(a.cHelper, this.x1, this.y1);
-    a.attHelper.showPt(pt);
+    a.annHelper.showPt(pt);
 
     // Redraw
     a.cHelper.repaint();

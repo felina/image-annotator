@@ -64,14 +64,14 @@ CanvasHelper.fn.repaint = function() {
   // Annotation
   for (var f = 0; f < ftrs.length; f++) {
     var ftr = ftrs[f];
-    for (var i = 0; i < ftr.atts.length; i++) {
-      this.drawAtt(ftr.atts[i], f);
+    for (var i = 0; i < ftr.anns.length; i++) {
+      this.drawAnn(ftr.anns[i], f);
     }
   }
 };
 
 // Annotation draw op
-CanvasHelper.fn.drawAtt = function(att, fInd) {
+CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var g = this.g;
 
   var cols =
@@ -83,14 +83,14 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
     "rgb(50, 200, 200)"
   ];
 
-  if (!att.valid) {
+  if (!ann.valid) {
     return;
   }
 
   var col = cols[fInd % cols.length];
   var fillCol = col;
 
-  if (att === this.parent.attHelper.getAtt()) {
+  if (ann === this.parent.annHelper.getAnn()) {
     fillCol = "white";
   }
 
@@ -101,11 +101,11 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
   g.fillStyle = fillCol;
 
   // Box drawing (2-point)
-  if (att.type === "rect") {
-    var x0 = att.pts[0].x;
-    var y0 = att.pts[0].y;
-    var x1 = att.pts[1].x;
-    var y1 = att.pts[1].y;
+  if (ann.type === "rect") {
+    var x0 = ann.pts[0].x;
+    var y0 = ann.pts[0].y;
+    var x1 = ann.pts[1].x;
+    var y1 = ann.pts[1].y;
 
     var dx = Math.abs(x1-x0);
     var dy = Math.abs(y1-y0);
@@ -120,19 +120,19 @@ CanvasHelper.fn.drawAtt = function(att, fInd) {
     this.drawPt({x:x1, y:y1});
   }
   // Polygon drawing (n-point)
-  else if (att.type === "poly") {
+  else if (ann.type === "poly") {
     g.beginPath();
-    g.moveTo(att.pts[0].x, att.pts[0].y);
+    g.moveTo(ann.pts[0].x, ann.pts[0].y);
 
-    for (var i = 1; i < att.pts.length; i++) {
-      g.lineTo(att.pts[i].x, att.pts[i].y);
+    for (var i = 1; i < ann.pts.length; i++) {
+      g.lineTo(ann.pts[i].x, ann.pts[i].y);
     }
 
-    g.lineTo(att.pts[0].x, att.pts[0].y);
+    g.lineTo(ann.pts[0].x, ann.pts[0].y);
     g.stroke();
 
-    for (i = 0; i < att.pts.length; i++) {
-      this.drawPt(att.pts[i]);
+    for (i = 0; i < ann.pts.length; i++) {
+      this.drawPt(ann.pts[i]);
     }
   }
 };
