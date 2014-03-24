@@ -230,6 +230,43 @@ AnnHelper.fn.newAnn = function() {
   return this.getAnn();
 };
 
+
+//////////////////////////////////////////////////////
+// Annotation UI
+
+// Picks the closest annotation point to
+// the given image-space point
+// Returns it, its index in the shape, and
+// the annotation object itself
+AnnHelper.fn.pickPt = function(x, y) {
+  var pick = {};
+  pick.pt = null;
+  pick.dist = Infinity;
+  pick.ann = null;
+
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var anns = this.ftrs[f].anns;
+    for (var a = 0; a < anns.length; a++) {
+      var ann = anns[a];
+      var pts = ann.getPts();
+      for (var p = 0; p < pts.length; p++) {
+        // (For every point currently in the annotator)
+        var pt = pts[p];
+        var d = Math.sqrt(Math.pow(x-pt.x,2) + Math.pow(y-pt.y,2));
+
+        if (d < pick.dist) {
+          pick.dist = d;
+          pick.pt = pt;
+          pick.ann = ann;
+        }
+      }
+    }
+  }
+
+  return pick;
+};
+
+
 //////////////////////////////////////////////////////
 // Misc functions
 

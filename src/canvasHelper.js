@@ -23,6 +23,10 @@ function CanvasHelper(parent) {
   this.curScale = this.defScale;
   this.xOffs = 0;
   this.yOffs = 0;
+
+  // Highlighting / selection visibility
+  this.hlt = null;
+  this.select = [];
 }
 
 CanvasHelper.fn = CanvasHelper.prototype;
@@ -76,11 +80,11 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
 
   var cols =
   [
-    "rgb(255, 20, 20)",
-    "rgb(0, 200, 0)",
-    "rgb(00, 0, 255)",
-    "rgb(255, 255, 0)",
-    "rgb(50, 200, 200)"
+    ["rgb(255, 20, 20)","rgb(255, 80, 80)"],
+    ["rgb(0, 200, 0)","rgb(80, 240, 80)"],
+    ["rgb(0, 0, 255)","rgb(80, 80, 255)"],
+    ["rgb(255, 255, 0)","rgb(255, 255, 90)"],
+    ["rgb(50, 200, 200)","rgb(90, 255, 255)"]
   ];
 
   if (!ann.valid) {
@@ -88,16 +92,18 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   }
 
   var col = cols[fInd % cols.length];
-  var fillCol = col;
+  var fillCol = col[0];
+  var cInd = 0;
+  var drawPts = false;
 
-  if (ann === this.parent.annHelper.getAnn()) {
-    fillCol = "white";
+  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann) {
+    cInd = 1;
+    fillCol = col[1];
+    drawPts = true;
   }
 
-  g.shadowColor = "#000";
-  g.shadowBlur = 1;
-  g.strokeStyle = col;
-  g.lineWidth = 1.5 / this.curScale;
+  g.shadowColor = "#FFF";
+  g.shadowBlur = 0;
   g.fillStyle = fillCol;
 
   // Shape drawing (n-point)
@@ -111,10 +117,15 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   }
 
   g.lineTo(pts[0].x, pts[0].y);
+
+  g.strokeStyle = col[cInd];
+  g.lineWidth = 1.5 / this.curScale;
   g.stroke();
 
-  for (i = 0; i < pts.length; i++) {
-    this.drawPt(pts[i]);
+  if (drawPts) {
+    for (i = 0; i < pts.length; i++) {
+      this.drawPt(pts[i]);
+    }
   }
 };
 
@@ -203,4 +214,25 @@ CanvasHelper.fn.calcZoom = function() {
   var absRatio = Math.min(xRatio, yRatio);
 
   this.defScale = absRatio * 0.9;
+};
+
+// Set highlighted Annotation
+CanvasHelper.fn.setHlt = function(ann) {
+  this.hlt = ann;
+};
+
+// Canvas to image space
+CanvasHelper.fn.ptToImg = function(xin, yin) {
+  var a = this;
+  var x = (xin-a.w/2-a.xOffs)/a.curScale;
+  var y = (yin-a.h/2-a.yOffs)/a.curScale;
+
+  if (x < -a.imgW/2) {x = -a.imgW/2;}
+  if (x >  a.imgW/2) {x =  a.imgW/2;}
+  if (y < -a.imgH/2) {y = -a.imgH/2;}
+  if (y >  a.imgH/2) {y =  a.imgH/2;}
+
+  var out = {x:x,y:y};
+
+  return out;
 };

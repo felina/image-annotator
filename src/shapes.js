@@ -42,11 +42,13 @@ SuperShape.fn.delPt = function(ind) {};
 SuperShape.fn.getDrawPts = function() {return [];};
 SuperShape.fn.getExport = function() {return {};};
 SuperShape.fn.getNumPts = function() {return this.pts.length;};
+SuperShape.fn.getPts = function() {return this.pts;};
 
 
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
+  this.type = 'rect';
 }
 RectAnn.prototype = Object.create(SuperShape.prototype);
 RectAnn.fn = RectAnn.prototype;
@@ -89,6 +91,15 @@ RectAnn.fn.getDrawPts = function() {
   return res;
 };
 
+RectAnn.fn.getPts = function() {
+  if (this.valid) {
+    return this.getDrawPts();
+  }
+  else {
+    return [];
+  }
+};
+
 RectAnn.fn.delPt = function(ind) {
   // Deleting a rect point isn't meaningful -
   // invalidate the shape
@@ -120,6 +131,7 @@ RectAnn.fn.getExport = function() {
 // Polygon shape definition //
 function PolyAnn() {
   SuperShape.call(this);
+  this.type = 'poly';
 }
 
 PolyAnn.prototype = Object.create(SuperShape.prototype);

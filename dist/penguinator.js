@@ -235,6 +235,43 @@ AnnHelper.fn.newAnn = function() {
   return this.getAnn();
 };
 
+
+//////////////////////////////////////////////////////
+// Annotation UI
+
+// Picks the closest annotation point to
+// the given image-space point
+// Returns it, its index in the shape, and
+// the annotation object itself
+AnnHelper.fn.pickPt = function(x, y) {
+  var pick = {};
+  pick.pt = null;
+  pick.dist = Infinity;
+  pick.ann = null;
+
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var anns = this.ftrs[f].anns;
+    for (var a = 0; a < anns.length; a++) {
+      var ann = anns[a];
+      var pts = ann.getPts();
+      for (var p = 0; p < pts.length; p++) {
+        // (For every point currently in the annotator)
+        var pt = pts[p];
+        var d = Math.sqrt(Math.pow(x-pt.x,2) + Math.pow(y-pt.y,2));
+
+        if (d < pick.dist) {
+          pick.dist = d;
+          pick.pt = pt;
+          pick.ann = ann;
+        }
+      }
+    }
+  }
+
+  return pick;
+};
+
+
 //////////////////////////////////////////////////////
 // Misc functions
 
@@ -288,6 +325,7 @@ function Annotator(img, w, h) {
   this.zoomout = null;
   this.pan = null;
   this.annotate = null;
+  this.edit = null;
   this.annType = null;
   this.nextAnn = null;
   this.prevAnn = null;
@@ -404,8 +442,9 @@ Annotator.fn.build = function($parent) {
   this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
   this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
   this.pan       = $('<button id="pan">Pan</button>').appendTo($parent);
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent)
-                    .css("margin-right", "20px");
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
+  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+                      .css("margin-right", "20px");
 
   this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
   this.prevAnn   = $('<button id="prevAnn">&lt</button>').appendTo($parent);
@@ -462,6 +501,7 @@ Annotator.fn.build = function($parent) {
   // Operation selection
   this.pan.click(function(){ a.switchOp("pan"); });
   this.annotate.click(function(){ a.switchOp("annotate"); });
+  this.edit.click(function(){ a.switchOp("edit"); });
 
   // Annotation deletion
   this.delAnn.click(function() {
@@ -565,13 +605,19 @@ Annotator.fn.updateTitle = function() {
 // Annotation ('annotate')
 // Panning ('pan')
 Annotator.fn.switchOp = function(op) {
-  if (op === "annotate") {
-    this.curTool = new AnnTool(this);
-    this.canvas.css("cursor", "crosshair");
-  }
-  else if (op === "pan") {
-    this.curTool = new PanTool(this);
-    this.canvas.css("cursor", "move");
+  switch (op) {
+    case "annotate":
+      this.curTool = new AnnTool(this);
+      this.canvas.css("cursor", "crosshair");
+      break;
+    case "pan":
+      this.curTool = new PanTool(this);
+      this.canvas.css("cursor", "move");
+      break;
+    case "edit":
+      this.curTool = new EditTool(this);
+      this.canvas.css("cursor", "select");
+      break;
   }
 };
 
@@ -650,6 +696,10 @@ function CanvasHelper(parent) {
   this.curScale = this.defScale;
   this.xOffs = 0;
   this.yOffs = 0;
+
+  // Highlighting / selection visibility
+  this.hlt = null;
+  this.select = [];
 }
 
 CanvasHelper.fn = CanvasHelper.prototype;
@@ -703,11 +753,11 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
 
   var cols =
   [
-    "rgb(255, 20, 20)",
-    "rgb(0, 200, 0)",
-    "rgb(00, 0, 255)",
-    "rgb(255, 255, 0)",
-    "rgb(50, 200, 200)"
+    ["rgb(255, 20, 20)","rgb(255, 80, 80)"],
+    ["rgb(0, 200, 0)","rgb(80, 240, 80)"],
+    ["rgb(0, 0, 255)","rgb(80, 80, 255)"],
+    ["rgb(255, 255, 0)","rgb(255, 255, 90)"],
+    ["rgb(50, 200, 200)","rgb(90, 255, 255)"]
   ];
 
   if (!ann.valid) {
@@ -715,16 +765,18 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   }
 
   var col = cols[fInd % cols.length];
-  var fillCol = col;
+  var fillCol = col[0];
+  var cInd = 0;
+  var drawPts = false;
 
-  if (ann === this.parent.annHelper.getAnn()) {
-    fillCol = "white";
+  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann) {
+    cInd = 1;
+    fillCol = col[1];
+    drawPts = true;
   }
 
-  g.shadowColor = "#000";
-  g.shadowBlur = 1;
-  g.strokeStyle = col;
-  g.lineWidth = 1.5 / this.curScale;
+  g.shadowColor = "#FFF";
+  g.shadowBlur = 0;
   g.fillStyle = fillCol;
 
   // Shape drawing (n-point)
@@ -738,10 +790,15 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   }
 
   g.lineTo(pts[0].x, pts[0].y);
+
+  g.strokeStyle = col[cInd];
+  g.lineWidth = 1.5 / this.curScale;
   g.stroke();
 
-  for (i = 0; i < pts.length; i++) {
-    this.drawPt(pts[i]);
+  if (drawPts) {
+    for (i = 0; i < pts.length; i++) {
+      this.drawPt(pts[i]);
+    }
   }
 };
 
@@ -832,6 +889,36 @@ CanvasHelper.fn.calcZoom = function() {
   this.defScale = absRatio * 0.9;
 };
 
+// Set highlighted Annotation
+CanvasHelper.fn.setHlt = function(ann) {
+  this.hlt = ann;
+};
+
+// Canvas to image space
+CanvasHelper.fn.ptToImg = function(xin, yin) {
+  var a = this;
+  var x = (xin-a.w/2-a.xOffs)/a.curScale;
+  var y = (yin-a.h/2-a.yOffs)/a.curScale;
+
+  if (x < -a.imgW/2) {x = -a.imgW/2;}
+  if (x >  a.imgW/2) {x =  a.imgW/2;}
+  if (y < -a.imgH/2) {y = -a.imgH/2;}
+  if (y >  a.imgH/2) {y =  a.imgH/2;}
+
+  var out = {x:x,y:y};
+
+  return out;
+};
+
+// Features to be annotated
+function Feature(name, required, shape) {
+  this.name = name;
+  this.req = required;
+  this.shape = shape;
+  this.anns = [];
+  this.annC = 0;
+}
+
 // Annotations - as distinct on the canvas
 function createAnnotation(type) {
   //this.valid = false;
@@ -876,11 +963,13 @@ SuperShape.fn.delPt = function(ind) {};
 SuperShape.fn.getDrawPts = function() {return [];};
 SuperShape.fn.getExport = function() {return {};};
 SuperShape.fn.getNumPts = function() {return this.pts.length;};
+SuperShape.fn.getPts = function() {return this.pts;};
 
 
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
+  this.type = 'rect';
 }
 RectAnn.prototype = Object.create(SuperShape.prototype);
 RectAnn.fn = RectAnn.prototype;
@@ -923,6 +1012,15 @@ RectAnn.fn.getDrawPts = function() {
   return res;
 };
 
+RectAnn.fn.getPts = function() {
+  if (this.valid) {
+    return this.getDrawPts();
+  }
+  else {
+    return [];
+  }
+};
+
 RectAnn.fn.delPt = function(ind) {
   // Deleting a rect point isn't meaningful -
   // invalidate the shape
@@ -954,6 +1052,7 @@ RectAnn.fn.getExport = function() {
 // Polygon shape definition //
 function PolyAnn() {
   SuperShape.call(this);
+  this.type = 'poly';
 }
 
 PolyAnn.prototype = Object.create(SuperShape.prototype);
@@ -1080,7 +1179,7 @@ AnnTool.fn.lbUp = function(x, y) {
   var offset = a.canvas.offset();
   x -= offset.left;
   y -= offset.top;
-  var pt = ptToImg(a.cHelper, x, y);
+  var pt = a.cHelper.ptToImg(x, y);
 
   this.active = this.ann.addPt(pt);
   a.updateControls();
@@ -1089,13 +1188,13 @@ AnnTool.fn.lbUp = function(x, y) {
 // Double click - finish a polygon annotation
 AnnTool.fn.lbDbl = function(x, y) {
   // NB: We get 2x 'up' events before the double-click
-  // Need to remove erroneous extra point
+  // Need to remove erroneous extra points
   if (this.active) {
     var a = this.parent;
     this.active = false;
 
-    this.ann.delPt(-1);
-    this.ann.delPt(-1);
+    this.ann.delPt(-1); // Remove pt from second click
+    this.ann.delPt(-1); // Remove intermediate pt (would be next placed)
 
     a.showChange();
   }
@@ -1108,7 +1207,7 @@ AnnTool.fn.mMove = function(x, y) {
     var offset = a.canvas.offset();
     x -= offset.left;
     y -= offset.top;
-    var pt = ptToImg(a.cHelper, x, y);
+    var pt = a.cHelper.ptToImg(x, y);
 
     this.ann.modLastPt(pt);
     a.cHelper.repaint();
@@ -1116,32 +1215,47 @@ AnnTool.fn.mMove = function(x, y) {
 };
 
 
+
+// Edit tool class definition //
+// This allows selection and modification of existing annotations
+
+function EditTool(parent) {
+  SuperTool.call(this);
+  this.parent = parent;
+  this.ann = null;
+}
+EditTool.prototype = Object.create(SuperTool.prototype);
+EditTool.fn = EditTool.prototype;
+
+EditTool.fn.mMove = function(x, y) {
+  var a = this.parent;
+  var offset = a.canvas.offset();
+  x -= offset.left;
+  y -= offset.top;
+  var pt = this.parent.cHelper.ptToImg(x, y);
+
+  if (this.ann === null) {
+    this.passiveMove(pt.x, pt.y);
+    a.showChange();
+  }
+  // TODO: Active move code (for modifications)
+};
+
+// Highlight annotations under the cursor
+EditTool.fn.passiveMove = function(x, y) {
+  var anh = this.parent.annHelper;
+  var c = this.parent.cHelper;
+
+  var pick = anh.pickPt(x, y);
+
+  if (pick.dist < 15) {
+    c.setHlt(pick.ann);
+  }
+  else {
+    c.setHlt(null);
+  }
+};
+
 /*jshint unused:true*/
-
-// Util.js: Functions and small classes helpful elsewhere //
-
-// Canvas to image space
-function ptToImg(a, xin, yin) {
-  var x = (xin-a.w/2-a.xOffs)/a.curScale;
-  var y = (yin-a.h/2-a.yOffs)/a.curScale;
-
-  if (x < -a.imgW/2) {x = -a.imgW/2;}
-  if (x >  a.imgW/2) {x =  a.imgW/2;}
-  if (y < -a.imgH/2) {y = -a.imgH/2;}
-  if (y >  a.imgH/2) {y =  a.imgH/2;}
-
-  var out = {x:x,y:y};
-
-  return out;
-}
-
-// Features to be annotated
-function Feature(name, required, shape) {
-  this.name = name;
-  this.req = required;
-  this.shape = shape;
-  this.anns = [];
-  this.annC = 0;
-}
 
 }(jQuery));

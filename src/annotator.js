@@ -25,6 +25,7 @@ function Annotator(img, w, h) {
   this.zoomout = null;
   this.pan = null;
   this.annotate = null;
+  this.edit = null;
   this.annType = null;
   this.nextAnn = null;
   this.prevAnn = null;
@@ -141,8 +142,9 @@ Annotator.fn.build = function($parent) {
   this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
   this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
   this.pan       = $('<button id="pan">Pan</button>').appendTo($parent);
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent)
-                    .css("margin-right", "20px");
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
+  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+                      .css("margin-right", "20px");
 
   this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
   this.prevAnn   = $('<button id="prevAnn">&lt</button>').appendTo($parent);
@@ -199,6 +201,7 @@ Annotator.fn.build = function($parent) {
   // Operation selection
   this.pan.click(function(){ a.switchOp("pan"); });
   this.annotate.click(function(){ a.switchOp("annotate"); });
+  this.edit.click(function(){ a.switchOp("edit"); });
 
   // Annotation deletion
   this.delAnn.click(function() {
@@ -302,12 +305,18 @@ Annotator.fn.updateTitle = function() {
 // Annotation ('annotate')
 // Panning ('pan')
 Annotator.fn.switchOp = function(op) {
-  if (op === "annotate") {
-    this.curTool = new AnnTool(this);
-    this.canvas.css("cursor", "crosshair");
-  }
-  else if (op === "pan") {
-    this.curTool = new PanTool(this);
-    this.canvas.css("cursor", "move");
+  switch (op) {
+    case "annotate":
+      this.curTool = new AnnTool(this);
+      this.canvas.css("cursor", "crosshair");
+      break;
+    case "pan":
+      this.curTool = new PanTool(this);
+      this.canvas.css("cursor", "move");
+      break;
+    case "edit":
+      this.curTool = new EditTool(this);
+      this.canvas.css("cursor", "select");
+      break;
   }
 };
