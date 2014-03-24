@@ -1,4 +1,4 @@
-/*! penguinator - v3.4.5 - 2014-03-24
+/*! penguinator - v3.5.0 - 2014-03-24
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
