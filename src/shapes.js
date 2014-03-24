@@ -25,6 +25,7 @@ function createAnnotation(type) {
 // Shape superclass
 function SuperShape() {
   this.valid = false;
+  this.pts = [];
   this.type = 'none';
 }
 
@@ -40,13 +41,12 @@ SuperShape.fn.insPt = function(ind, pt) {};
 SuperShape.fn.delPt = function(ind) {};
 SuperShape.fn.getDrawPts = function() {return [];};
 SuperShape.fn.getExport = function() {return {};};
+SuperShape.fn.getNumPts = function() {return this.pts.length;};
 
 
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
-
-  this.pts = [];
 }
 RectAnn.prototype = Object.create(SuperShape.prototype);
 RectAnn.fn = RectAnn.prototype;
@@ -89,11 +89,45 @@ RectAnn.fn.getDrawPts = function() {
   return res;
 };
 
+RectAnn.fn.delPt = function(ind) {
+  // Deleting a rect point isn't meaningful -
+  // invalidate the shape
+  this.invalidate();
+};
+
 
 // Polygon shape definition //
 function PolyAnn() {
   SuperShape.call(this);
-  // TODO
 }
+
+PolyAnn.prototype = Object.create(SuperShape.prototype);
+PolyAnn.fn = PolyAnn.prototype;
+
+PolyAnn.fn.addPt = function(pt) {
+  if (this.pts.length === 0) {
+    this.pts = [pt, pt];
+  }
+  else {
+    this.pts.push(pt);
+  }
+
+  this.valid = true;
+  return true;
+};
+
+PolyAnn.fn.modLastPt = function(pt) {
+  if (this.pts.length > 0) {
+    this.pts[this.pts.length-1] = pt;
+  }
+};
+
+PolyAnn.fn.getDrawPts = function() {
+  return this.pts;
+};
+
+PolyAnn.fn.delPt = function(ind) {
+  this.pts.splice(ind);
+};
 
 /*jshint unused:true*/

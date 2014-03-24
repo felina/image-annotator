@@ -211,7 +211,7 @@ AnnHelper.fn.prevFtr = function() {
 // it will be removed when the next switch
 // occurs
 AnnHelper.fn.delAnn = function() {
-  this.getAnn().reset();
+  this.getAnn().invalidate();
 };
 
 // Select next annotation/start a new one
@@ -245,10 +245,9 @@ AnnHelper.fn.prevAnn = function() {
 // Annotation generation
 
 AnnHelper.fn.newAnn = function() {
-  var ann = createAnnotation(this.curType);
-  this.setAnn(ann);
-
-  return ann;
+  this.aInd = this.anns.length - 1;
+  this.nextAnn();
+  return this.getAnn();
 };
 
 //////////////////////////////////////////////////////

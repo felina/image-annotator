@@ -216,7 +216,7 @@ AnnHelper.fn.prevFtr = function() {
 // it will be removed when the next switch
 // occurs
 AnnHelper.fn.delAnn = function() {
-  this.getAnn().reset();
+  this.getAnn().invalidate();
 };
 
 // Select next annotation/start a new one
@@ -250,10 +250,9 @@ AnnHelper.fn.prevAnn = function() {
 // Annotation generation
 
 AnnHelper.fn.newAnn = function() {
-  var ann = createAnnotation(this.curType);
-  this.setAnn(ann);
-
-  return ann;
+  this.aInd = this.anns.length - 1;
+  this.nextAnn();
+  return this.getAnn();
 };
 
 //////////////////////////////////////////////////////
@@ -882,6 +881,7 @@ function createAnnotation(type) {
 // Shape superclass
 function SuperShape() {
   this.valid = false;
+  this.pts = [];
   this.type = 'none';
 }
 
@@ -897,13 +897,12 @@ SuperShape.fn.insPt = function(ind, pt) {};
 SuperShape.fn.delPt = function(ind) {};
 SuperShape.fn.getDrawPts = function() {return [];};
 SuperShape.fn.getExport = function() {return {};};
+SuperShape.fn.getNumPts = function() {return this.pts.length;};
 
 
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
-
-  this.pts = [];
 }
 RectAnn.prototype = Object.create(SuperShape.prototype);
 RectAnn.fn = RectAnn.prototype;
@@ -946,12 +945,46 @@ RectAnn.fn.getDrawPts = function() {
   return res;
 };
 
+RectAnn.fn.delPt = function(ind) {
+  // Deleting a rect point isn't meaningful -
+  // invalidate the shape
+  this.invalidate();
+};
+
 
 // Polygon shape definition //
 function PolyAnn() {
   SuperShape.call(this);
-  // TODO
 }
+
+PolyAnn.prototype = Object.create(SuperShape.prototype);
+PolyAnn.fn = PolyAnn.prototype;
+
+PolyAnn.fn.addPt = function(pt) {
+  if (this.pts.length === 0) {
+    this.pts = [pt, pt];
+  }
+  else {
+    this.pts.push(pt);
+  }
+
+  this.valid = true;
+  return true;
+};
+
+PolyAnn.fn.modLastPt = function(pt) {
+  if (this.pts.length > 0) {
+    this.pts[this.pts.length-1] = pt;
+  }
+};
+
+PolyAnn.fn.getDrawPts = function() {
+  return this.pts;
+};
+
+PolyAnn.fn.delPt = function(ind) {
+  this.pts.splice(ind);
+};
 
 /*jshint unused:true*/
 
@@ -964,7 +997,6 @@ function SuperTool() {
   this.y1 = 0;
 
   this.active = false;
-
 }
 
 SuperTool.fn = SuperTool.prototype;
@@ -1042,15 +1074,17 @@ AnnTool.fn.lbUp = function(x, y) {
 };
 
 // Double click - finish a polygon annotation
-// TODO!
 AnnTool.fn.lbDbl = function(x, y) {
-  // if (this.active) {
-  //   var a = this.parent;
-  //   this.active = false;
+  // NB: We get 2x 'up' events before the double-click
+  // Need to remove erroneous extra point
+  if (this.active) {
+    var a = this.parent;
+    this.active = false;
 
-  //   a.annHelper.endAnn();
-  //   a.updateControls();
-  // }
+    this.ann.delPt(-1);
+
+    a.updateControls();
+  }
 };
 
 // Mouse move - update last point

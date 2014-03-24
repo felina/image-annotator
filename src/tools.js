@@ -7,7 +7,6 @@ function SuperTool() {
   this.y1 = 0;
 
   this.active = false;
-
 }
 
 SuperTool.fn = SuperTool.prototype;
@@ -85,15 +84,17 @@ AnnTool.fn.lbUp = function(x, y) {
 };
 
 // Double click - finish a polygon annotation
-// TODO!
 AnnTool.fn.lbDbl = function(x, y) {
-  // if (this.active) {
-  //   var a = this.parent;
-  //   this.active = false;
+  // NB: We get 2x 'up' events before the double-click
+  // Need to remove erroneous extra point
+  if (this.active) {
+    var a = this.parent;
+    this.active = false;
 
-  //   a.annHelper.endAnn();
-  //   a.updateControls();
-  // }
+    this.ann.delPt(-1);
+
+    a.updateControls();
+  }
 };
 
 // Mouse move - update last point
