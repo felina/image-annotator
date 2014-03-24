@@ -95,6 +95,27 @@ RectAnn.fn.delPt = function(ind) {
   this.invalidate();
 };
 
+RectAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'rect';
+
+  var x0 = this.pts[0].x;
+  var y0 = this.pts[0].y;
+  var x1 = this.pts[1].x;
+  var y1 = this.pts[1].y;
+
+  var dx = Math.abs(x1-x0);
+  var dy = Math.abs(y1-y0);
+  var x = Math.min(x0, x1);
+  var y = Math.min(y0, y1);
+
+  res.pos = {x : x, y : y};
+  res.size = {width : dx, height : dy};
+
+  return res;
+};
+
 
 // Polygon shape definition //
 function PolyAnn() {
@@ -128,6 +149,20 @@ PolyAnn.fn.getDrawPts = function() {
 
 PolyAnn.fn.delPt = function(ind) {
   this.pts.splice(ind);
+
+  if (this.pts.length < 2) {
+    this.invalidate();
+    this.pts = [];
+  }
+};
+
+PolyAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'poly';
+  res.points = this.pts;
+
+  return res;
 };
 
 /*jshint unused:true*/

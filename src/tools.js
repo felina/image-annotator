@@ -92,8 +92,9 @@ AnnTool.fn.lbDbl = function(x, y) {
     this.active = false;
 
     this.ann.delPt(-1);
+    this.ann.delPt(-1);
 
-    a.updateControls();
+    a.showChange();
   }
 };
 

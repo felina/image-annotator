@@ -125,28 +125,8 @@ AnnHelper.fn.exportAnns = function() {
         continue;
       }
 
-      // The shape as it's output
-      var s = {};
-      s.type = ann.type;
-
-      if (s.type === 'rect') {
-        var x0 = ann.pts[0].x;
-        var y0 = ann.pts[0].y;
-        var x1 = ann.pts[1].x;
-        var y1 = ann.pts[1].y;
-
-        var dx = Math.abs(x1-x0);
-        var dy = Math.abs(y1-y0);
-        var x = Math.min(x0, x1);
-        var y = Math.min(y0, y1);
-
-        s.pos = {x : x, y : y};
-        s.size = {width : dx, height : dy};
-      }
-      else {
-        s.points = ann.pts;
-      }
-
+      // Get the export data from the shape
+      var s = ann.getExport();
       out[f.name].shapes.push(s);
     }
   }

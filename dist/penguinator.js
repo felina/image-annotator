@@ -130,28 +130,8 @@ AnnHelper.fn.exportAnns = function() {
         continue;
       }
 
-      // The shape as it's output
-      var s = {};
-      s.type = ann.type;
-
-      if (s.type === 'rect') {
-        var x0 = ann.pts[0].x;
-        var y0 = ann.pts[0].y;
-        var x1 = ann.pts[1].x;
-        var y1 = ann.pts[1].y;
-
-        var dx = Math.abs(x1-x0);
-        var dy = Math.abs(y1-y0);
-        var x = Math.min(x0, x1);
-        var y = Math.min(y0, y1);
-
-        s.pos = {x : x, y : y};
-        s.size = {width : dx, height : dy};
-      }
-      else {
-        s.points = ann.pts;
-      }
-
+      // Get the export data from the shape
+      var s = ann.getExport();
       out[f.name].shapes.push(s);
     }
   }
@@ -398,7 +378,6 @@ Annotator.fn.update = function(img, w, h) {
   if (this.img !== null) {
     this.img.load(function(){
       a.cHelper.imgLoaded(a.img);
-      console.log('img loaded');
     });
   }
   
@@ -950,6 +929,27 @@ RectAnn.fn.delPt = function(ind) {
   this.invalidate();
 };
 
+RectAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'rect';
+
+  var x0 = this.pts[0].x;
+  var y0 = this.pts[0].y;
+  var x1 = this.pts[1].x;
+  var y1 = this.pts[1].y;
+
+  var dx = Math.abs(x1-x0);
+  var dy = Math.abs(y1-y0);
+  var x = Math.min(x0, x1);
+  var y = Math.min(y0, y1);
+
+  res.pos = {x : x, y : y};
+  res.size = {width : dx, height : dy};
+
+  return res;
+};
+
 
 // Polygon shape definition //
 function PolyAnn() {
@@ -983,6 +983,20 @@ PolyAnn.fn.getDrawPts = function() {
 
 PolyAnn.fn.delPt = function(ind) {
   this.pts.splice(ind);
+
+  if (this.pts.length < 2) {
+    this.invalidate();
+    this.pts = [];
+  }
+};
+
+PolyAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'poly';
+  res.points = this.pts;
+
+  return res;
 };
 
 /*jshint unused:true*/
@@ -1081,8 +1095,9 @@ AnnTool.fn.lbDbl = function(x, y) {
     this.active = false;
 
     this.ann.delPt(-1);
+    this.ann.delPt(-1);
 
-    a.updateControls();
+    a.showChange();
   }
 };
 
