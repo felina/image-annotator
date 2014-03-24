@@ -116,8 +116,6 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
     g.lineTo(pts[i].x, pts[i].y);
   }
 
-  g.lineTo(pts[0].x, pts[0].y);
-
   g.strokeStyle = col[cInd];
   g.lineWidth = 1.5 / this.curScale;
   g.stroke();

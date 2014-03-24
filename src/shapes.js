@@ -12,16 +12,6 @@ function createAnnotation(type) {
   }
 }
 
-// TODO: Something with this
-// Annotation.prototype.reset = function(type) {
-//   this.valid = false;
-//   this.pts = [{x:0,y:0}, {x:0,y:0}];
-
-//   if (type != null) {
-//     this.type = type;
-//   }
-// };
-
 // Shape superclass
 function SuperShape() {
   this.valid = false;
@@ -75,6 +65,10 @@ RectAnn.fn.modLastPt = function(pt) {
 };
 
 RectAnn.fn.getDrawPts = function() {
+  if (!this.valid) {
+    return [];
+  }
+
   var res = [];
 
   var x0 = this.pts[0].x;
@@ -156,7 +150,7 @@ PolyAnn.fn.modLastPt = function(pt) {
 };
 
 PolyAnn.fn.getDrawPts = function() {
-  return this.pts;
+  return this.pts.concat([this.pts[0]]);
 };
 
 PolyAnn.fn.delPt = function(ind) {

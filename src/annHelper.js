@@ -266,6 +266,60 @@ AnnHelper.fn.pickPt = function(x, y) {
   return pick;
 };
 
+// Pick the closest annotation line to
+// the given image-space point
+// Returns the closest point on the line, the
+// annotation which holds the line, and the indices
+// of the endpoints which define the line
+AnnHelper.fn.pickLn = function(x, y) {
+  var pick = {};
+  pick.pt = null;
+  pick.dist = Infinity;
+  pick.ann = null;
+  pick.i0 = 0;
+  pick.i1 = 0;
+
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var anns = this.ftrs[f].anns;
+    for (var a = 0; a < anns.length; a++) {
+      var ann = anns[a];
+      var pts = ann.getDrawPts();
+      for (var p = 0; p < pts.length-1; p++) {
+        // (For every line currently in the annotator)
+        var i0 = p;
+        var i1 = p+1;
+
+        // These points define the line
+        var p0 = pts[i0];
+        var p1 = pts[i1];
+
+        // 'u' defines a percentage along the line the closest point lies at
+        var u = ((x - p0.x)*(p1.x - p0.x) + (y - p0.y)*(p1.y - p0.y)) /
+                (Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
+        u = Math.min(Math.max(u, 0), 1); // limit the range of 'u'
+
+        // 'pu' is the closest point on the line
+        var pu = {};
+        pu.x = p0.x + u*(p1.x - p0.x);
+        pu.y = p0.y + u*(p1.y - p0.y);
+
+        var d = Math.sqrt(Math.pow(x-pu.x,2) + Math.pow(y-pu.y,2));
+
+        // We're finding the closest "closest point"
+        if (d < pick.dist) {
+          pick.dist = d;
+          pick.pt = pu;
+          pick.ann = ann;
+          pick.i0 = i0;
+          pick.i1 = i1;
+        }
+      }
+    }
+  }
+
+  return pick;
+};
+
 
 //////////////////////////////////////////////////////
 // Misc functions

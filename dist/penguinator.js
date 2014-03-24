@@ -271,6 +271,60 @@ AnnHelper.fn.pickPt = function(x, y) {
   return pick;
 };
 
+// Pick the closest annotation line to
+// the given image-space point
+// Returns the closest point on the line, the
+// annotation which holds the line, and the indices
+// of the endpoints which define the line
+AnnHelper.fn.pickLn = function(x, y) {
+  var pick = {};
+  pick.pt = null;
+  pick.dist = Infinity;
+  pick.ann = null;
+  pick.i0 = 0;
+  pick.i1 = 0;
+
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var anns = this.ftrs[f].anns;
+    for (var a = 0; a < anns.length; a++) {
+      var ann = anns[a];
+      var pts = ann.getDrawPts();
+      for (var p = 0; p < pts.length-1; p++) {
+        // (For every line currently in the annotator)
+        var i0 = p;
+        var i1 = p+1;
+
+        // These points define the line
+        var p0 = pts[i0];
+        var p1 = pts[i1];
+
+        // 'u' defines a percentage along the line the closest point lies at
+        var u = ((x - p0.x)*(p1.x - p0.x) + (y - p0.y)*(p1.y - p0.y)) /
+                (Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
+        u = Math.min(Math.max(u, 0), 1); // limit the range of 'u'
+
+        // 'pu' is the closest point on the line
+        var pu = {};
+        pu.x = p0.x + u*(p1.x - p0.x);
+        pu.y = p0.y + u*(p1.y - p0.y);
+
+        var d = Math.sqrt(Math.pow(x-pu.x,2) + Math.pow(y-pu.y,2));
+
+        // We're finding the closest "closest point"
+        if (d < pick.dist) {
+          pick.dist = d;
+          pick.pt = pu;
+          pick.ann = ann;
+          pick.i0 = i0;
+          pick.i1 = i1;
+        }
+      }
+    }
+  }
+
+  return pick;
+};
+
 
 //////////////////////////////////////////////////////
 // Misc functions
@@ -789,8 +843,6 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
     g.lineTo(pts[i].x, pts[i].y);
   }
 
-  g.lineTo(pts[0].x, pts[0].y);
-
   g.strokeStyle = col[cInd];
   g.lineWidth = 1.5 / this.curScale;
   g.stroke();
@@ -933,16 +985,6 @@ function createAnnotation(type) {
   }
 }
 
-// TODO: Something with this
-// Annotation.prototype.reset = function(type) {
-//   this.valid = false;
-//   this.pts = [{x:0,y:0}, {x:0,y:0}];
-
-//   if (type != null) {
-//     this.type = type;
-//   }
-// };
-
 // Shape superclass
 function SuperShape() {
   this.valid = false;
@@ -996,6 +1038,10 @@ RectAnn.fn.modLastPt = function(pt) {
 };
 
 RectAnn.fn.getDrawPts = function() {
+  if (!this.valid) {
+    return [];
+  }
+
   var res = [];
 
   var x0 = this.pts[0].x;
@@ -1077,7 +1123,7 @@ PolyAnn.fn.modLastPt = function(pt) {
 };
 
 PolyAnn.fn.getDrawPts = function() {
-  return this.pts;
+  return this.pts.concat([this.pts[0]]);
 };
 
 PolyAnn.fn.delPt = function(ind) {
@@ -1246,7 +1292,18 @@ EditTool.fn.passiveMove = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
 
-  var pick = anh.pickPt(x, y);
+  var pickpt = anh.pickPt(x, y);
+  var pickln = anh.pickLn(x, y);
+  var pick;
+
+  // Compare line and point distances
+  // NB could combine in line function...?
+  if (pickpt.dist < pickln.dist) {
+    pick = pickpt;
+  }
+  else {
+    pick = pickln;
+  }
 
   if (pick.dist < 15) {
     c.setHlt(pick.ann);

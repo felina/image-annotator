@@ -144,7 +144,18 @@ EditTool.fn.passiveMove = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
 
-  var pick = anh.pickPt(x, y);
+  var pickpt = anh.pickPt(x, y);
+  var pickln = anh.pickLn(x, y);
+  var pick;
+
+  // Compare line and point distances
+  // NB could combine in line function...?
+  if (pickpt.dist < pickln.dist) {
+    pick = pickpt;
+  }
+  else {
+    pick = pickln;
+  }
 
   if (pick.dist < 15) {
     c.setHlt(pick.ann);
