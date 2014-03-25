@@ -20,12 +20,30 @@ function AnnHelper(parent) {
 }
 AnnHelper.fn = AnnHelper.prototype;
 
+// Returns the current annotation
 AnnHelper.fn.getAnn = function() {
   return this.anns[this.aInd];
 };
 
-AnnHelper.fn.setAnn = function(ann) {
+// Replaces the currently selected annotation
+AnnHelper.fn.replaceAnn = function(ann) {
   this.anns[this.aInd] = ann;
+};
+
+// Sets the selection to an existing annotation
+AnnHelper.fn.setAnn = function(ann) {
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var ftr = this.ftrs[f];
+    for (var a = 0; a < ftr.anns.length; a++) {
+      var foundA = ftr.anns[a];
+      if (foundA === ann) {
+        this.fInd = f;
+        this.aInd = a;
+        this.anns = this.getFtr().anns;
+        return;
+      }
+    }
+  }
 };
 
 AnnHelper.fn.getFtr = function() {
@@ -185,48 +203,18 @@ AnnHelper.fn.prevFtr = function() {
 
 
 //////////////////////////////////////////////////////
-// Annotation selection
+// Annotation operations
 
 // Invalidates the current annotation -
-// it will be removed when the next switch
-// occurs
+// it is effectively deleted
 AnnHelper.fn.delAnn = function() {
   this.getAnn().invalidate();
 };
 
-// Select next annotation/start a new one
-// Jumps to next ann index, creates a new annotation
-// if we hit the end of the list
-AnnHelper.fn.nextAnn = function() {
-  this.aInd++;
-
-  if (this.aInd === this.anns.length) {
-    this.anns.push(createAnnotation(this.curType));
-  }
-
-  this.clrInvalid();
-  this.parent.showChange();
-};
-
-// Select previous annotation, if one exists
-AnnHelper.fn.prevAnn = function() {
-  this.aInd--;
-
-  if (this.aInd < 0) {
-    this.aInd = 0;
-  }
-
-  this.clrInvalid();
-  this.parent.showChange();
-};
-
-
-//////////////////////////////////////////////////////
-// Annotation generation
-
+// Creates a new annotation
 AnnHelper.fn.newAnn = function() {
+  this.anns.push(createAnnotation(this.curType));
   this.aInd = this.anns.length - 1;
-  this.nextAnn();
   return this.getAnn();
 };
 
@@ -278,6 +266,7 @@ AnnHelper.fn.pickLn = function(x, y) {
   pick.ann = null;
   pick.i0 = 0;
   pick.i1 = 0;
+  pick.endpt = false;
 
   for (var f = 0; f < this.ftrs.length; f++) {
     var anns = this.ftrs[f].anns;
@@ -296,7 +285,18 @@ AnnHelper.fn.pickLn = function(x, y) {
         // 'u' defines a percentage along the line the closest point lies at
         var u = ((x - p0.x)*(p1.x - p0.x) + (y - p0.y)*(p1.y - p0.y)) /
                 (Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
-        u = Math.min(Math.max(u, 0), 1); // limit the range of 'u'
+
+        // Limit the range of u, and register if
+        // it's an endpoint
+        var endpt = false;
+        if (u <= 0) {
+          u = 0;
+          endpt = true;
+        }
+        else if (u >= 1) {
+          u = 1;
+          endpt = true;
+        }
 
         // 'pu' is the closest point on the line
         var pu = {};
@@ -312,6 +312,7 @@ AnnHelper.fn.pickLn = function(x, y) {
           pick.ann = ann;
           pick.i0 = i0;
           pick.i1 = i1;
+          pick.endpt = endpt;
         }
       }
     }

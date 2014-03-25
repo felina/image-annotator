@@ -27,8 +27,6 @@ function Annotator(img, w, h) {
   this.annotate = null;
   this.edit = null;
   this.annType = null;
-  this.nextAnn = null;
-  this.prevAnn = null;
   this.delAnn = null;
 
   this.nextFtr = null;
@@ -147,14 +145,11 @@ Annotator.fn.build = function($parent) {
                       .css("margin-right", "20px");
 
   this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
-  this.prevAnn   = $('<button id="prevAnn">&lt</button>').appendTo($parent);
-
   this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
   this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent);
-  this.nextAnn   = $('<button id="nextAnn">&gt</button>').appendTo($parent);
   this.nextFtr   = $('<button id="nextAnn">&gt&gt</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
@@ -209,10 +204,6 @@ Annotator.fn.build = function($parent) {
     a.updateControls();
     a.cHelper.repaint();
   });
-
-  // Annotations - next/prev
-  this.prevAnn.click(function() { a.annHelper.prevAnn(); });
-  this.nextAnn.click(function() { a.annHelper.nextAnn(); });
 
   // Features next/prev
   this.prevFtr.click(function() { a.annHelper.prevFtr(); });
@@ -272,17 +263,6 @@ Annotator.fn.updateControls = function() {
 
   this.prevFtr.prop('disabled', ath.fInd === 0 || !this.img);
   this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1 || !this.img);
-  this.prevAnn.prop('disabled', ath.aInd === 0 || !this.img);
-
-  // Logic for enabling the 'next annribute' button
-  var ind = ath.anns.indexOf(ath.getAnn())+1;
-  var nextValid = false;
-
-  if (ind < ath.anns.length) {
-    nextValid = ath.anns[ind].valid;
-  }
-
-  this.nextAnn.prop('disabled', !ath.getAnn().valid && !nextValid || !this.img);
   this.delAnn.prop('disabled', !ath.getAnn().valid || !this.img);
 
   this.zoomin.prop('disabled', !this.img);

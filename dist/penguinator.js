@@ -1,4 +1,4 @@
-/*! penguinator - v3.5.0 - 2014-03-24
+/*! penguinator - v3.5.0 - 2014-03-25
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
@@ -25,12 +25,30 @@ function AnnHelper(parent) {
 }
 AnnHelper.fn = AnnHelper.prototype;
 
+// Returns the current annotation
 AnnHelper.fn.getAnn = function() {
   return this.anns[this.aInd];
 };
 
-AnnHelper.fn.setAnn = function(ann) {
+// Replaces the currently selected annotation
+AnnHelper.fn.replaceAnn = function(ann) {
   this.anns[this.aInd] = ann;
+};
+
+// Sets the selection to an existing annotation
+AnnHelper.fn.setAnn = function(ann) {
+  for (var f = 0; f < this.ftrs.length; f++) {
+    var ftr = this.ftrs[f];
+    for (var a = 0; a < ftr.anns.length; a++) {
+      var foundA = ftr.anns[a];
+      if (foundA === ann) {
+        this.fInd = f;
+        this.aInd = a;
+        this.anns = this.getFtr().anns;
+        return;
+      }
+    }
+  }
 };
 
 AnnHelper.fn.getFtr = function() {
@@ -190,48 +208,18 @@ AnnHelper.fn.prevFtr = function() {
 
 
 //////////////////////////////////////////////////////
-// Annotation selection
+// Annotation operations
 
 // Invalidates the current annotation -
-// it will be removed when the next switch
-// occurs
+// it is effectively deleted
 AnnHelper.fn.delAnn = function() {
   this.getAnn().invalidate();
 };
 
-// Select next annotation/start a new one
-// Jumps to next ann index, creates a new annotation
-// if we hit the end of the list
-AnnHelper.fn.nextAnn = function() {
-  this.aInd++;
-
-  if (this.aInd === this.anns.length) {
-    this.anns.push(createAnnotation(this.curType));
-  }
-
-  this.clrInvalid();
-  this.parent.showChange();
-};
-
-// Select previous annotation, if one exists
-AnnHelper.fn.prevAnn = function() {
-  this.aInd--;
-
-  if (this.aInd < 0) {
-    this.aInd = 0;
-  }
-
-  this.clrInvalid();
-  this.parent.showChange();
-};
-
-
-//////////////////////////////////////////////////////
-// Annotation generation
-
+// Creates a new annotation
 AnnHelper.fn.newAnn = function() {
+  this.anns.push(createAnnotation(this.curType));
   this.aInd = this.anns.length - 1;
-  this.nextAnn();
   return this.getAnn();
 };
 
@@ -283,6 +271,7 @@ AnnHelper.fn.pickLn = function(x, y) {
   pick.ann = null;
   pick.i0 = 0;
   pick.i1 = 0;
+  pick.endpt = false;
 
   for (var f = 0; f < this.ftrs.length; f++) {
     var anns = this.ftrs[f].anns;
@@ -301,7 +290,18 @@ AnnHelper.fn.pickLn = function(x, y) {
         // 'u' defines a percentage along the line the closest point lies at
         var u = ((x - p0.x)*(p1.x - p0.x) + (y - p0.y)*(p1.y - p0.y)) /
                 (Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
-        u = Math.min(Math.max(u, 0), 1); // limit the range of 'u'
+
+        // Limit the range of u, and register if
+        // it's an endpoint
+        var endpt = false;
+        if (u <= 0) {
+          u = 0;
+          endpt = true;
+        }
+        else if (u >= 1) {
+          u = 1;
+          endpt = true;
+        }
 
         // 'pu' is the closest point on the line
         var pu = {};
@@ -317,6 +317,7 @@ AnnHelper.fn.pickLn = function(x, y) {
           pick.ann = ann;
           pick.i0 = i0;
           pick.i1 = i1;
+          pick.endpt = endpt;
         }
       }
     }
@@ -381,8 +382,6 @@ function Annotator(img, w, h) {
   this.annotate = null;
   this.edit = null;
   this.annType = null;
-  this.nextAnn = null;
-  this.prevAnn = null;
   this.delAnn = null;
 
   this.nextFtr = null;
@@ -501,14 +500,11 @@ Annotator.fn.build = function($parent) {
                       .css("margin-right", "20px");
 
   this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
-  this.prevAnn   = $('<button id="prevAnn">&lt</button>').appendTo($parent);
-
   this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
   this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent);
-  this.nextAnn   = $('<button id="nextAnn">&gt</button>').appendTo($parent);
   this.nextFtr   = $('<button id="nextAnn">&gt&gt</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
@@ -563,10 +559,6 @@ Annotator.fn.build = function($parent) {
     a.updateControls();
     a.cHelper.repaint();
   });
-
-  // Annotations - next/prev
-  this.prevAnn.click(function() { a.annHelper.prevAnn(); });
-  this.nextAnn.click(function() { a.annHelper.nextAnn(); });
 
   // Features next/prev
   this.prevFtr.click(function() { a.annHelper.prevFtr(); });
@@ -626,17 +618,6 @@ Annotator.fn.updateControls = function() {
 
   this.prevFtr.prop('disabled', ath.fInd === 0 || !this.img);
   this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1 || !this.img);
-  this.prevAnn.prop('disabled', ath.aInd === 0 || !this.img);
-
-  // Logic for enabling the 'next annribute' button
-  var ind = ath.anns.indexOf(ath.getAnn())+1;
-  var nextValid = false;
-
-  if (ind < ath.anns.length) {
-    nextValid = ath.anns[ind].valid;
-  }
-
-  this.nextAnn.prop('disabled', !ath.getAnn().valid && !nextValid || !this.img);
   this.delAnn.prop('disabled', !ath.getAnn().valid || !this.img);
 
   this.zoomin.prop('disabled', !this.img);
@@ -823,7 +804,7 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var cInd = 0;
   var drawPts = false;
 
-  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann) {
+  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann && !this.hlt) {
     cInd = 1;
     fillCol = col[1];
     drawPts = true;
@@ -1268,7 +1249,7 @@ AnnTool.fn.mMove = function(x, y) {
 function EditTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
-  this.ann = null;
+  this.canEdit = false;
 }
 EditTool.prototype = Object.create(SuperTool.prototype);
 EditTool.fn = EditTool.prototype;
@@ -1280,30 +1261,33 @@ EditTool.fn.mMove = function(x, y) {
   y -= offset.top;
   var pt = this.parent.cHelper.ptToImg(x, y);
 
-  if (this.ann === null) {
-    this.passiveMove(pt.x, pt.y);
-    a.showChange();
-  }
+  this.passiveMove(pt.x, pt.y);
+  a.showChange();
+
   // TODO: Active move code (for modifications)
+};
+
+EditTool.fn.lbUp = function(x, y) {
+  var a = this.parent;
+  var offset = a.canvas.offset();
+  x -= offset.left;
+  y -= offset.top;
+  var pt = this.parent.cHelper.ptToImg(x, y);
+
+  if (!this.canEdit) {
+    // Make a new selection
+    var pick = this.getPick(pt.x, pt.y);
+
+    if (pick.dist < 15) {
+      a.annHelper.setAnn(pick.ann);
+    }
+  }
 };
 
 // Highlight annotations under the cursor
 EditTool.fn.passiveMove = function(x, y) {
-  var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
-
-  var pickpt = anh.pickPt(x, y);
-  var pickln = anh.pickLn(x, y);
-  var pick;
-
-  // Compare line and point distances
-  // NB could combine in line function...?
-  if (pickpt.dist < pickln.dist) {
-    pick = pickpt;
-  }
-  else {
-    pick = pickln;
-  }
+  var pick = this.getPick(x, y);
 
   if (pick.dist < 15) {
     c.setHlt(pick.ann);
@@ -1311,7 +1295,34 @@ EditTool.fn.passiveMove = function(x, y) {
   else {
     c.setHlt(null);
   }
+
+  if (pick.ann === this.parent.annHelper.getAnn()) {
+    this.canEdit = true;
+  }
+  else {
+    this.canEdit = false;
+  }
 };
+
+EditTool.fn.getPick = function(x, y) {
+  var anh = this.parent.annHelper;
+  var pickpt = anh.pickPt(x, y);
+  var pickln = anh.pickLn(x, y);
+  var pick;
+
+  // Compare line and point distances
+  // Could combine in line function...?
+  if (pickpt.dist < pickln.dist || pickln.endpt) {
+    pick = pickpt;
+  }
+  else {
+    pick = pickln;
+  }
+
+  return pick;
+};
+
+// Selection
 
 /*jshint unused:true*/
 

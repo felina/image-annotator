@@ -120,7 +120,7 @@ AnnTool.fn.mMove = function(x, y) {
 function EditTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
-  this.ann = null;
+  this.canEdit = false;
 }
 EditTool.prototype = Object.create(SuperTool.prototype);
 EditTool.fn = EditTool.prototype;
@@ -132,30 +132,33 @@ EditTool.fn.mMove = function(x, y) {
   y -= offset.top;
   var pt = this.parent.cHelper.ptToImg(x, y);
 
-  if (this.ann === null) {
-    this.passiveMove(pt.x, pt.y);
-    a.showChange();
-  }
+  this.passiveMove(pt.x, pt.y);
+  a.showChange();
+
   // TODO: Active move code (for modifications)
+};
+
+EditTool.fn.lbUp = function(x, y) {
+  var a = this.parent;
+  var offset = a.canvas.offset();
+  x -= offset.left;
+  y -= offset.top;
+  var pt = this.parent.cHelper.ptToImg(x, y);
+
+  if (!this.canEdit) {
+    // Make a new selection
+    var pick = this.getPick(pt.x, pt.y);
+
+    if (pick.dist < 15) {
+      a.annHelper.setAnn(pick.ann);
+    }
+  }
 };
 
 // Highlight annotations under the cursor
 EditTool.fn.passiveMove = function(x, y) {
-  var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
-
-  var pickpt = anh.pickPt(x, y);
-  var pickln = anh.pickLn(x, y);
-  var pick;
-
-  // Compare line and point distances
-  // NB could combine in line function...?
-  if (pickpt.dist < pickln.dist) {
-    pick = pickpt;
-  }
-  else {
-    pick = pickln;
-  }
+  var pick = this.getPick(x, y);
 
   if (pick.dist < 15) {
     c.setHlt(pick.ann);
@@ -163,6 +166,33 @@ EditTool.fn.passiveMove = function(x, y) {
   else {
     c.setHlt(null);
   }
+
+  if (pick.ann === this.parent.annHelper.getAnn()) {
+    this.canEdit = true;
+  }
+  else {
+    this.canEdit = false;
+  }
 };
+
+EditTool.fn.getPick = function(x, y) {
+  var anh = this.parent.annHelper;
+  var pickpt = anh.pickPt(x, y);
+  var pickln = anh.pickLn(x, y);
+  var pick;
+
+  // Compare line and point distances
+  // Could combine in line function...?
+  if (pickpt.dist < pickln.dist || pickln.endpt) {
+    pick = pickpt;
+  }
+  else {
+    pick = pickln;
+  }
+
+  return pick;
+};
+
+// Selection
 
 /*jshint unused:true*/
