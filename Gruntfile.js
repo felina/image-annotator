@@ -6,22 +6,12 @@ module.exports = function(grunt) {
       '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' +
       '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author %>;' +
       ' Licensed <%= pkg.license %> */\n',
-    concat: {
-      options: {
-        banner: '<%= banner %>',
-        stripBanners: true
-      },
-      dist: {
-        src: ['src/wrap/intro.js', 'src/*.js', 'src/shapes/*.js', 'src/tools/*.js', 'src/wrap/outro.js'],
-        dest: 'dist/penguinator.js'
-      }
-    },
     uglify: {
       options: {
         banner: '<%= banner %>'
       },
       dist: {
-        src: '<%= concat.dist.dest %>',
+        src: 'dist/penguinator.js',
         dest: 'dist/<%= pkg.name %>.min.js'
       }
     },
@@ -51,7 +41,7 @@ module.exports = function(grunt) {
         src: 'Gruntfile.js'
       },
       lib_test: {
-        src: ['dist/penguinator.js']
+        src: ['src/*.js', 'src/tools/*.js', 'src/shapes/*.js']
       }
     },
     qunit: {
@@ -77,8 +67,8 @@ module.exports = function(grunt) {
   require('load-grunt-tasks')(grunt);
 
   grunt.registerTask('default', [
+    'jshint',
     'browserify:compile',
-    //'jshint',
     'uglify'
   ]);
 };

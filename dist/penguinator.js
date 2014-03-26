@@ -743,7 +743,7 @@ module.exports = Annotator;
 var Annotator = require('./annotator');
 
 // The annotator function - appplicable to any jQuery object collection
-exports.annotator = function(input) {
+module.exports.annotator = function(input) {
   var w, h;
 
   if (typeof input.src !== "undefined") {
@@ -1571,7 +1571,7 @@ var RectAnn = require('./shapes/rect');
 var PolyAnn = require('./shapes/poly');
 
 // Annotations - as distinct on the canvas
-exports.createAnnotation = function createAnnotation(type) {
+module.exports.createAnnotation = function createAnnotation(type) {
   switch (type) {
     case 'rect':
       return new RectAnn();
