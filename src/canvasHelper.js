@@ -72,6 +72,11 @@ CanvasHelper.fn.repaint = function() {
       this.drawAnn(ftr.anns[i], f);
     }
   }
+
+  // Tools
+  if (this.parent.curTool) {
+    this.parent.curTool.draw(g);
+  }
 };
 
 // Annotation draw op
@@ -218,8 +223,12 @@ CanvasHelper.fn.setHlt = function(ann) {
   this.hlt = ann;
 };
 
-// Canvas to image space
+// Screen to image space
 CanvasHelper.fn.ptToImg = function(xin, yin) {
+  var offset = this.canvas.offset();
+  xin -= offset.left;
+  yin -= offset.top;
+
   var a = this;
   var x = (xin-a.w/2-a.xOffs)/a.curScale;
   var y = (yin-a.h/2-a.yOffs)/a.curScale;
@@ -232,4 +241,9 @@ CanvasHelper.fn.ptToImg = function(xin, yin) {
   var out = {x:x,y:y};
 
   return out;
+};
+
+// Scales a distance to image space
+CanvasHelper.fn.scaleDist = function(dist) {
+  return dist / this.curScale;
 };

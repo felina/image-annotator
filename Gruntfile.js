@@ -12,7 +12,7 @@ module.exports = function(grunt) {
         stripBanners: true
       },
       dist: {
-        src: ['src/wrap/intro.js', 'src/*.js', 'src/wrap/outro.js'],
+        src: ['src/wrap/intro.js', 'src/*.js', 'src/shapes/*.js', 'src/tools/*.js', 'src/wrap/outro.js'],
         dest: 'dist/penguinator.js'
       }
     },

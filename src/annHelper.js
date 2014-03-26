@@ -256,6 +256,7 @@ AnnHelper.fn.pickPt = function(x, y) {
   pick.pt = null;
   pick.dist = Infinity;
   pick.ann = null;
+  pick.ind = 0;
 
   for (var f = 0; f < this.ftrs.length; f++) {
     var anns = this.ftrs[f].anns;
@@ -270,6 +271,7 @@ AnnHelper.fn.pickPt = function(x, y) {
         if (d < pick.dist) {
           pick.dist = d;
           pick.pt = pt;
+          pick.ind = p;
           pick.ann = ann;
         }
       }

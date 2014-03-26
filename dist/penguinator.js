@@ -261,6 +261,7 @@ AnnHelper.fn.pickPt = function(x, y) {
   pick.pt = null;
   pick.dist = Infinity;
   pick.ann = null;
+  pick.ind = 0;
 
   for (var f = 0; f < this.ftrs.length; f++) {
     var anns = this.ftrs[f].anns;
@@ -275,6 +276,7 @@ AnnHelper.fn.pickPt = function(x, y) {
         if (d < pick.dist) {
           pick.dist = d;
           pick.pt = pt;
+          pick.ind = p;
           pick.ann = ann;
         }
       }
@@ -550,6 +552,7 @@ Annotator.fn.build = function($parent) {
                       .css(canvascss)
                       .appendTo(this.container);
   this.canvas[0].onselectstart = function(){return false;};
+  this.canvas[0].oncontextmenu = function(){return false;};
 
   // Generate the canvas helper
   this.cHelper = new CanvasHelper(this);
@@ -606,11 +609,33 @@ Annotator.fn.build = function($parent) {
   // Mouse operations - call the tool handlers
   this.canvas.mousedown(function(e){ 
     if (a.img) {
-      a.curTool.lbDown(e.pageX, e.pageY);
+      switch (e.which) {
+        case 1:
+          a.curTool.lbDown(e.pageX, e.pageY);
+          break;
+        case 3:
+          e.preventDefault();
+          a.curTool.rbDown(e.pageX, e.pageY);
+          break;
+      }
     }
   });
+
   this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
-  this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
+
+  this.canvas.mouseup(function(e){
+    if (a.img) {
+      switch (e.which) {
+        case 1:
+          a.curTool.lbUp(e.pageX, e.pageY);
+          break;
+        case 3:
+          e.preventDefault();
+          a.curTool.rbUp(e.pageX, e.pageY);
+          break;
+      }
+    }
+  });
 
   this.canvas.dblclick(function(e){
     a.curTool.lbDbl(e.pageX, e.pageY);
@@ -826,6 +851,11 @@ CanvasHelper.fn.repaint = function() {
       this.drawAnn(ftr.anns[i], f);
     }
   }
+
+  // Tools
+  if (this.parent.curTool) {
+    this.parent.curTool.draw(g);
+  }
 };
 
 // Annotation draw op
@@ -972,8 +1002,12 @@ CanvasHelper.fn.setHlt = function(ann) {
   this.hlt = ann;
 };
 
-// Canvas to image space
+// Screen to image space
 CanvasHelper.fn.ptToImg = function(xin, yin) {
+  var offset = this.canvas.offset();
+  xin -= offset.left;
+  yin -= offset.top;
+
   var a = this;
   var x = (xin-a.w/2-a.xOffs)/a.curScale;
   var y = (yin-a.h/2-a.yOffs)/a.curScale;
@@ -986,6 +1020,11 @@ CanvasHelper.fn.ptToImg = function(xin, yin) {
   var out = {x:x,y:y};
 
   return out;
+};
+
+// Scales a distance to image space
+CanvasHelper.fn.scaleDist = function(dist) {
+  return dist / this.curScale;
 };
 
 // Features to be annotated
@@ -1039,15 +1078,112 @@ SuperShape.fn.getDrawPts = function() {return [];};
 SuperShape.fn.getExport = function() {return {};};
 SuperShape.fn.getNumPts = function() {return this.pts.length;};
 SuperShape.fn.getPts = function() {return this.pts;};
+SuperShape.fn.canInsPt = function() {return false;};
+/*jshint unused:true*/
 
+// Base tool class defn //
+function SuperTool() {
+  this.x0 = 0;
+  this.x1 = 0;
+  this.y0 = 0;
+  this.y1 = 0;
 
+  this.active = false;
+}
+
+SuperTool.fn = SuperTool.prototype;
+
+/*jshint unused:vars*/
+SuperTool.fn.lbDown = function(x, y) {};
+SuperTool.fn.lbUp   = function(x, y) {};
+SuperTool.fn.lbDbl  = function(x, y) {};
+SuperTool.fn.rbDown = function(x, y) {};
+SuperTool.fn.rbUp   = function(x, y) {};
+SuperTool.fn.mMove  = function(x, y) {};
+SuperTool.fn.draw   = function(g) {};
+/*jshint unused:true*/
+
+// Polygon shape definition //
+function PolyAnn() {
+  SuperShape.call(this);
+  this.type = 'poly';
+}
+
+PolyAnn.prototype = Object.create(SuperShape.prototype);
+PolyAnn.fn = PolyAnn.prototype;
+
+/*jshint unused:vars*/
+
+PolyAnn.fn.addPt = function(pt) {
+  if (this.pts.length === 0) {
+    this.pts = [pt, pt];
+  }
+  else {
+    this.pts.push(pt);
+  }
+
+  this.valid = true;
+  return true;
+};
+
+// Insert a point at the given index
+PolyAnn.fn.insPt = function(ind, pt) {
+  if (ind < 0 || ind > this.pts.length) {
+    return;
+  }
+
+  this.pts.splice(ind, 0, pt);
+};
+
+PolyAnn.fn.canInsPt = function() {
+  return true;
+};
+
+PolyAnn.fn.modLastPt = function(pt) {
+  if (this.pts.length > 0) {
+    this.pts[this.pts.length-1] = pt;
+  }
+};
+
+PolyAnn.fn.modPt = function(ind, pt) {
+  if (ind >= 0 && ind < this.pts.length) {
+    this.pts[ind] = pt;
+  }
+};
+
+PolyAnn.fn.getDrawPts = function() {
+  return this.pts.concat([this.pts[0]]);
+};
+
+PolyAnn.fn.delPt = function(ind) {
+  this.pts.splice(ind, 1);
+
+  if (this.pts.length < 2) {
+    this.invalidate();
+    this.pts = [];
+  }
+};
+
+PolyAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'poly';
+  res.points = this.pts;
+
+  return res;
+};
+
+/*jshint unused:true*/
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
   this.type = 'rect';
 }
+
 RectAnn.prototype = Object.create(SuperShape.prototype);
 RectAnn.fn = RectAnn.prototype;
+
+/*jshint unused:vars*/
 
 RectAnn.fn.addPt = function(newPt) {
   // Init
@@ -1067,6 +1203,25 @@ RectAnn.fn.addPt = function(newPt) {
 RectAnn.fn.modLastPt = function(pt) {
   if (this.pts.length === 2) {
     this.pts[1] = pt;
+  }
+};
+
+RectAnn.fn.modPt = function(ind, pt) {
+  switch (ind) {
+    case 0:
+      this.pts[0] = pt;
+      break;
+    case 1:
+      this.pts[1].x = pt.x;
+      this.pts[0].y = pt.y;
+      break;
+    case 2:
+      this.pts[1] = pt;
+      break;
+    case 3:
+      this.pts[0].x = pt.x;
+      this.pts[1].y = pt.y;
+      break;
   }
 };
 
@@ -1093,7 +1248,7 @@ RectAnn.fn.getDrawPts = function() {
 
 RectAnn.fn.getPts = function() {
   if (this.valid) {
-    return this.getDrawPts();
+    return this.getDrawPts().slice(0, -1);
   }
   else {
     return [];
@@ -1127,77 +1282,214 @@ RectAnn.fn.getExport = function() {
   return res;
 };
 
+/*jshint unused:true*/
 
-// Polygon shape definition //
-function PolyAnn() {
-  SuperShape.call(this);
-  this.type = 'poly';
+// Annotation tool class definition //
+// This accepts user input to generate a *new* Annotation
+
+function AnnTool(parent) {
+  SuperTool.call(this);
+  this.parent = parent;
+  this.ann = null;
+}
+AnnTool.prototype = Object.create(SuperTool.prototype);
+AnnTool.fn = AnnTool.prototype;
+
+/*jshint unused:vars*/
+
+// Mouse up - add a point to the annotation
+AnnTool.fn.lbUp = function(x, y) {
+  var a = this.parent;
+
+  // Create annotation if we're not already making
+  // one
+  if (!this.active) {
+    this.active = true;
+    this.ann = a.annHelper.newAnn();
+  }
+
+  var pt = a.cHelper.ptToImg(x, y);
+
+  this.active = this.ann.addPt(pt);
+  a.showChange();
+};
+
+// Double click - finish a polygon annotation
+AnnTool.fn.lbDbl = function(x, y) {
+  // NB: We get 2x 'up' events before the double-click
+  // Need to remove erroneous extra points
+  if (this.active) {
+    var a = this.parent;
+    this.active = false;
+
+    this.ann.delPt(-1); // Remove pt from second click
+    this.ann.delPt(-1); // Remove intermediate pt (would be next placed)
+
+    a.showChange();
+  }
+};
+
+// Mouse move - update last point
+AnnTool.fn.mMove = function(x, y) {
+  if (this.active) {
+    var c = this.parent.cHelper;
+    var pt = c.ptToImg(x, y);
+
+    this.ann.modLastPt(pt);
+    c.repaint();
+  }
+};
+/*jshint unused:true*/
+
+// Edit tool class definition //
+// This allows selection and modification of existing annotations
+
+function EditTool(parent) {
+  SuperTool.call(this);
+  this.parent = parent;
+
+  this.canEdit = false;
+
+  this.editing = false;
+  this.editPt = 0;
+
+  this.hlt = null;
 }
 
-PolyAnn.prototype = Object.create(SuperShape.prototype);
-PolyAnn.fn = PolyAnn.prototype;
+EditTool.prototype = Object.create(SuperTool.prototype);
+EditTool.fn = EditTool.prototype;
 
-PolyAnn.fn.addPt = function(pt) {
-  if (this.pts.length === 0) {
-    this.pts = [pt, pt];
+/*jshint unused:vars*/
+
+EditTool.fn.mMove = function(x, y) {
+  var a = this.parent;
+  var c = a.cHelper;
+
+  var pt = c.ptToImg(x, y);
+
+  if (!this.editing) {
+    this.passiveMove(pt.x, pt.y);
+    a.showChange();
   }
   else {
-    this.pts.push(pt);
-  }
-
-  this.valid = true;
-  return true;
-};
-
-PolyAnn.fn.modLastPt = function(pt) {
-  if (this.pts.length > 0) {
-    this.pts[this.pts.length-1] = pt;
+    // Point editing
+    var ann = a.annHelper.getAnn();
+    ann.modPt(this.editPt, pt);
+    this.hlt = pt;
+    a.showChange();
   }
 };
 
-PolyAnn.fn.getDrawPts = function() {
-  return this.pts.concat([this.pts[0]]);
-};
+EditTool.fn.lbUp = function(x, y) {
+  var anh = this.parent.annHelper;
+  var c = this.parent.cHelper;
 
-PolyAnn.fn.delPt = function(ind) {
-  this.pts.splice(ind);
+  var pt = c.ptToImg(x, y);
+  var ann = anh.getAnn();
 
-  if (this.pts.length < 2) {
-    this.invalidate();
-    this.pts = [];
+  if (!this.canEdit) {
+    // Make a new selection
+    var pick = anh.pickLn(pt.x, pt.y);
+
+    if (pick.dist < c.scaleDist(15)) {
+      anh.setAnn(pick.ann);
+    }
+  }
+  else if (!this.editing) {
+    // Point modifications
+    var pickpt = anh.pickPt(pt.x, pt.y);
+
+    if (pickpt.ann === ann && pickpt.dist < c.scaleDist(15)) {
+      // Editing point
+      this.editPt = pickpt.ind;
+      this.editing = true;
+      return;
+    }
+
+    // New points
+    if (ann.canInsPt()) {
+      var pickln = anh.pickLn(pt.x, pt.y);
+
+      if (pickln.ann === ann && pickln.dist < c.scaleDist(15)) {
+        // Editing *new* point - create it
+        ann.insPt(pickln.i1, pt);
+        this.editPt = pickln.i1;
+        this.editing = true;
+        return;
+      }
+    }
+  }
+  else {
+    // Finish point modification
+    this.editing = false;
   }
 };
 
-PolyAnn.fn.getExport = function() {
-  var res = {};
+// Highlight annotations under the cursor
+EditTool.fn.passiveMove = function(x, y) {
+  var c = this.parent.cHelper;
+  var anh = this.parent.annHelper;
 
-  res.type = 'poly';
-  res.points = this.pts;
+  var pickpt = anh.pickPt(x, y);
+  var pickln = anh.pickLn(x, y);
+  var pick = null;
 
-  return res;
+  // Compare line and point distances
+  if (pickpt.dist < c.scaleDist(15)) {
+    pick = pickpt;
+  }
+  else if (pickln.dist < c.scaleDist(15)) {
+    pick = pickln;
+  }
+  else {
+    this.canEdit = false;
+    this.hlt = null;
+    c.setHlt(null);
+    return;
+  }
+
+  // At this point we know the distance is in range
+  if (pick.ann === anh.getAnn()) {
+    this.canEdit = true;
+    this.hlt = pick.pt;
+  }
+  else {
+    this.canEdit = false;
+    this.hlt = null;
+  }
+
+  c.setHlt(pick.ann);
+};
+
+// Point deletion (right click)
+EditTool.fn.rbUp = function(x, y) {
+  var anh = this.parent.annHelper;
+  var c = this.parent.cHelper;
+
+  var pt = c.ptToImg(x, y);
+  var ann = anh.getAnn();
+
+  if (this.canEdit && !this.editing) {
+    // Point deletion
+    var pickpt = anh.pickPt(pt.x, pt.y);
+
+    if (pickpt.ann === ann && pickpt.dist < c.scaleDist(15)) {
+      // Editing point
+      ann.delPt(pickpt.ind);
+      return;
+    }
+  }
+};
+
+// Draw point to change/create
+EditTool.fn.draw = function(g) {
+  if (this.hlt) {
+    g.fillStyle = "white";
+    this.parent.cHelper.drawPt(this.hlt);
+  }
 };
 
 /*jshint unused:true*/
-
-// Base tool class defn //
-
-function SuperTool() {
-  this.x0 = 0;
-  this.x1 = 0;
-  this.y0 = 0;
-  this.y1 = 0;
-
-  this.active = false;
-}
-
-SuperTool.fn = SuperTool.prototype;
-
-/*jshint unused:vars*/
-SuperTool.fn.lbDown = function(x, y) {};
-SuperTool.fn.lbUp   = function(x, y) {};
-SuperTool.fn.lbDbl  = function(x, y) {};
-SuperTool.fn.mMove  = function(x, y) {};
-
 
 // Pan tool class definition //
 
@@ -1205,8 +1497,11 @@ function PanTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
 }
+
 PanTool.prototype = Object.create(SuperTool.prototype);
 PanTool.fn = PanTool.prototype;
+
+/*jshint unused:vars*/
 
 PanTool.fn.lbDown = function(x, y) {
   if (!this.active) {
@@ -1231,150 +1526,6 @@ PanTool.fn.mMove = function(x, y) {
     this.y0 = y;
   }
 };
-
-
-// Annotation tool class definition //
-// This accepts user input to generate a *new* Annotation
-
-function AnnTool(parent) {
-  SuperTool.call(this);
-  this.parent = parent;
-  this.ann = null;
-}
-AnnTool.prototype = Object.create(SuperTool.prototype);
-AnnTool.fn = AnnTool.prototype;
-
-// Mouse up - add a point to the annotation
-AnnTool.fn.lbUp = function(x, y) {
-  var a = this.parent;
-
-  // Create annotation if we're not already making
-  // one
-  if (!this.active) {
-    this.active = true;
-    this.ann = a.annHelper.newAnn();
-  }
-
-  var offset = a.canvas.offset();
-  x -= offset.left;
-  y -= offset.top;
-  var pt = a.cHelper.ptToImg(x, y);
-
-  this.active = this.ann.addPt(pt);
-  a.updateControls();
-};
-
-// Double click - finish a polygon annotation
-AnnTool.fn.lbDbl = function(x, y) {
-  // NB: We get 2x 'up' events before the double-click
-  // Need to remove erroneous extra points
-  if (this.active) {
-    var a = this.parent;
-    this.active = false;
-
-    this.ann.delPt(-1); // Remove pt from second click
-    this.ann.delPt(-1); // Remove intermediate pt (would be next placed)
-
-    a.showChange();
-  }
-};
-
-// Mouse move - update last point
-AnnTool.fn.mMove = function(x, y) {
-  if (this.active) {
-    var a = this.parent;
-    var offset = a.canvas.offset();
-    x -= offset.left;
-    y -= offset.top;
-    var pt = a.cHelper.ptToImg(x, y);
-
-    this.ann.modLastPt(pt);
-    a.cHelper.repaint();
-  }
-};
-
-
-
-// Edit tool class definition //
-// This allows selection and modification of existing annotations
-
-function EditTool(parent) {
-  SuperTool.call(this);
-  this.parent = parent;
-  this.canEdit = false;
-}
-EditTool.prototype = Object.create(SuperTool.prototype);
-EditTool.fn = EditTool.prototype;
-
-EditTool.fn.mMove = function(x, y) {
-  var a = this.parent;
-  var offset = a.canvas.offset();
-  x -= offset.left;
-  y -= offset.top;
-  var pt = this.parent.cHelper.ptToImg(x, y);
-
-  this.passiveMove(pt.x, pt.y);
-  a.showChange();
-
-  // TODO: Active move code (for modifications)
-};
-
-EditTool.fn.lbUp = function(x, y) {
-  var a = this.parent;
-  var offset = a.canvas.offset();
-  x -= offset.left;
-  y -= offset.top;
-  var pt = this.parent.cHelper.ptToImg(x, y);
-
-  if (!this.canEdit) {
-    // Make a new selection
-    var pick = this.getPick(pt.x, pt.y);
-
-    if (pick.dist < 15) {
-      a.annHelper.setAnn(pick.ann);
-    }
-  }
-};
-
-// Highlight annotations under the cursor
-EditTool.fn.passiveMove = function(x, y) {
-  var c = this.parent.cHelper;
-  var pick = this.getPick(x, y);
-
-  if (pick.dist < 15) {
-    c.setHlt(pick.ann);
-  }
-  else {
-    c.setHlt(null);
-  }
-
-  if (pick.ann === this.parent.annHelper.getAnn()) {
-    this.canEdit = true;
-  }
-  else {
-    this.canEdit = false;
-  }
-};
-
-EditTool.fn.getPick = function(x, y) {
-  var anh = this.parent.annHelper;
-  var pickpt = anh.pickPt(x, y);
-  var pickln = anh.pickLn(x, y);
-  var pick;
-
-  // Compare line and point distances
-  // Could combine in line function...?
-  if (pickpt.dist < pickln.dist || pickln.endpt) {
-    pick = pickpt;
-  }
-  else {
-    pick = pickln;
-  }
-
-  return pick;
-};
-
-// Selection
 
 /*jshint unused:true*/
 

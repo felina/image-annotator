@@ -170,6 +170,7 @@ Annotator.fn.build = function($parent) {
                       .css(canvascss)
                       .appendTo(this.container);
   this.canvas[0].onselectstart = function(){return false;};
+  this.canvas[0].oncontextmenu = function(){return false;};
 
   // Generate the canvas helper
   this.cHelper = new CanvasHelper(this);
@@ -226,11 +227,33 @@ Annotator.fn.build = function($parent) {
   // Mouse operations - call the tool handlers
   this.canvas.mousedown(function(e){ 
     if (a.img) {
-      a.curTool.lbDown(e.pageX, e.pageY);
+      switch (e.which) {
+        case 1:
+          a.curTool.lbDown(e.pageX, e.pageY);
+          break;
+        case 3:
+          e.preventDefault();
+          a.curTool.rbDown(e.pageX, e.pageY);
+          break;
+      }
     }
   });
+
   this.canvas.mousemove(function(e){ a.curTool.mMove(e.pageX, e.pageY); });
-  this.canvas.mouseup(function(e){ a.curTool.lbUp(e.pageX, e.pageY); });
+
+  this.canvas.mouseup(function(e){
+    if (a.img) {
+      switch (e.which) {
+        case 1:
+          a.curTool.lbUp(e.pageX, e.pageY);
+          break;
+        case 3:
+          e.preventDefault();
+          a.curTool.rbUp(e.pageX, e.pageY);
+          break;
+      }
+    }
+  });
 
   this.canvas.dblclick(function(e){
     a.curTool.lbDbl(e.pageX, e.pageY);
