@@ -196,7 +196,6 @@ CanvasHelper.fn.imgLoaded = function(img) {
   this.imgW = img[0].width;
   this.imgH = img[0].height;
 
-  console.log("" + this.imgW + ", " + this.imgH);
   this.calcZoom();
   this.curScale = this.defScale;
 

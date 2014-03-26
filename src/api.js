@@ -10,7 +10,7 @@ $.fn.annotator = function(input) {
   }
 
   if (typeof input.features === "undefined") {
-    throw "Error: Input feature array is required";
+    input.features = null;
   }
   else if (!input.features instanceof Array) {
     throw "Error: input.features is not a valid Array instance";
@@ -42,8 +42,7 @@ $.fn.annotator = function(input) {
   a.annsIn(input);
   a.cssIn(input);
 
-  a.updateControls();
-  a.updateTitle();
+  a.showChange();
 
   return a;
 };

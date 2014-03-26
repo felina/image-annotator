@@ -1,4 +1,4 @@
-/*! penguinator - v3.5.0 - 2014-03-25
+/*! penguinator - v3.6.0 - 2014-03-26
 * https://github.com/felina/image-annotator
 * Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
 (function($) {
@@ -10,24 +10,18 @@
 
 function AnnHelper(parent) {
   this.parent = parent;
-
-  // Features
-  this.ftrs = [];
-  this.fInd = 0;
-  this.aInd = 0;
-
-  // Annotations
-  this.anns = [createAnnotation("rect")];
-  this.curType = "rect";
-
-  // Drawing
-  this.pInd = 0;
+  this.reset();
 }
 AnnHelper.fn = AnnHelper.prototype;
 
 // Returns the current annotation
 AnnHelper.fn.getAnn = function() {
-  return this.anns[this.aInd];
+  if (this.anns.length === 0) {
+    return null;
+  }
+  else {
+    return this.anns[this.aInd];
+  }
 };
 
 // Replaces the currently selected annotation
@@ -43,6 +37,7 @@ AnnHelper.fn.setAnn = function(ann) {
       var foundA = ftr.anns[a];
       if (foundA === ann) {
         this.fInd = f;
+        this.ftrChanged();
         this.aInd = a;
         this.anns = this.getFtr().anns;
         return;
@@ -52,18 +47,41 @@ AnnHelper.fn.setAnn = function(ann) {
 };
 
 AnnHelper.fn.getFtr = function() {
-  return this.ftrs[this.fInd];
+  if (this.ftrs.length === 0) {
+    return null;
+  }
+  else {
+    return this.ftrs[this.fInd];
+  }
+};
+
+AnnHelper.fn.getFtrs = function() {
+  return this.ftrs;
+};
+
+// Sets the feature selection to an existing feature
+AnnHelper.fn.setFtr = function(ftr) {
+  for (var f = 0; f < this.ftrs.length; f++) {
+    if (ftr === this.ftrs[f]) {
+      this.fInd = f;
+      this.ftrChanged();
+      return;
+    }
+  }
 };
 
 // Resets to default state
 AnnHelper.fn.reset = function() {
   // Reset annotation
-  this.anns = [createAnnotation(this.curType)];
+  this.anns = [];
   this.aInd = 0;
 
   // Reset features
   this.fInd = 0;
   this.ftrs = [];
+
+  // Reset type
+  this.curType = "rect";
 };
 
 //////////////////////////////////////////////////////
@@ -71,21 +89,27 @@ AnnHelper.fn.reset = function() {
 
 // Feature import
 AnnHelper.fn.addFtrData = function(ftr) {
-    this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
+  this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
 };
 
 AnnHelper.fn.importFeatures = function(input) {
   // Clear existing
   this.ftrs = [];
 
+  if (!input) {
+    // null feature array input
+    input = [new Feature("Image", false, "any")];
+  }
+
   for (var i = 0; i < input.length; i++) {
     this.addFtrData(input[i]);
   }
 
+  this.parent.updateFtrs(this.ftrs);
   this.ftrChanged();
 };
 
-// Annribute import - Depends on previous feature import
+// Attribute import - Depends on previous feature import
 AnnHelper.fn.importAnns = function(anns) {
   // Iterate features
   for (var i = 0; i < this.ftrs.length; i++) {
@@ -181,6 +205,7 @@ AnnHelper.fn.ftrChanged = function() {
   }
 
   // Update UI
+  this.parent.dispFtr(this.getFtr());
   this.parent.showChange();
 };
 
@@ -382,10 +407,8 @@ function Annotator(img, w, h) {
   this.annotate = null;
   this.edit = null;
   this.annType = null;
+  this.ftrSel = null;
   this.delAnn = null;
-
-  this.nextFtr = null;
-  this.prevFtr = null;
 
   this.title = null;
 
@@ -499,18 +522,21 @@ Annotator.fn.build = function($parent) {
   this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
-  this.prevFtr   = $('<button id="prevFtr">&lt&lt</button>').appendTo($parent);
   this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
 
-  this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent);
-  this.nextFtr   = $('<button id="nextAnn">&gt&gt</button>').appendTo($parent)
+  this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
   this.title     = $('<label>Annotating:</label>').appendTo($parent)
                       .css("font-family", "sans-serif")
                       .css("font-size", "12px");
+
+  this.ftrSel    = $('<select id="ftrsel"></select>')
+                      .html('<option>Image</option>')
+                      .prop('disabled', true)
+                      .appendTo($parent);
 
   // Canvas container
   this.container = $('<div></div>')
@@ -538,13 +564,30 @@ Annotator.fn.build = function($parent) {
   this.annType.change(function() {
     var str = $(this).val();
 
-    if (str === "Box") {
-      a.annHelper.changeType("rect");
-      a.switchOp("annotate");
+    switch (str) {
+      case "Box":
+        a.annHelper.changeType("rect");
+        a.switchOp("annotate");
+        break;
+      case "Polygon":
+        a.annHelper.changeType("poly");
+        a.switchOp("annotate");
+        break;
     }
-    else if (str === "Polygon") {
-      a.annHelper.changeType("poly");
-      a.switchOp("annotate");
+  });
+
+  // Switching features
+  this.ftrSel.change(function() {
+    var str = $(this).val();
+    var ftrs = a.annHelper.getFtrs();
+
+    for (var f = 0; f < ftrs.length; f++) {
+      var ftr = ftrs[f];
+
+      if (str === ftr.fmtName()) {
+        a.annHelper.setFtr(ftr);
+        return;
+      }
     }
   });
 
@@ -559,10 +602,6 @@ Annotator.fn.build = function($parent) {
     a.updateControls();
     a.cHelper.repaint();
   });
-
-  // Features next/prev
-  this.prevFtr.click(function() { a.annHelper.prevFtr(); });
-  this.nextFtr.click(function() { a.annHelper.nextFtr(); });
 
   // Mouse operations - call the tool handlers
   this.canvas.mousedown(function(e){ 
@@ -591,7 +630,6 @@ Annotator.fn.build = function($parent) {
 Annotator.fn.showChange = function() {
   this.cHelper.repaint();
   this.updateControls();
-  this.updateTitle();
 };
 
 // Select annotation type with lock/disable lock
@@ -613,24 +651,33 @@ Annotator.fn.lockSelect = function(type, lock) {
   }
 };
 
+// Select feature to display
+Annotator.fn.dispFtr = function(ftr) {
+  this.ftrSel.val(ftr.fmtName());
+};
+
+// Show features
+Annotator.fn.updateFtrs = function(ftrs) {
+  var options = "";
+  this.ftrSel.prop('disabled', false);
+
+  for (var f = 0; f < ftrs.length; f++) {
+    var ftr = ftrs[f];
+    options = options.concat("<option>" + ftr.fmtName() + "</option>");
+  }
+
+  this.ftrSel.empty().html(options);
+};
+
 Annotator.fn.updateControls = function() {
   var ath = this.annHelper;
 
-  this.prevFtr.prop('disabled', ath.fInd === 0 || !this.img);
-  this.nextFtr.prop('disabled', ath.fInd === ath.ftrs.length - 1 || !this.img);
   this.delAnn.prop('disabled', !ath.getAnn().valid || !this.img);
-
   this.zoomin.prop('disabled', !this.img);
   this.zoomout.prop('disabled', !this.img);
   this.pan.prop('disabled', !this.img);
   this.annotate.prop('disabled', !this.img);
-};
-
-Annotator.fn.updateTitle = function() {
-  var name = this.annHelper.getFtr().name;
-  var ind  = this.annHelper.fInd;
-  var len  = this.annHelper.ftrs.length;
-  this.title.text("Annotating: " + name + " (" + (ind+1) + "/" + len + ")");
+  this.edit.prop('disabled', !this.img);
 };
 
 //////////////////////////////////////////////////////
@@ -668,7 +715,7 @@ $.fn.annotator = function(input) {
   }
 
   if (typeof input.features === "undefined") {
-    throw "Error: Input feature array is required";
+    input.features = null;
   }
   else if (!input.features instanceof Array) {
     throw "Error: input.features is not a valid Array instance";
@@ -700,8 +747,7 @@ $.fn.annotator = function(input) {
   a.annsIn(input);
   a.cssIn(input);
 
-  a.updateControls();
-  a.updateTitle();
+  a.showChange();
 
   return a;
 };
@@ -904,7 +950,6 @@ CanvasHelper.fn.imgLoaded = function(img) {
   this.imgW = img[0].width;
   this.imgH = img[0].height;
 
-  console.log("" + this.imgW + ", " + this.imgH);
   this.calcZoom();
   this.curScale = this.defScale;
 
@@ -951,6 +996,13 @@ function Feature(name, required, shape) {
   this.anns = [];
   this.annC = 0;
 }
+Feature.fn = Feature.prototype;
+
+// Returns formatted name
+Feature.fn.fmtName = function() {
+  var first = this.name.charAt(0).toUpperCase();
+  return first.concat(this.name.substr(1));
+};
 
 // Annotations - as distinct on the canvas
 function createAnnotation(type) {

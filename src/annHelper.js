@@ -5,24 +5,18 @@
 
 function AnnHelper(parent) {
   this.parent = parent;
-
-  // Features
-  this.ftrs = [];
-  this.fInd = 0;
-  this.aInd = 0;
-
-  // Annotations
-  this.anns = [createAnnotation("rect")];
-  this.curType = "rect";
-
-  // Drawing
-  this.pInd = 0;
+  this.reset();
 }
 AnnHelper.fn = AnnHelper.prototype;
 
 // Returns the current annotation
 AnnHelper.fn.getAnn = function() {
-  return this.anns[this.aInd];
+  if (this.anns.length === 0) {
+    return null;
+  }
+  else {
+    return this.anns[this.aInd];
+  }
 };
 
 // Replaces the currently selected annotation
@@ -38,6 +32,7 @@ AnnHelper.fn.setAnn = function(ann) {
       var foundA = ftr.anns[a];
       if (foundA === ann) {
         this.fInd = f;
+        this.ftrChanged();
         this.aInd = a;
         this.anns = this.getFtr().anns;
         return;
@@ -47,18 +42,41 @@ AnnHelper.fn.setAnn = function(ann) {
 };
 
 AnnHelper.fn.getFtr = function() {
-  return this.ftrs[this.fInd];
+  if (this.ftrs.length === 0) {
+    return null;
+  }
+  else {
+    return this.ftrs[this.fInd];
+  }
+};
+
+AnnHelper.fn.getFtrs = function() {
+  return this.ftrs;
+};
+
+// Sets the feature selection to an existing feature
+AnnHelper.fn.setFtr = function(ftr) {
+  for (var f = 0; f < this.ftrs.length; f++) {
+    if (ftr === this.ftrs[f]) {
+      this.fInd = f;
+      this.ftrChanged();
+      return;
+    }
+  }
 };
 
 // Resets to default state
 AnnHelper.fn.reset = function() {
   // Reset annotation
-  this.anns = [createAnnotation(this.curType)];
+  this.anns = [];
   this.aInd = 0;
 
   // Reset features
   this.fInd = 0;
   this.ftrs = [];
+
+  // Reset type
+  this.curType = "rect";
 };
 
 //////////////////////////////////////////////////////
@@ -66,21 +84,27 @@ AnnHelper.fn.reset = function() {
 
 // Feature import
 AnnHelper.fn.addFtrData = function(ftr) {
-    this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
+  this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
 };
 
 AnnHelper.fn.importFeatures = function(input) {
   // Clear existing
   this.ftrs = [];
 
+  if (!input) {
+    // null feature array input
+    input = [new Feature("Image", false, "any")];
+  }
+
   for (var i = 0; i < input.length; i++) {
     this.addFtrData(input[i]);
   }
 
+  this.parent.updateFtrs(this.ftrs);
   this.ftrChanged();
 };
 
-// Annribute import - Depends on previous feature import
+// Attribute import - Depends on previous feature import
 AnnHelper.fn.importAnns = function(anns) {
   // Iterate features
   for (var i = 0; i < this.ftrs.length; i++) {
@@ -176,6 +200,7 @@ AnnHelper.fn.ftrChanged = function() {
   }
 
   // Update UI
+  this.parent.dispFtr(this.getFtr());
   this.parent.showChange();
 };
 
