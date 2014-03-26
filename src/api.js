@@ -1,5 +1,7 @@
+var Annotator = require('./annotator');
+
 // The annotator function - appplicable to any jQuery object collection
-$.fn.annotator = function(input) {
+exports.annotator = function(input) {
   var w, h;
 
   if (typeof input.src !== "undefined") {

@@ -1,3 +1,12 @@
+// Other core components
+var AnnHelper     = require('./annHelper');
+var CanvasHelper  = require('./canvasHelper');
+
+// Tools
+var PanTool       = require('./tools/pan');
+var AnnTool       = require('./tools/annotate');
+var EditTool      = require('./tools/edit');
+
 // Annotator class definition //
 
 var containercss = {
@@ -345,3 +354,5 @@ Annotator.fn.switchOp = function(op) {
       break;
   }
 };
+
+module.exports = Annotator;

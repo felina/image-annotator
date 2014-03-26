@@ -1,3 +1,5 @@
+
+
 // Canvas helper class definition //
 
 // Creates a new CanvasHelper
@@ -247,3 +249,5 @@ CanvasHelper.fn.ptToImg = function(xin, yin) {
 CanvasHelper.fn.scaleDist = function(dist) {
   return dist / this.curScale;
 };
+
+module.exports = CanvasHelper;

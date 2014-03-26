@@ -1,3 +1,5 @@
+var SuperShape = require('../superShape');
+
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
@@ -107,3 +109,5 @@ RectAnn.fn.getExport = function() {
 };
 
 /*jshint unused:true*/
+
+module.exports = RectAnn;

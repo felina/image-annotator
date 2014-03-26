@@ -19,3 +19,5 @@ SuperTool.fn.rbUp   = function(x, y) {};
 SuperTool.fn.mMove  = function(x, y) {};
 SuperTool.fn.draw   = function(g) {};
 /*jshint unused:true*/
+
+module.exports = SuperTool;

@@ -13,3 +13,5 @@ Feature.fn.fmtName = function() {
   var first = this.name.charAt(0).toUpperCase();
   return first.concat(this.name.substr(1));
 };
+
+module.exports = Feature;

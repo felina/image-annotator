@@ -1,3 +1,5 @@
+var SuperTool = require('../superTool');
+
 // Edit tool class definition //
 // This allows selection and modification of existing annotations
 
@@ -147,3 +149,5 @@ EditTool.fn.draw = function(g) {
 };
 
 /*jshint unused:true*/
+
+module.exports = EditTool;

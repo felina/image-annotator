@@ -1,7 +1,6 @@
-/*! penguinator - v3.6.0 - 2014-03-26
-* https://github.com/felina/image-annotator
-* Copyright (c) 2014 Alistair Wick <alistair.wk@gmail.com>; Licensed MIT */
-(function($) {
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+var Feature = require('./feature');
+var createAnnotation = require('./util').createAnnotation;
 
 // Annotation helper class definition //
 
@@ -380,6 +379,17 @@ AnnHelper.fn.clrInvalid = function() {
   }
 };
 
+module.exports = AnnHelper;
+},{"./feature":5,"./util":14}],2:[function(require,module,exports){
+// Other core components
+var AnnHelper     = require('./annHelper');
+var CanvasHelper  = require('./canvasHelper');
+
+// Tools
+var PanTool       = require('./tools/pan');
+var AnnTool       = require('./tools/annotate');
+var EditTool      = require('./tools/edit');
+
 // Annotator class definition //
 
 var containercss = {
@@ -728,8 +738,12 @@ Annotator.fn.switchOp = function(op) {
   }
 };
 
+module.exports = Annotator;
+},{"./annHelper":1,"./canvasHelper":4,"./tools/annotate":11,"./tools/edit":12,"./tools/pan":13}],3:[function(require,module,exports){
+var Annotator = require('./annotator');
+
 // The annotator function - appplicable to any jQuery object collection
-$.fn.annotator = function(input) {
+exports.annotator = function(input) {
   var w, h;
 
   if (typeof input.src !== "undefined") {
@@ -776,6 +790,9 @@ $.fn.annotator = function(input) {
 
   return a;
 };
+
+},{"./annotator":2}],4:[function(require,module,exports){
+
 
 // Canvas helper class definition //
 
@@ -1027,6 +1044,8 @@ CanvasHelper.fn.scaleDist = function(dist) {
   return dist / this.curScale;
 };
 
+module.exports = CanvasHelper;
+},{}],5:[function(require,module,exports){
 // Features to be annotated
 function Feature(name, required, shape) {
   this.name = name;
@@ -1043,65 +1062,15 @@ Feature.fn.fmtName = function() {
   return first.concat(this.name.substr(1));
 };
 
-// Annotations - as distinct on the canvas
-function createAnnotation(type) {
-  //this.valid = false;
-  //this.pts = [{x:0,y:0}, {x:0,y:0}];
-  //this.type = type;
+module.exports = Feature;
+},{}],6:[function(require,module,exports){
+var api = require('./api');
 
-  switch (type) {
-    case 'rect':
-      return new RectAnn();
-    case 'poly':
-      return new PolyAnn();
-  }
-}
-
-// Shape superclass
-function SuperShape() {
-  this.valid = false;
-  this.pts = [];
-  this.type = 'none';
-}
-
-SuperShape.fn = SuperShape.prototype;
-
-/*jshint unused:vars*/
-// Available functions for shapes with default/empty defns
-SuperShape.fn.invalidate = function() {this.valid = false;};
-SuperShape.fn.addPt = function(pt) {};
-SuperShape.fn.modLastPt = function(pt) {};
-SuperShape.fn.modPt = function(ind, pt) {};
-SuperShape.fn.insPt = function(ind, pt) {};
-SuperShape.fn.delPt = function(ind) {};
-SuperShape.fn.getDrawPts = function() {return [];};
-SuperShape.fn.getExport = function() {return {};};
-SuperShape.fn.getNumPts = function() {return this.pts.length;};
-SuperShape.fn.getPts = function() {return this.pts;};
-SuperShape.fn.canInsPt = function() {return false;};
-/*jshint unused:true*/
-
-// Base tool class defn //
-function SuperTool() {
-  this.x0 = 0;
-  this.x1 = 0;
-  this.y0 = 0;
-  this.y1 = 0;
-
-  this.active = false;
-}
-
-SuperTool.fn = SuperTool.prototype;
-
-/*jshint unused:vars*/
-SuperTool.fn.lbDown = function(x, y) {};
-SuperTool.fn.lbUp   = function(x, y) {};
-SuperTool.fn.lbDbl  = function(x, y) {};
-SuperTool.fn.rbDown = function(x, y) {};
-SuperTool.fn.rbUp   = function(x, y) {};
-SuperTool.fn.mMove  = function(x, y) {};
-SuperTool.fn.draw   = function(g) {};
-/*jshint unused:true*/
+(function($) {
+  $.fn.annotator = api.annotator;
+}(jQuery));
+},{"./api":3}],7:[function(require,module,exports){
+var SuperShape = require('../superShape');
 
 // Polygon shape definition //
 function PolyAnn() {
@@ -1174,6 +1143,11 @@ PolyAnn.fn.getExport = function() {
 };
 
 /*jshint unused:true*/
+
+module.exports = PolyAnn;
+},{"../superShape":9}],8:[function(require,module,exports){
+var SuperShape = require('../superShape');
+
 // Rect shape definition //
 function RectAnn() {
   SuperShape.call(this);
@@ -1284,6 +1258,61 @@ RectAnn.fn.getExport = function() {
 
 /*jshint unused:true*/
 
+module.exports = RectAnn;
+},{"../superShape":9}],9:[function(require,module,exports){
+// Shape superclass
+function SuperShape() {
+  this.valid = false;
+  this.pts = [];
+  this.type = 'none';
+}
+
+SuperShape.fn = SuperShape.prototype;
+
+/*jshint unused:vars*/
+// Available functions for shapes with default/empty defns
+SuperShape.fn.invalidate = function() {this.valid = false;};
+SuperShape.fn.addPt = function(pt) {};
+SuperShape.fn.modLastPt = function(pt) {};
+SuperShape.fn.modPt = function(ind, pt) {};
+SuperShape.fn.insPt = function(ind, pt) {};
+SuperShape.fn.delPt = function(ind) {};
+SuperShape.fn.getDrawPts = function() {return [];};
+SuperShape.fn.getExport = function() {return {};};
+SuperShape.fn.getNumPts = function() {return this.pts.length;};
+SuperShape.fn.getPts = function() {return this.pts;};
+SuperShape.fn.canInsPt = function() {return false;};
+/*jshint unused:true*/
+
+module.exports = SuperShape;
+
+},{}],10:[function(require,module,exports){
+// Base tool class defn //
+function SuperTool() {
+  this.x0 = 0;
+  this.x1 = 0;
+  this.y0 = 0;
+  this.y1 = 0;
+
+  this.active = false;
+}
+
+SuperTool.fn = SuperTool.prototype;
+
+/*jshint unused:vars*/
+SuperTool.fn.lbDown = function(x, y) {};
+SuperTool.fn.lbUp   = function(x, y) {};
+SuperTool.fn.lbDbl  = function(x, y) {};
+SuperTool.fn.rbDown = function(x, y) {};
+SuperTool.fn.rbUp   = function(x, y) {};
+SuperTool.fn.mMove  = function(x, y) {};
+SuperTool.fn.draw   = function(g) {};
+/*jshint unused:true*/
+
+module.exports = SuperTool;
+},{}],11:[function(require,module,exports){
+var SuperTool = require('../superTool');
+
 // Annotation tool class definition //
 // This accepts user input to generate a *new* Annotation
 
@@ -1340,6 +1369,10 @@ AnnTool.fn.mMove = function(x, y) {
   }
 };
 /*jshint unused:true*/
+
+module.exports = AnnTool;
+},{"../superTool":10}],12:[function(require,module,exports){
+var SuperTool = require('../superTool');
 
 // Edit tool class definition //
 // This allows selection and modification of existing annotations
@@ -1491,8 +1524,11 @@ EditTool.fn.draw = function(g) {
 
 /*jshint unused:true*/
 
-// Pan tool class definition //
+module.exports = EditTool;
+},{"../superTool":10}],13:[function(require,module,exports){
+var SuperTool = require('../superTool');
 
+// Pan tool class definition //
 function PanTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
@@ -1529,4 +1565,19 @@ PanTool.fn.mMove = function(x, y) {
 
 /*jshint unused:true*/
 
-}(jQuery));
+module.exports = PanTool;
+},{"../superTool":10}],14:[function(require,module,exports){
+var RectAnn = require('./shapes/rect');
+var PolyAnn = require('./shapes/poly');
+
+// Annotations - as distinct on the canvas
+exports.createAnnotation = function createAnnotation(type) {
+  switch (type) {
+    case 'rect':
+      return new RectAnn();
+    case 'poly':
+      return new PolyAnn();
+  }
+};
+
+},{"./shapes/poly":7,"./shapes/rect":8}]},{},[6]);

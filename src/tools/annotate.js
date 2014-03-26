@@ -1,3 +1,5 @@
+var SuperTool = require('../superTool');
+
 // Annotation tool class definition //
 // This accepts user input to generate a *new* Annotation
 
@@ -54,3 +56,5 @@ AnnTool.fn.mMove = function(x, y) {
   }
 };
 /*jshint unused:true*/
+
+module.exports = AnnTool;

@@ -1,17 +1,3 @@
-// Annotations - as distinct on the canvas
-function createAnnotation(type) {
-  //this.valid = false;
-  //this.pts = [{x:0,y:0}, {x:0,y:0}];
-  //this.type = type;
-
-  switch (type) {
-    case 'rect':
-      return new RectAnn();
-    case 'poly':
-      return new PolyAnn();
-  }
-}
-
 // Shape superclass
 function SuperShape() {
   this.valid = false;
@@ -35,3 +21,5 @@ SuperShape.fn.getNumPts = function() {return this.pts.length;};
 SuperShape.fn.getPts = function() {return this.pts;};
 SuperShape.fn.canInsPt = function() {return false;};
 /*jshint unused:true*/
+
+module.exports = SuperShape;

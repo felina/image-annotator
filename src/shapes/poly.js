@@ -1,3 +1,5 @@
+var SuperShape = require('../superShape');
+
 // Polygon shape definition //
 function PolyAnn() {
   SuperShape.call(this);
@@ -69,3 +71,5 @@ PolyAnn.fn.getExport = function() {
 };
 
 /*jshint unused:true*/
+
+module.exports = PolyAnn;

@@ -1,3 +1,6 @@
+var Feature = require('./feature');
+var createAnnotation = require('./util').createAnnotation;
+
 // Annotation helper class definition //
 
 // This deals with managing the annotation data,
@@ -374,3 +377,5 @@ AnnHelper.fn.clrInvalid = function() {
     }
   }
 };
+
+module.exports = AnnHelper;

@@ -66,10 +66,19 @@ module.exports = function(grunt) {
         files: '<%= jshint.lib_test.src %>',
         tasks: ['jshint:lib_test', 'qunit']
       }
+    },
+    browserify: {
+      compile: {
+        files : {'dist/penguinator.js' : 'src/main.js'}
+      }
     }
   });
 
   require('load-grunt-tasks')(grunt);
 
-  grunt.registerTask('default', ['concat', 'jshint']);
+  grunt.registerTask('default', [
+    'browserify:compile',
+    //'jshint',
+    'uglify'
+  ]);
 };

@@ -1,5 +1,6 @@
-// Pan tool class definition //
+var SuperTool = require('../superTool');
 
+// Pan tool class definition //
 function PanTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
@@ -35,3 +36,5 @@ PanTool.fn.mMove = function(x, y) {
 };
 
 /*jshint unused:true*/
+
+module.exports = PanTool;
