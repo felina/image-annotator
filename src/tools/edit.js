@@ -110,7 +110,15 @@ EditTool.fn.passiveMove = function(x, y) {
   // At this point we know the distance is in range
   if (pick.ann === anh.getAnn()) {
     this.canEdit = true;
-    this.hlt = pick.pt;
+
+    // Only highlight edge if the shape allows it
+    // Can always highlight points
+    if (pick === pickln && !pick.ann.canInsPt()) {
+      this.hlt = null;
+    }
+    else {
+      this.hlt = pick.pt;
+    }
   }
   else {
     this.canEdit = false;
