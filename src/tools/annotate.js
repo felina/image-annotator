@@ -55,6 +55,33 @@ AnnTool.fn.mMove = function(x, y) {
     c.repaint();
   }
 };
+
+AnnTool.fn.keyDown = function(key) {
+  var anh = this.parent.annHelper;
+
+  switch (key) {
+    case 46: // Delete
+      anh.getAnn().invalidate();
+      this.active = false;
+      this.parent.showChange();
+      break;
+    case 8: // Backspace
+      if (this.active) {
+        // Delete last placed point
+        var pt = this.ann.getPts()[this.ann.getNumPts()-1];
+        this.ann.delPt(-1);
+        this.active = this.ann.isValid();
+
+        if (this.active) {
+          this.ann.modLastPt(pt);
+        }
+
+        this.parent.showChange();
+      }
+      break;
+  }
+};
+
 /*jshint unused:true*/
 
 module.exports = AnnTool;

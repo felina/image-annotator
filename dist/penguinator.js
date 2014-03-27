@@ -234,10 +234,11 @@ AnnHelper.fn.prevFtr = function() {
 //////////////////////////////////////////////////////
 // Annotation operations
 
-// Invalidates the current annotation -
-// it is effectively deleted
+// Invalidates the current annotation and
+// clears it from storage
 AnnHelper.fn.delAnn = function() {
   this.getAnn().invalidate();
+  this.clrInvalid();
 };
 
 // Creates a new annotation
@@ -555,7 +556,7 @@ Annotator.fn.build = function($parent) {
                       .appendTo($parent);
 
   // Canvas container
-  this.container = $('<div></div>')
+  this.container = $('<div tabindex=0></div>')
                       .css(containercss)
                       .width(this.w)
                       .height(this.h)
@@ -662,9 +663,10 @@ Annotator.fn.build = function($parent) {
     return false;
   });
 
-  this.canvas.keydown(function(e) {
+  this.container.keydown(function(e) {
     if (a.img) {
       var key = e.keyCode;
+      console.log("Key " + key);
       a.curTool.keyDown(key);
     }
   });
@@ -913,7 +915,7 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var cInd = 0;
   var drawPts = false;
 
-  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann && !this.hlt) {
+  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann) {
     cInd = 1;
     fillCol = col[1];
     drawPts = true;
@@ -1411,6 +1413,33 @@ AnnTool.fn.mMove = function(x, y) {
     c.repaint();
   }
 };
+
+AnnTool.fn.keyDown = function(key) {
+  var anh = this.parent.annHelper;
+
+  switch (key) {
+    case 46: // Delete
+      anh.getAnn().invalidate();
+      this.active = false;
+      this.parent.showChange();
+      break;
+    case 8: // Backspace
+      if (this.active) {
+        // Delete last placed point
+        var pt = this.ann.getPts()[this.ann.getNumPts()-1];
+        this.ann.delPt(-1);
+        this.active = this.ann.isValid();
+
+        if (this.active) {
+          this.ann.modLastPt(pt);
+        }
+
+        this.parent.showChange();
+      }
+      break;
+  }
+};
+
 /*jshint unused:true*/
 
 module.exports = AnnTool;
@@ -1568,7 +1597,23 @@ EditTool.fn.rbDown = function(x, y) {
 };
 
 EditTool.fn.keyDown = function(key) {
-  
+  var anh = this.parent.annHelper;
+
+  switch (key) {
+    case 46: // Delete
+      // Delete edit point if applicable
+      if (this.editing) {
+        anh.getAnn().delPt(this.editPt);
+        this.editing = false;
+      }
+      // Otherwise the whole shape
+      else {
+        anh.delAnn();
+      }
+
+      this.parent.showChange();
+      break;
+  }
 };
 
 // Draw point to change/create

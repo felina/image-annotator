@@ -233,10 +233,11 @@ AnnHelper.fn.prevFtr = function() {
 //////////////////////////////////////////////////////
 // Annotation operations
 
-// Invalidates the current annotation -
-// it is effectively deleted
+// Invalidates the current annotation and
+// clears it from storage
 AnnHelper.fn.delAnn = function() {
   this.getAnn().invalidate();
+  this.clrInvalid();
 };
 
 // Creates a new annotation

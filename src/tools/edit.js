@@ -151,7 +151,23 @@ EditTool.fn.rbDown = function(x, y) {
 };
 
 EditTool.fn.keyDown = function(key) {
-  
+  var anh = this.parent.annHelper;
+
+  switch (key) {
+    case 46: // Delete
+      // Delete edit point if applicable
+      if (this.editing) {
+        anh.getAnn().delPt(this.editPt);
+        this.editing = false;
+      }
+      // Otherwise the whole shape
+      else {
+        anh.delAnn();
+      }
+
+      this.parent.showChange();
+      break;
+  }
 };
 
 // Draw point to change/create

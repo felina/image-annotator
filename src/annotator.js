@@ -166,7 +166,7 @@ Annotator.fn.build = function($parent) {
                       .appendTo($parent);
 
   // Canvas container
-  this.container = $('<div></div>')
+  this.container = $('<div tabindex=0></div>')
                       .css(containercss)
                       .width(this.w)
                       .height(this.h)
@@ -273,9 +273,10 @@ Annotator.fn.build = function($parent) {
     return false;
   });
 
-  this.canvas.keydown(function(e) {
+  this.container.keydown(function(e) {
     if (a.img) {
       var key = e.keyCode;
+      console.log("Key " + key);
       a.curTool.keyDown(key);
     }
   });

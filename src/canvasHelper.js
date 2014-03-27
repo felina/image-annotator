@@ -103,7 +103,7 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var cInd = 0;
   var drawPts = false;
 
-  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann && !this.hlt) {
+  if (ann === this.hlt || this.parent.annHelper.getAnn() === ann) {
     cInd = 1;
     fillCol = col[1];
     drawPts = true;
