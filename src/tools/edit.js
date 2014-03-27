@@ -39,19 +39,21 @@ EditTool.fn.mMove = function(x, y) {
   }
 };
 
-EditTool.fn.lbUp = function(x, y) {
+EditTool.fn.lbDown = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
 
   var pt = c.ptToImg(x, y);
   var ann = anh.getAnn();
 
+  // Run normal editing logic
   if (!this.canEdit) {
     // Make a new selection
     var pick = anh.pickLn(pt.x, pt.y);
 
     if (pick.dist < c.scaleDist(15)) {
       anh.setAnn(pick.ann);
+      return;
     }
   }
   else if (!this.editing) {
@@ -64,9 +66,8 @@ EditTool.fn.lbUp = function(x, y) {
       this.editing = true;
       return;
     }
-
     // New points
-    if (ann.canInsPt()) {
+    else if (ann.canInsPt()) {
       var pickln = anh.pickLn(pt.x, pt.y);
 
       if (pickln.ann === ann && pickln.dist < c.scaleDist(15)) {
@@ -78,9 +79,10 @@ EditTool.fn.lbUp = function(x, y) {
       }
     }
   }
-  else {
+  else if (this.editing) {
     // Finish point modification
     this.editing = false;
+    return;
   }
 };
 
@@ -129,7 +131,7 @@ EditTool.fn.passiveMove = function(x, y) {
 };
 
 // Point deletion (right click)
-EditTool.fn.rbUp = function(x, y) {
+EditTool.fn.rbDown = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
 
@@ -148,6 +150,10 @@ EditTool.fn.rbUp = function(x, y) {
   }
 };
 
+EditTool.fn.keyDown = function(key) {
+  
+};
+
 // Draw point to change/create
 EditTool.fn.draw = function(g) {
   if (this.hlt) {
@@ -155,6 +161,7 @@ EditTool.fn.draw = function(g) {
     this.parent.cHelper.drawPt(this.hlt);
   }
 };
+
 
 /*jshint unused:true*/
 

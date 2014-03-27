@@ -266,17 +266,20 @@ AnnHelper.fn.pickPt = function(x, y) {
     var anns = this.ftrs[f].anns;
     for (var a = 0; a < anns.length; a++) {
       var ann = anns[a];
-      var pts = ann.getPts();
-      for (var p = 0; p < pts.length; p++) {
-        // (For every point currently in the annotator)
-        var pt = pts[p];
-        var d = Math.sqrt(Math.pow(x-pt.x,2) + Math.pow(y-pt.y,2));
 
-        if (d < pick.dist) {
-          pick.dist = d;
-          pick.pt = pt;
-          pick.ind = p;
-          pick.ann = ann;
+      if (ann.isValid()) {
+        var pts = ann.getPts();
+        for (var p = 0; p < pts.length; p++) {
+          // (For every point currently in the annotator)
+          var pt = pts[p];
+          var d = Math.sqrt(Math.pow(x-pt.x,2) + Math.pow(y-pt.y,2));
+
+          if (d < pick.dist) {
+            pick.dist = d;
+            pick.pt = pt;
+            pick.ind = p;
+            pick.ann = ann;
+          }
         }
       }
     }
@@ -303,47 +306,50 @@ AnnHelper.fn.pickLn = function(x, y) {
     var anns = this.ftrs[f].anns;
     for (var a = 0; a < anns.length; a++) {
       var ann = anns[a];
-      var pts = ann.getDrawPts();
-      for (var p = 0; p < pts.length-1; p++) {
-        // (For every line currently in the annotator)
-        var i0 = p;
-        var i1 = p+1;
 
-        // These points define the line
-        var p0 = pts[i0];
-        var p1 = pts[i1];
+      if (ann.isValid()) {
+        var pts = ann.getDrawPts();
+        for (var p = 0; p < pts.length-1; p++) {
+          // (For every line currently in the annotator)
+          var i0 = p;
+          var i1 = p+1;
 
-        // 'u' defines a percentage along the line the closest point lies at
-        var u = ((x - p0.x)*(p1.x - p0.x) + (y - p0.y)*(p1.y - p0.y)) /
-                (Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
+          // These points define the line
+          var p0 = pts[i0];
+          var p1 = pts[i1];
 
-        // Limit the range of u, and register if
-        // it's an endpoint
-        var endpt = false;
-        if (u <= 0) {
-          u = 0;
-          endpt = true;
-        }
-        else if (u >= 1) {
-          u = 1;
-          endpt = true;
-        }
+          // 'u' defines a percentage along the line the closest point lies at
+          var u = ((x - p0.x)*(p1.x - p0.x) + (y - p0.y)*(p1.y - p0.y)) /
+                  (Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2));
 
-        // 'pu' is the closest point on the line
-        var pu = {};
-        pu.x = p0.x + u*(p1.x - p0.x);
-        pu.y = p0.y + u*(p1.y - p0.y);
+          // Limit the range of u, and register if
+          // it's an endpoint
+          var endpt = false;
+          if (u <= 0) {
+            u = 0;
+            endpt = true;
+          }
+          else if (u >= 1) {
+            u = 1;
+            endpt = true;
+          }
 
-        var d = Math.sqrt(Math.pow(x-pu.x,2) + Math.pow(y-pu.y,2));
+          // 'pu' is the closest point on the line
+          var pu = {};
+          pu.x = p0.x + u*(p1.x - p0.x);
+          pu.y = p0.y + u*(p1.y - p0.y);
 
-        // We're finding the closest "closest point"
-        if (d < pick.dist) {
-          pick.dist = d;
-          pick.pt = pu;
-          pick.ann = ann;
-          pick.i0 = i0;
-          pick.i1 = i1;
-          pick.endpt = endpt;
+          var d = Math.sqrt(Math.pow(x-pu.x,2) + Math.pow(y-pu.y,2));
+
+          // We're finding the closest "closest point"
+          if (d < pick.dist) {
+            pick.dist = d;
+            pick.pt = pu;
+            pick.ann = ann;
+            pick.i0 = i0;
+            pick.i1 = i1;
+            pick.endpt = endpt;
+          }
         }
       }
     }
@@ -529,16 +535,14 @@ Annotator.fn.build = function($parent) {
   // Controls
   this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
   this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
-  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent);
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
-  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
   this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
-
-  this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent)
+  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
   this.title     = $('<label>Annotating:</label>').appendTo($parent)
@@ -561,6 +565,11 @@ Annotator.fn.build = function($parent) {
   this.canvas = $('<canvas>Unsupported browser.</canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
+
+  // Bottom controls
+  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo($parent);
+
+  // Disable some of the normal page interaction in the canvas area
   this.canvas[0].onselectstart = function(){return false;};
   this.canvas[0].oncontextmenu = function(){return false;};
 
@@ -651,6 +660,13 @@ Annotator.fn.build = function($parent) {
     a.curTool.lbDbl(e.pageX, e.pageY);
     e.preventDefault();
     return false;
+  });
+
+  this.canvas.keydown(function(e) {
+    if (a.img) {
+      var key = e.keyCode;
+      a.curTool.keyDown(key);
+    }
   });
 
   // Call the normal update
@@ -1271,17 +1287,43 @@ SuperShape.fn = SuperShape.prototype;
 
 /*jshint unused:vars*/
 // Available functions for shapes with default/empty defns
-SuperShape.fn.invalidate = function() {this.valid = false;};
-SuperShape.fn.addPt = function(pt) {};
-SuperShape.fn.modLastPt = function(pt) {};
-SuperShape.fn.modPt = function(ind, pt) {};
-SuperShape.fn.insPt = function(ind, pt) {};
-SuperShape.fn.delPt = function(ind) {};
-SuperShape.fn.getDrawPts = function() {return [];};
-SuperShape.fn.getExport = function() {return {};};
-SuperShape.fn.getNumPts = function() {return this.pts.length;};
-SuperShape.fn.getPts = function() {return this.pts;};
-SuperShape.fn.canInsPt = function() {return false;};
+SuperShape.fn.invalidate  = function() {this.valid = false;};
+SuperShape.fn.isValid     = function() {return this.valid;};
+SuperShape.fn.addPt       = function(pt) {};
+SuperShape.fn.modLastPt   = function(pt) {};
+SuperShape.fn.modPt       = function(ind, pt) {};
+SuperShape.fn.insPt       = function(ind, pt) {};
+SuperShape.fn.delPt       = function(ind) {};
+SuperShape.fn.getDrawPts  = function() {return [];};
+SuperShape.fn.getExport   = function() {return {};};
+SuperShape.fn.getNumPts   = function() {return this.pts.length;};
+SuperShape.fn.getPts      = function() {return this.pts;};
+SuperShape.fn.canInsPt    = function() {return false;};
+
+// Default implementation of getBounds should suffice for
+// most shapes
+SuperShape.fn.getBounds   = function() {
+  if (this.pts.length === 0) {
+    return null;
+  }
+
+  var out = {};
+  out.x0 = this.pts[0].x;
+  out.y0 = this.pts[0].y;
+  out.x1 = out.x0;
+  out.y1 = out.y0;
+
+  for (var i = 1; i < this.pts.length; i++) {
+    var pt = this.pts[i];
+    out.x0 = Math.min(out.x0, pt.x);
+    out.x1 = Math.max(out.x1, pt.x);
+    out.y0 = Math.min(out.y0, pt.y);
+    out.y1 = Math.max(out.y1, pt.y);
+  }
+
+  return out;
+};
+
 /*jshint unused:true*/
 
 module.exports = SuperShape;
@@ -1300,13 +1342,14 @@ function SuperTool() {
 SuperTool.fn = SuperTool.prototype;
 
 /*jshint unused:vars*/
-SuperTool.fn.lbDown = function(x, y) {};
-SuperTool.fn.lbUp   = function(x, y) {};
-SuperTool.fn.lbDbl  = function(x, y) {};
-SuperTool.fn.rbDown = function(x, y) {};
-SuperTool.fn.rbUp   = function(x, y) {};
-SuperTool.fn.mMove  = function(x, y) {};
-SuperTool.fn.draw   = function(g) {};
+SuperTool.fn.lbDown   = function(x, y) {};
+SuperTool.fn.lbUp     = function(x, y) {};
+SuperTool.fn.lbDbl    = function(x, y) {};
+SuperTool.fn.rbDown   = function(x, y) {};
+SuperTool.fn.rbUp     = function(x, y) {};
+SuperTool.fn.mMove    = function(x, y) {};
+SuperTool.fn.keyDown  = function(key) {};
+SuperTool.fn.draw     = function(g) {};
 /*jshint unused:true*/
 
 module.exports = SuperTool;
@@ -1413,19 +1456,21 @@ EditTool.fn.mMove = function(x, y) {
   }
 };
 
-EditTool.fn.lbUp = function(x, y) {
+EditTool.fn.lbDown = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
 
   var pt = c.ptToImg(x, y);
   var ann = anh.getAnn();
 
+  // Run normal editing logic
   if (!this.canEdit) {
     // Make a new selection
     var pick = anh.pickLn(pt.x, pt.y);
 
     if (pick.dist < c.scaleDist(15)) {
       anh.setAnn(pick.ann);
+      return;
     }
   }
   else if (!this.editing) {
@@ -1438,9 +1483,8 @@ EditTool.fn.lbUp = function(x, y) {
       this.editing = true;
       return;
     }
-
     // New points
-    if (ann.canInsPt()) {
+    else if (ann.canInsPt()) {
       var pickln = anh.pickLn(pt.x, pt.y);
 
       if (pickln.ann === ann && pickln.dist < c.scaleDist(15)) {
@@ -1452,9 +1496,10 @@ EditTool.fn.lbUp = function(x, y) {
       }
     }
   }
-  else {
+  else if (this.editing) {
     // Finish point modification
     this.editing = false;
+    return;
   }
 };
 
@@ -1503,7 +1548,7 @@ EditTool.fn.passiveMove = function(x, y) {
 };
 
 // Point deletion (right click)
-EditTool.fn.rbUp = function(x, y) {
+EditTool.fn.rbDown = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
 
@@ -1522,6 +1567,10 @@ EditTool.fn.rbUp = function(x, y) {
   }
 };
 
+EditTool.fn.keyDown = function(key) {
+  
+};
+
 // Draw point to change/create
 EditTool.fn.draw = function(g) {
   if (this.hlt) {
@@ -1529,6 +1578,7 @@ EditTool.fn.draw = function(g) {
     this.parent.cHelper.drawPt(this.hlt);
   }
 };
+
 
 /*jshint unused:true*/
 

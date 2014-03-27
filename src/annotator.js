@@ -146,16 +146,14 @@ Annotator.fn.build = function($parent) {
   // Controls
   this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
   this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
-  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent);
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
-  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
   this.annType   = $('<select id="typesel"></select>')
                       .html('<option>Box</option><option>Polygon</option>')
                       .appendTo($parent);
-
-  this.delAnn    = $('<button id="nextAnn">X</button>').appendTo($parent)
+  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
                       .css("margin-right", "20px");
 
   this.title     = $('<label>Annotating:</label>').appendTo($parent)
@@ -178,6 +176,11 @@ Annotator.fn.build = function($parent) {
   this.canvas = $('<canvas>Unsupported browser.</canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
+
+  // Bottom controls
+  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo($parent);
+
+  // Disable some of the normal page interaction in the canvas area
   this.canvas[0].onselectstart = function(){return false;};
   this.canvas[0].oncontextmenu = function(){return false;};
 
@@ -268,6 +271,13 @@ Annotator.fn.build = function($parent) {
     a.curTool.lbDbl(e.pageX, e.pageY);
     e.preventDefault();
     return false;
+  });
+
+  this.canvas.keydown(function(e) {
+    if (a.img) {
+      var key = e.keyCode;
+      a.curTool.keyDown(key);
+    }
   });
 
   // Call the normal update
