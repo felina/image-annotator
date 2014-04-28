@@ -1,4 +1,31 @@
-// Other core components
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: annotator.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: annotator.js</h1>
+
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// Other core components
 var AnnHelper     = require('./annHelper');
 var CanvasHelper  = require('./canvasHelper');
 
@@ -167,7 +194,7 @@ Annotator.fn.update = function(img, w, h) {
   this.w = w;
   this.h = h;
 
-  // Reloading & resizing
+  // Reloading &amp; resizing
   this.container.width(w).height(h);
 
   // Reset pan/zoom
@@ -189,41 +216,41 @@ Annotator.fn.build = function($parent) {
   $parent.data("Annotator", this);
 
   // Controls
-  this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
-  this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
-  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent)
+  this.zoomin    = $('&lt;button id="zoomin">+&lt;/button>').appendTo($parent);
+  this.zoomout   = $('&lt;button id="zoomout">-&lt;/button>').appendTo($parent);
+  this.pan       = $('&lt;button id="pan">Pan&lt;/button>').appendTo($parent)
                       .css("margin-right", "20px");
 
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
-  this.annType   = $('<select id="typesel"></select>')
-                      .html('<option>Box</option><option>Polygon</option>')
+  this.annotate  = $('&lt;button id="annot">Annotate&lt;/button>').appendTo($parent);
+  this.annType   = $('&lt;select id="typesel">&lt;/select>')
+                      .html('&lt;option>Box&lt;/option>&lt;option>Polygon&lt;/option>')
                       .appendTo($parent);
-  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+  this.edit      = $('&lt;button id="edit">Edit&lt;/button>').appendTo($parent)
                       .css("margin-right", "20px");
 
-  this.title     = $('<label>Annotating:</label>').appendTo($parent)
+  this.title     = $('&lt;label>Annotating:&lt;/label>').appendTo($parent)
                       .css("font-family", "sans-serif")
                       .css("font-size", "12px");
 
-  this.ftrSel    = $('<select id="ftrsel"></select>')
-                      .html('<option>Image</option>')
+  this.ftrSel    = $('&lt;select id="ftrsel">&lt;/select>')
+                      .html('&lt;option>Image&lt;/option>')
                       .prop('disabled', true)
                       .appendTo($parent);
 
   // Canvas container
-  this.container = $('<div tabindex=0></div>')
+  this.container = $('&lt;div tabindex=0>&lt;/div>')
                       .css(containercss)
                       .width(this.w)
                       .height(this.h)
                       .appendTo($parent);
 
   // The drawing canvas
-  this.canvas = $('<canvas>Unsupported browser.</canvas>')
+  this.canvas = $('&lt;canvas>Unsupported browser.&lt;/canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
 
   // Bottom controls
-  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo($parent);
+  this.delAnn    = $('&lt;button id="nextAnn">Delete Annotation&lt;/button>').appendTo($parent);
 
   // Disable some of the normal page interaction in the canvas area
   this.canvas[0].onselectstart = function(){return false;};
@@ -259,7 +286,7 @@ Annotator.fn.build = function($parent) {
     var str = $(this).val();
     var ftrs = a.annHelper.getFtrs();
 
-    for (var f = 0; f < ftrs.length; f++) {
+    for (var f = 0; f &lt; ftrs.length; f++) {
       var ftr = ftrs[f];
 
       if (str === ftr.fmtName()) {
@@ -382,7 +409,7 @@ Annotator.fn.dispFtr = function(ftr) {
 
 /**
  * Show the feature list in the "selected feature" control.
- * @param  {Array.<Feature>} ftrs
+ * @param  {Array.&lt;Feature>} ftrs
  * @memberOf Annotator#
  * @method   updateFtrs
  */
@@ -390,9 +417,9 @@ Annotator.fn.updateFtrs = function(ftrs) {
   var options = "";
   this.ftrSel.prop('disabled', false);
 
-  for (var f = 0; f < ftrs.length; f++) {
+  for (var f = 0; f &lt; ftrs.length; f++) {
     var ftr = ftrs[f];
-    options = options.concat("<option>" + ftr.fmtName() + "</option>");
+    options = options.concat("&lt;option>" + ftr.fmtName() + "&lt;/option>");
   }
 
   this.ftrSel.empty().html(options);
@@ -440,4 +467,26 @@ Annotator.fn.switchOp = function(op) {
   }
 };
 
-module.exports = Annotator;
+module.exports = Annotator;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="AnnHelper.html">AnnHelper</a></li><li><a href="Annotator.html">Annotator</a></li><li><a href="AnnTool.html">AnnTool</a></li><li><a href="CanvasHelper.html">CanvasHelper</a></li><li><a href="EditTool.html">EditTool</a></li><li><a href="Feature.html">Feature</a></li><li><a href="PanTool.html">PanTool</a></li><li><a href="PolyAnn.html">PolyAnn</a></li><li><a href="RectAnn.html">RectAnn</a></li><li><a href="SuperShape.html">SuperShape</a></li><li><a href="SuperTool.html">SuperTool</a></li></ul><h3>Global</h3><ul><li><a href="global.html#annotator">annotator</a></li><li><a href="global.html#createAnnotation">createAnnotation</a></li><li><a href="global.html#Initializer">Initializer</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Mon Apr 28 2014 20:45:31 GMT+0100 (GMT Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

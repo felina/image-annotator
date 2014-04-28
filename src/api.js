@@ -1,6 +1,12 @@
 var Annotator = require('./annotator');
 
-// The annotator function - appplicable to any jQuery object collection
+/**
+ * The annotator api function - applicable to any jQuery object, this creates an Annotator which is bound to the parent element.
+ * If an annotator is already bound to the element, this method updates the annotator with the new input.
+ * @param  {Object} input
+ * @return {Annotator} The element's annotator.
+ * @method annotator
+ */
 module.exports.annotator = function(input) {
   var w, h;
 

@@ -1,4 +1,31 @@
-var Feature = require('./feature');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: annHelper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: annHelper.js</h1>
+
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>var Feature = require('./feature');
 var createAnnotation = require('./util').createAnnotation;
 
 /**
@@ -10,11 +37,11 @@ var createAnnotation = require('./util').createAnnotation;
 function AnnHelper(parent) {
   this.parent = parent;
 
-  /** @type {Array.<SuperShape>} The stored annotations */
+  /** @type {Array.&lt;SuperShape>} The stored annotations */
   this.anns = [];
   this.aInd = 0;
   this.fInd = 0;
-  /** @type {Array.<Feature>} The stored features */
+  /** @type {Array.&lt;Feature>} The stored features */
   this.ftrs = [];
   /** @type {String} The next annotation type to use */
   this.curType = "rect";
@@ -53,9 +80,9 @@ AnnHelper.fn.replaceAnn = function(ann) {
  * @method setAnn
  */
 AnnHelper.fn.setAnn = function(ann) {
-  for (var f = 0; f < this.ftrs.length; f++) {
+  for (var f = 0; f &lt; this.ftrs.length; f++) {
     var ftr = this.ftrs[f];
-    for (var a = 0; a < ftr.anns.length; a++) {
+    for (var a = 0; a &lt; ftr.anns.length; a++) {
       var foundA = ftr.anns[a];
       if (foundA === ann) {
         this.fInd = f;
@@ -85,7 +112,7 @@ AnnHelper.fn.getFtr = function() {
 
 /**
  * Gets the complete feature array.
- * @return {Array.<Feature>}
+ * @return {Array.&lt;Feature>}
  * @memberof AnnHelper#
  * @method getFtrs
  */
@@ -102,7 +129,7 @@ AnnHelper.fn.getFtrs = function() {
  * @method setFtr
  */
 AnnHelper.fn.setFtr = function(ftr) {
-  for (var f = 0; f < this.ftrs.length; f++) {
+  for (var f = 0; f &lt; this.ftrs.length; f++) {
     if (ftr === this.ftrs[f]) {
       this.fInd = f;
       this.ftrChanged();
@@ -144,7 +171,7 @@ AnnHelper.fn.addFtrData = function(ftr) {
 /**
  * Imports external feature data provided by the client application.
  * If input is null, a single default "image" feature is added.
- * @param  {Array.<{name : String, required : Boolean, shape : String}>} input
+ * @param  {Array.&lt;{name : String, required : Boolean, shape : String}>} input
  * @memberof AnnHelper#
  * @method importFeatures
  */
@@ -157,7 +184,7 @@ AnnHelper.fn.importFeatures = function(input) {
     input = [new Feature("Image", false, "any")];
   }
 
-  for (var i = 0; i < input.length; i++) {
+  for (var i = 0; i &lt; input.length; i++) {
     this.addFtrData(input[i]);
   }
 
@@ -175,7 +202,7 @@ AnnHelper.fn.importFeatures = function(input) {
  */
 AnnHelper.fn.importAnns = function(anns) {
   // Iterate features
-  for (var i = 0; i < this.ftrs.length; i++) {
+  for (var i = 0; i &lt; this.ftrs.length; i++) {
     var f = this.ftrs[i];
     f.anns = [];
 
@@ -186,7 +213,7 @@ AnnHelper.fn.importAnns = function(anns) {
     var input = anns[f.name];
     var shapes = input.shapes;
 
-    for (var j = 0; j < shapes.length; j++) {
+    for (var j = 0; j &lt; shapes.length; j++) {
       var s = shapes[j];
 
       // Generate each annotation from input data
@@ -222,7 +249,7 @@ AnnHelper.fn.exportAnns = function() {
   var out = {};
 
   // Iterate the features
-  for (var i = 0; i < this.ftrs.length; i++) {
+  for (var i = 0; i &lt; this.ftrs.length; i++) {
     var f = this.ftrs[i];
 
     // Store shapes
@@ -230,7 +257,7 @@ AnnHelper.fn.exportAnns = function() {
     out[f.name].shapes = [];
 
     // Iterate the annotatons for the feature
-    for (var j = 0; j < f.anns.length; j++) {
+    for (var j = 0; j &lt; f.anns.length; j++) {
       var ann = f.anns[j];
 
       // Check it's a valid shape
@@ -306,7 +333,7 @@ AnnHelper.fn.nextFtr = function() {
 AnnHelper.fn.prevFtr = function() {
   this.fInd--;
 
-  if (this.fInd < 0) {
+  if (this.fInd &lt; 0) {
     this.fInd = 0;
   }
 
@@ -362,19 +389,19 @@ AnnHelper.fn.pickPt = function(x, y) {
   pick.ann = null;
   pick.ind = 0;
 
-  for (var f = 0; f < this.ftrs.length; f++) {
+  for (var f = 0; f &lt; this.ftrs.length; f++) {
     var anns = this.ftrs[f].anns;
-    for (var a = 0; a < anns.length; a++) {
+    for (var a = 0; a &lt; anns.length; a++) {
       var ann = anns[a];
 
       if (ann.isValid()) {
         var pts = ann.getPts();
-        for (var p = 0; p < pts.length; p++) {
+        for (var p = 0; p &lt; pts.length; p++) {
           // (For every point currently in the annotator)
           var pt = pts[p];
           var d = Math.sqrt(Math.pow(x-pt.x,2) + Math.pow(y-pt.y,2));
 
-          if (d < pick.dist) {
+          if (d &lt; pick.dist) {
             pick.dist = d;
             pick.pt = pt;
             pick.ind = p;
@@ -409,14 +436,14 @@ AnnHelper.fn.pickLn = function(x, y) {
   pick.i1 = 0;
   pick.endpt = false;
 
-  for (var f = 0; f < this.ftrs.length; f++) {
+  for (var f = 0; f &lt; this.ftrs.length; f++) {
     var anns = this.ftrs[f].anns;
-    for (var a = 0; a < anns.length; a++) {
+    for (var a = 0; a &lt; anns.length; a++) {
       var ann = anns[a];
 
       if (ann.isValid()) {
         var pts = ann.getDrawPts();
-        for (var p = 0; p < pts.length-1; p++) {
+        for (var p = 0; p &lt; pts.length-1; p++) {
           // (For every line currently in the annotator)
           var i0 = p;
           var i1 = p+1;
@@ -432,7 +459,7 @@ AnnHelper.fn.pickLn = function(x, y) {
           // Limit the range of u, and register if
           // it's an endpoint
           var endpt = false;
-          if (u <= 0) {
+          if (u &lt;= 0) {
             u = 0;
             endpt = true;
           }
@@ -449,7 +476,7 @@ AnnHelper.fn.pickLn = function(x, y) {
           var d = Math.sqrt(Math.pow(x-pu.x,2) + Math.pow(y-pu.y,2));
 
           // We're finding the closest "closest point"
-          if (d < pick.dist) {
+          if (d &lt; pick.dist) {
             pick.dist = d;
             pick.pt = pu;
             pick.ann = ann;
@@ -486,7 +513,7 @@ AnnHelper.fn.changeType = function(type) {
  * @method clrInvalid
  */
 AnnHelper.fn.clrInvalid = function() {
-  for (var i = 0; i < this.anns.length; i++) {
+  for (var i = 0; i &lt; this.anns.length; i++) {
     if (i === this.aInd) {
       continue;
     }
@@ -502,4 +529,26 @@ AnnHelper.fn.clrInvalid = function() {
   }
 };
 
-module.exports = AnnHelper;
+module.exports = AnnHelper;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="AnnHelper.html">AnnHelper</a></li><li><a href="Annotator.html">Annotator</a></li><li><a href="AnnTool.html">AnnTool</a></li><li><a href="CanvasHelper.html">CanvasHelper</a></li><li><a href="EditTool.html">EditTool</a></li><li><a href="Feature.html">Feature</a></li><li><a href="PanTool.html">PanTool</a></li><li><a href="PolyAnn.html">PolyAnn</a></li><li><a href="RectAnn.html">RectAnn</a></li><li><a href="SuperShape.html">SuperShape</a></li><li><a href="SuperTool.html">SuperTool</a></li></ul><h3>Global</h3><ul><li><a href="global.html#annotator">annotator</a></li><li><a href="global.html#createAnnotation">createAnnotation</a></li><li><a href="global.html#Initializer">Initializer</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Mon Apr 28 2014 20:45:31 GMT+0100 (GMT Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

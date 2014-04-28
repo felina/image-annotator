@@ -1,6 +1,12 @@
 var SuperTool = require('../superTool');
 
-// Pan tool class definition //
+/**
+ * The Pan tool handles user input to the canvas. It allows the user
+ * to pan their vew of the image and annotations.
+ * @param {Annotator} parent The Annotator the tool will operate on
+ * @constructor
+ * @extends {SuperTool}
+ */
 function PanTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
@@ -11,6 +17,13 @@ PanTool.fn = PanTool.prototype;
 
 /*jshint unused:vars*/
 
+/**
+ * Handler for left-click press, which starts the pan operation.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf PanTool#
+ * @method lbDown
+ */
 PanTool.fn.lbDown = function(x, y) {
   if (!this.active) {
     this.x0 = x;
@@ -19,10 +32,24 @@ PanTool.fn.lbDown = function(x, y) {
   }
 };
 
+/**
+ * Handler for left-click release, which ends the pan operation
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf PanTool#
+ * @method lbUp
+ */
 PanTool.fn.lbUp = function(x, y) {
   this.active = false;
 };
 
+/**
+ * Handler for mouse movement, which pans the canvas.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf PanTool#
+ * @method  mMove
+ */
 PanTool.fn.mMove = function(x, y) {
   if (this.active) {
     var dx = x - this.x0;
