@@ -152,7 +152,7 @@ AnnHelper.fn.importFeatures = function(input) {
   // Clear existing
   this.ftrs = [];
 
-  if (!input) {
+  if (input === null || input.length === 0) {
     // null feature array input
     input = [new Feature("Image", false, "any")];
   }

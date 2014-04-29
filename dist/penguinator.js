@@ -2,18 +2,32 @@
 var Feature = require('./feature');
 var createAnnotation = require('./util').createAnnotation;
 
-// Annotation helper class definition //
-
-// This deals with managing the annotation data,
-// doing import/export etc
-
+/**
+ * AnnHelper deals with managing the annotation
+ * data and doing import/export.
+ * @param {Annotator} parent The annotator using this helper instance
+ * @constructor
+ */
 function AnnHelper(parent) {
   this.parent = parent;
-  this.reset();
+
+  /** @type {Array.<SuperShape>} The stored annotations */
+  this.anns = [];
+  this.aInd = 0;
+  this.fInd = 0;
+  /** @type {Array.<Feature>} The stored features */
+  this.ftrs = [];
+  /** @type {String} The next annotation type to use */
+  this.curType = "rect";
 }
 AnnHelper.fn = AnnHelper.prototype;
 
-// Returns the current annotation
+/**
+ * Gets the current (selected) annotation
+ * @return {Annotation}
+ * @memberof AnnHelper#
+ * @method getAnn
+ */
 AnnHelper.fn.getAnn = function() {
   if (this.anns.length === 0) {
     return null;
@@ -23,12 +37,22 @@ AnnHelper.fn.getAnn = function() {
   }
 };
 
-// Replaces the currently selected annotation
+/**
+ * Replaces the selected annotation with the one provided
+ * @param  {RectAnn|PolyAnn} ann Annotation to store
+ * @memberof AnnHelper#
+ * @method replaceAnn
+ */
 AnnHelper.fn.replaceAnn = function(ann) {
   this.anns[this.aInd] = ann;
 };
 
-// Sets the selection to an existing annotation
+/**
+ * Sets thse selection to an existing annotation.
+ * @param {RectAnn|PolyAnn} ann
+ * @memberof AnnHelper#
+ * @method setAnn
+ */
 AnnHelper.fn.setAnn = function(ann) {
   for (var f = 0; f < this.ftrs.length; f++) {
     var ftr = this.ftrs[f];
@@ -45,6 +69,12 @@ AnnHelper.fn.setAnn = function(ann) {
   }
 };
 
+/**
+ * Gets the current (selected) feature - the one being annotated.
+ * @return {Feature}
+ * @memberof AnnHelper#
+ * @method getFtr
+ */
 AnnHelper.fn.getFtr = function() {
   if (this.ftrs.length === 0) {
     return null;
@@ -54,11 +84,24 @@ AnnHelper.fn.getFtr = function() {
   }
 };
 
+/**
+ * Gets the complete feature array.
+ * @return {Array.<Feature>}
+ * @memberof AnnHelper#
+ * @method getFtrs
+ */
 AnnHelper.fn.getFtrs = function() {
   return this.ftrs;
 };
 
-// Sets the feature selection to an existing feature
+/**
+ * Sets the feature selection to an existing feature.
+ * This will do nothing if the specified feature is not
+ * in the feature array.
+ * @param {Feature} ftr
+ * @memberof AnnHelper#
+ * @method setFtr
+ */
 AnnHelper.fn.setFtr = function(ftr) {
   for (var f = 0; f < this.ftrs.length; f++) {
     if (ftr === this.ftrs[f]) {
@@ -69,7 +112,11 @@ AnnHelper.fn.setFtr = function(ftr) {
   }
 };
 
-// Resets to default state
+/**
+ * Sets the helper to its default state.
+ * @memberof AnnHelper#
+ * @method reset
+ */
 AnnHelper.fn.reset = function() {
   // Reset annotation
   this.anns = [];
@@ -79,23 +126,34 @@ AnnHelper.fn.reset = function() {
   this.fInd = 0;
   this.ftrs = [];
 
-  // Reset type
   this.curType = "rect";
 };
 
 //////////////////////////////////////////////////////
 // Data import / export
 
-// Feature import
+/**
+ * Imports data for a single feature.
+ * @param {{name : String, required : Boolean, shape : String}} ftr The feature to import
+ * @memberof AnnHelper#
+ * @method addFtrData
+ */
 AnnHelper.fn.addFtrData = function(ftr) {
   this.ftrs.push(new Feature(ftr.name, ftr.required, ftr.shape));
 };
 
+/**
+ * Imports external feature data provided by the client application.
+ * If input is null, a single default "image" feature is added.
+ * @param  {Array.<{name : String, required : Boolean, shape : String}>} input
+ * @memberof AnnHelper#
+ * @method importFeatures
+ */
 AnnHelper.fn.importFeatures = function(input) {
   // Clear existing
   this.ftrs = [];
 
-  if (!input) {
+  if (input === null || input.length === 0) {
     // null feature array input
     input = [new Feature("Image", false, "any")];
   }
@@ -108,7 +166,14 @@ AnnHelper.fn.importFeatures = function(input) {
   this.ftrChanged();
 };
 
-// Attribute import - Depends on previous feature import
+/**
+ * Imports annotation data provided by the client application.
+ * This depends on features having already being imported -
+ * call importFeatures(null) to setup a 'default' feature.
+ * @param  {Object} anns Map from feature names to annotation data arrays to import.
+ * @memberof AnnHelper#
+ * @method importAnns
+ */
 AnnHelper.fn.importAnns = function(anns) {
   // Iterate features
   for (var i = 0; i < this.ftrs.length; i++) {
@@ -116,7 +181,7 @@ AnnHelper.fn.importAnns = function(anns) {
     f.anns = [];
 
     if (typeof anns[f.name] === 'undefined') {
-      continue; // Skip feature if there was no input annribute data
+      continue; // Skip feature if there was no input attribute data
     }
 
     var input = anns[f.name];
@@ -146,7 +211,13 @@ AnnHelper.fn.importAnns = function(anns) {
   this.parent.showChange();
 };
 
-// Annotation export
+/**
+ * Allows export of the annotations to the client application.
+ * Returns object mapping feature names to arrays of annotations.
+ * @return {Object}
+ * @memberof AnnHelper#
+ * @method exportAnns
+ */
 AnnHelper.fn.exportAnns = function() {
   // Empty output object
   var out = {};
@@ -184,7 +255,12 @@ AnnHelper.fn.exportAnns = function() {
 //////////////////////////////////////////////////////
 // Feature selection
 
-// Common to feature changes
+/**
+ * Correctly finalises a feature change. Must be called
+ * when the selected feature index changes.
+ * @memberof AnnHelper#
+ * @method ftrChanged
+ */
 AnnHelper.fn.ftrChanged = function() {
   // Lock/unlock shape selection
   var lock = this.getFtr().shape !== "any";
@@ -208,7 +284,11 @@ AnnHelper.fn.ftrChanged = function() {
   this.parent.showChange();
 };
 
-// Select the next feature
+/**
+ * Selects the next feature in the feature array, up to the last.
+ * @memberof AnnHelper#
+ * @method nextFtr
+ */
 AnnHelper.fn.nextFtr = function() {
   this.fInd++;
 
@@ -219,7 +299,11 @@ AnnHelper.fn.nextFtr = function() {
   this.ftrChanged();
 };
 
-// Select the previous feature
+/**
+ * Selects the previous feature in the feature array, down to the first.
+ * @memberof AnnHelper#
+ * @method prevFtr
+ */
 AnnHelper.fn.prevFtr = function() {
   this.fInd--;
 
@@ -234,14 +318,24 @@ AnnHelper.fn.prevFtr = function() {
 //////////////////////////////////////////////////////
 // Annotation operations
 
-// Invalidates the current annotation and
-// clears it from storage
+/**
+ * Invalidates the current annotation and clears it from storage.
+ * @memberof AnnHelper#
+ * @method delAnn
+ */
 AnnHelper.fn.delAnn = function() {
   this.getAnn().invalidate();
   this.clrInvalid();
 };
 
 // Creates a new annotation
+/**
+ * Creates an returns a new annotation. This is the only safe way to
+ * add new annotations.
+ * @return {RectAnn|PolyAnn}
+ * @memberof AnnHelper#
+ * @method newAnn
+ */
 AnnHelper.fn.newAnn = function() {
   this.anns.push(createAnnotation(this.curType));
   this.aInd = this.anns.length - 1;
@@ -252,10 +346,16 @@ AnnHelper.fn.newAnn = function() {
 //////////////////////////////////////////////////////
 // Annotation UI
 
-// Picks the closest annotation point to
-// the given image-space point
-// Returns it, its index in the shape, and
-// the annotation object itself
+/**
+ * Picks the closest annotation point to the given image-space
+ * point, and returns it, its distance from the given point, 
+ * its index in the shape, and the annotation itself.
+ * @param  {Number} x X-coordinate in image space
+ * @param  {Number} y Y-coordinate in image space
+ * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn}}
+ * @memberof AnnHelper#
+ * @method pickPt
+ */
 AnnHelper.fn.pickPt = function(x, y) {
   var pick = {};
   pick.pt = null;
@@ -289,11 +389,18 @@ AnnHelper.fn.pickPt = function(x, y) {
   return pick;
 };
 
-// Pick the closest annotation line to
-// the given image-space point
-// Returns the closest point on the line, the
-// annotation which holds the line, and the indices
-// of the endpoints which define the line
+/**
+ * Picks the closest annotation line to the given image-space point
+ * and returns the closest point on the line, the annotation which
+ * holds the line, the indices of the points which define the line,
+ * and the distance from the given point to the line. Also returns
+ * whether or not the picked point is an endpoint on the line.
+ * @param  {Number} x X-coordinate in image space
+ * @param  {Number} y Y-coordinate in image space
+ * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn, i0 : Number, i1 : Number, endpt : Boolean}}
+ * @memberof AnnHelper#
+ * @method pickLn
+ */
 AnnHelper.fn.pickLn = function(x, y) {
   var pick = {};
   pick.pt = null;
@@ -363,12 +470,22 @@ AnnHelper.fn.pickLn = function(x, y) {
 //////////////////////////////////////////////////////
 // Misc functions
 
-// Type selection
+/**
+ * Changes the current annotation type - the type to use
+ * for the next created annotation.
+ * @param  {String} type
+ * @memberof AnnHelper#
+ * @method changeType
+ */
 AnnHelper.fn.changeType = function(type) {
   this.curType = type;
 };
 
-// Clears invalid annotations
+/**
+ * Clears invalidated annotations from the current annotation array.
+ * @memberof AnnHelper#
+ * @method clrInvalid
+ */
 AnnHelper.fn.clrInvalid = function() {
   for (var i = 0; i < this.anns.length; i++) {
     if (i === this.aInd) {
@@ -412,9 +529,17 @@ var canvascss = {
   cursor : "move"
 };
 
-// Creates a new annotator (to be bound to a DOM object)
+/**
+ * Manages an annotator, which must be bound to a DOM object.
+ * @param {Image} img Image to annotate. Can be null - a placeholder is displayed.
+ * @param {Number} w Width of annotation area
+ * @param {Number} h Height of annotation area
+ * @constructor
+ */
 function Annotator(img, w, h) {
   // Parameters
+
+  /** @type {Image} The image being annotated. */
   this.img = img;
   this.w = w;
   this.h = h;
@@ -436,13 +561,13 @@ function Annotator(img, w, h) {
   this.container = null;
   this.canvas = null;
 
-  // Tools
+  /** @type {SuperTool} The tool currently in use. */
   this.curTool = new PanTool(this);
 
-  // Annotations
+  /** @type {AnnHelper} The attached annotation helper. */
   this.annHelper = new AnnHelper(this);
 
-  // Canvas ops
+  /** @type {CanvasHelper} The attached canvas helper. */
   this.cHelper = null;
 }
 Annotator.fn = Annotator.prototype;
@@ -451,7 +576,12 @@ Annotator.fn = Annotator.prototype;
 //////////////////////////////////////////////////////
 // Data import / export
 
-// Apply feature data import
+/**
+ * Applies feature data import - calls {@link AnnHelper#importFeatures}.
+ * @param  {Object} data
+ * @memberOf Annotator#
+ * @method   featuresIn
+ */
 Annotator.fn.featuresIn = function(data) {
   if (typeof data.features === 'undefined') {
     return; // No input provided
@@ -461,7 +591,12 @@ Annotator.fn.featuresIn = function(data) {
   this.showChange();
 };
 
-// Apply annotation data import
+/**
+ * Applies annotation data import - calls {@link AnnHelper#importAnns}.
+ * @param  {Object} data
+ * @memberOf Annotator#
+ * @method   annsIn
+ */
 Annotator.fn.annsIn = function(data) {
   if (typeof data.annotations === 'undefined') {
     return; // No input provided
@@ -471,7 +606,12 @@ Annotator.fn.annsIn = function(data) {
   this.showChange();
 };
 
-// Apply css styling
+/**
+ * Applies css styling provided by the client application.
+ * @param  {Css} data
+ * @memberOf Annotator#
+ * @method   cssin
+ */
 Annotator.fn.cssIn = function(data) {
   if (typeof data.style === 'undefined') {
     return; // No input provided
@@ -489,12 +629,22 @@ Annotator.fn.cssIn = function(data) {
   }
 };
 
-// Annotation export
+/**
+ * Gets the annotation data describing the annotations the user has made.
+ * @return {Object}
+ * @memberOf Annotator#
+ * @method   getExport
+ */
 Annotator.fn.getExport = function() {
   return this.annHelper.exportAnns();
 };
 
-// Feature retrieval
+/**
+ * Gets the features being annotated.
+ * @return {Object}
+ * @memberOf Annotator#
+ * @method   getFeatures
+ */
 Annotator.fn.getFeatures = function() {
   return this.annHelper.ftrs;
 };
@@ -502,8 +652,15 @@ Annotator.fn.getFeatures = function() {
 //////////////////////////////////////////////////////
 // Update / build functionality
 
-// Updates an existing annotator with a new image
-// (Also resets the pan/zoom and annotations)
+/**
+ * Updates an existing annotator with a new image.
+ * This also resets the pan/zoom and annotations,
+ * @param  {Image} img New Image to use
+ * @param  {Number} w New width of annotator
+ * @param  {Number} h New height of annotator
+ * @memberOf Annotator#
+ * @method   update
+ */
 Annotator.fn.update = function(img, w, h) {
   var a = this;
   this.img = img;
@@ -527,7 +684,12 @@ Annotator.fn.update = function(img, w, h) {
   this.annHelper.reset();
 };
 
-// Instantiates an annotator inside a DOM object
+/**
+ * Instantiates an annotator inside a DOM object. This creates the annotation canvas and all the HTML controls, and sets up user interaction events for all components.
+ * @param  {JQuery} $parent
+ * @memberOf Annotator#
+ * @method   build
+ */
 Annotator.fn.build = function($parent) {
   // Register and generate annotator components
   $parent.addClass("annotator");
@@ -679,13 +841,24 @@ Annotator.fn.build = function($parent) {
 //////////////////////////////////////////////////////
 // Annotation UI
 
-// Shows a sate change in the canvas and UI elements
+/**
+ * Shows a state change in the canvas and UI elements.
+ * @memberOf Annotator#
+ * @method   showChange
+ */
 Annotator.fn.showChange = function() {
   this.cHelper.repaint();
   this.updateControls();
 };
 
-// Select annotation type with lock/disable lock
+/**
+ * Select annotation type to use with a lock, or disables the lock.
+ * However, the "annotation type" control will stay disabled if the image is null.
+ * @param  {String} type Type to switch to (with lock=false)
+ * @param  {Boolean} lock Whether to lock the "annotation type" control
+ * @memberOf Annotator#
+ * @method   lockSelect
+ */
 Annotator.fn.lockSelect = function(type, lock) {
   if (!this.img) {
     this.annType.prop('disabled', true);
@@ -704,12 +877,22 @@ Annotator.fn.lockSelect = function(type, lock) {
   }
 };
 
-// Select feature to display
+/**
+ * Selects a feature to display in the "selected feature" control.
+ * @param  {Feature} ftr
+ * @memberOf Annotator#
+ * @method   dispFtr
+ */
 Annotator.fn.dispFtr = function(ftr) {
   this.ftrSel.val(ftr.fmtName());
 };
 
-// Show features
+/**
+ * Show the feature list in the "selected feature" control.
+ * @param  {Array.<Feature>} ftrs
+ * @memberOf Annotator#
+ * @method   updateFtrs
+ */
 Annotator.fn.updateFtrs = function(ftrs) {
   var options = "";
   this.ftrSel.prop('disabled', false);
@@ -722,6 +905,11 @@ Annotator.fn.updateFtrs = function(ftrs) {
   this.ftrSel.empty().html(options);
 };
 
+/**
+ * Updates the state of various controls, disabling or enabling them as appropriate to the Annotator's state.
+ * @memberOf Annotator#
+ * @method   updateControls
+ */
 Annotator.fn.updateControls = function() {
   var ath = this.annHelper;
 
@@ -736,9 +924,12 @@ Annotator.fn.updateControls = function() {
 //////////////////////////////////////////////////////
 // Tool switching
 
-// Switches between the main annotation tools:
-// Annotation ('annotate')
-// Panning ('pan')
+/**
+ * Switches between the main annotation tools: 'annotate' for Annotation, 'pan' for Panning and 'edit' for Annotation Editing.
+ * @param  {String} op
+ * @memberOf Annotator#
+ * @method   switchOp
+ */
 Annotator.fn.switchOp = function(op) {
   switch (op) {
     case "annotate":
@@ -760,7 +951,13 @@ module.exports = Annotator;
 },{"./annHelper":1,"./canvasHelper":4,"./tools/annotate":11,"./tools/edit":12,"./tools/pan":13}],3:[function(require,module,exports){
 var Annotator = require('./annotator');
 
-// The annotator function - appplicable to any jQuery object collection
+/**
+ * The annotator api function - applicable to any jQuery object, this creates an Annotator which is bound to the parent element.
+ * If an annotator is already bound to the element, this method updates the annotator with the new input.
+ * @param  {Object} input
+ * @return {Annotator} The element's annotator.
+ * @method annotator
+ */
 module.exports.annotator = function(input) {
   var w, h;
 
@@ -810,18 +1007,19 @@ module.exports.annotator = function(input) {
 };
 
 },{"./annotator":2}],4:[function(require,module,exports){
-
-
-// Canvas helper class definition //
-
-// Creates a new CanvasHelper
+/**
+ * Manages the Annotator's canvas, passing user input to the tools and performing all rendering functionality.
+ * @param {Annotator} parent The Annotator using this helper instance.
+ * @constructor
+ */
 function CanvasHelper(parent) {
   this.parent = parent;
   var w = parent.w;
   var h = parent.h;
 
-  // Drawing
+  /** @type {Canvas} The HTML canvas object */
   this.canvas = parent.canvas;
+  /** @type {GraphicsContext} The canvas' attached graphics context, used for drawing  */
   this.g = this.canvas[0].getContext("2d");
 
   // Dim
@@ -832,20 +1030,27 @@ function CanvasHelper(parent) {
   this.imgW = w;
   this.imgH = h;
 
-  // Transform info
-  this.defScale = 1.0; // TODO: Correct for size
+  /** @type {Number} The default scaling level for the current image (see {@link CanvasHelper#calcZoom}) */
+  this.defScale = 1.0;
+  /** @type {Number} The current scaling level */
   this.curScale = this.defScale;
+  /** @type {Number} The current x offset (pan) */
   this.xOffs = 0;
+  /** @type {Number} The current y offset (pan) */
   this.yOffs = 0;
 
-  // Highlighting / selection visibility
+  /** @type {SuperShape} Annotation to highlight independently of the currently selected annotation */
   this.hlt = null;
   this.select = [];
 }
 
 CanvasHelper.fn = CanvasHelper.prototype;
 
-// Canvas re-draw op
+/**
+ * Re-draws the canvas - updates the view of the image and its annotations.
+ * @memberOf CanvasHelper#
+ * @method   repaint
+ */
 CanvasHelper.fn.repaint = function() {
   var g = this.g;
   var ftrs = this.parent.getFeatures();
@@ -893,7 +1098,13 @@ CanvasHelper.fn.repaint = function() {
   }
 };
 
-// Annotation draw op
+/**
+ * Draws an annotation to the canvas.
+ * @param  {SuperShape} ann Annotation to draw.
+ * @param  {Number} fInd The index of the feature the annotation belongs to.
+ * @memberOf CanvasHelper#
+ * @method   drawAnn
+ */
 CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var g = this.g;
 
@@ -946,7 +1157,12 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   }
 };
 
-// Point drawing util
+/**
+ * Draws a point as a small circle to the canvas.
+ * @param  {Object} pt
+ * @memberOf CanvasHelper#
+ * @method   drawPt
+ */
 CanvasHelper.fn.drawPt = function(pt) {
   var g = this.g;
   g.beginPath();
@@ -954,7 +1170,13 @@ CanvasHelper.fn.drawPt = function(pt) {
   g.fill();
 };
 
-// Pan op
+/**
+ * Pans the view of the image and annotations.
+ * @param  {Number} x Distance to pan horizontally
+ * @param  {Number} y Distance to pan vertically
+ * @memberOf CanvasHelper#
+ * @method   doPan
+ */
 CanvasHelper.fn.doPan = function(x, y) {
   // New offset
   this.xOffs += x;
@@ -971,7 +1193,12 @@ CanvasHelper.fn.doPan = function(x, y) {
   this.repaint();
 };
 
-// Zoom op
+/**
+ * Zooms in or out of the image and annotations.
+ * @param  {Number} scale Scaling factor, e.g. 2 to zoom in by 2x
+ * @memberOf CanvasHelper#
+ * @method   zoom
+ */
 CanvasHelper.fn.zoom = function(scale) {
   // New scaling level
   this.curScale *= scale;
@@ -984,7 +1211,13 @@ CanvasHelper.fn.zoom = function(scale) {
   this.repaint();
 };
 
-// Resizing and resetting pan/zoom
+/**
+ * Updates the canvas to new dimensions and resets the pan and zoom to their default levels.
+ * @param  {Number} w New canvas width
+ * @param  {Number} h New canvas height
+ * @memberOf CanvasHelper#
+ * @method   reset
+ */
 CanvasHelper.fn.reset = function(w, h) {
   this.canvas[0].width = w;
   this.canvas[0].height = h;
@@ -1008,7 +1241,13 @@ CanvasHelper.fn.reset = function(w, h) {
   this.curScale = this.defScale;
 };
 
-// Called when the image finishes loading
+/**
+ * Finalizes image load, registering the image's true width and height. Calls {@link CanvasHelper#calcZoom}.
+ * This is called automatically when a new image finishes loading.
+ * @param  {Image} img
+ * @memberOf CanvasHelper#
+ * @method   imgLoaded
+ */
 CanvasHelper.fn.imgLoaded = function(img) {
   // Grab the image dimensions. These are only available
   // once the image is fully loaded
@@ -1021,7 +1260,11 @@ CanvasHelper.fn.imgLoaded = function(img) {
   this.repaint();
 };
 
-// Calculates the correct default zoom level
+/**
+ * Calculates the correct default zoom level, taking into account aspect ratio to keep the image fully in view at the furthest zoom level.
+ * @memberOf CanvasHelper#
+ * @method   calcZoom
+ */
 CanvasHelper.fn.calcZoom = function() {
   // We can use the dimensions and the available canvas
   // area to work out a good zoom level
@@ -1032,12 +1275,24 @@ CanvasHelper.fn.calcZoom = function() {
   this.defScale = absRatio * 0.9;
 };
 
-// Set highlighted Annotation
+/**
+ * Sets the annotation which is to be highlighted.
+ * @param {SuperShape} ann
+ * @memberOf CanvasHelper#
+ * @method   setHlt
+ */
 CanvasHelper.fn.setHlt = function(ann) {
   this.hlt = ann;
 };
 
-// Screen to image space
+/**
+ * Utility function which transforms a point from screen to image space according to the current pan and zoom settings.
+ * @param  {Number} xin
+ * @param  {Number} yin
+ * @return {Object} Transformed point
+ * @memberOf CanvasHelper#
+ * @method   ptToImg
+ */
 CanvasHelper.fn.ptToImg = function(xin, yin) {
   var offset = this.canvas.offset();
   xin -= offset.left;
@@ -1057,24 +1312,45 @@ CanvasHelper.fn.ptToImg = function(xin, yin) {
   return out;
 };
 
-// Scales a distance to image space
+/**
+ * Utility function which transforms a distance from screen to image space.
+ * @param  {Number} dist
+ * @return {Number} Scaled distance
+ * @memberOf CanvasHelper#
+ * @method   scaleDist
+ */
 CanvasHelper.fn.scaleDist = function(dist) {
   return dist / this.curScale;
 };
 
 module.exports = CanvasHelper;
 },{}],5:[function(require,module,exports){
-// Features to be annotated
+/**
+ * Describes a feature to be annotated.
+ * @param {String} name
+ * @param {Boolean} required
+ * @param {String} shape Allowed type(s) of annotation. Can be "any".
+ * @constructor
+ */
 function Feature(name, required, shape) {
+  /** @type {String} The feature's name */
   this.name = name;
+  /** @type {Boolean} Whether the feature is required (currently unused!) */
   this.req = required;
+  /** @type {String} Allowed type(s) of annotation. Can be "any". */
   this.shape = shape;
+  /** @type {Array.<SuperShape>} The stored annotations for the feature */
   this.anns = [];
   this.annC = 0;
 }
 Feature.fn = Feature.prototype;
 
-// Returns formatted name
+/**
+ * Returns a formatted name, with the first letter capitalized.
+ * @return {String}
+ * @memberOf Feature#
+ * @method fmtName
+ */
 Feature.fn.fmtName = function() {
   var first = this.name.charAt(0).toUpperCase();
   return first.concat(this.name.substr(1));
@@ -1084,13 +1360,22 @@ module.exports = Feature;
 },{}],6:[function(require,module,exports){
 var api = require('./api');
 
+/**
+ * Registers the annotator API function to jQuery objects. Called immediately on load of the script.
+ * @param  {JQuery} $
+ * @method Initializer
+ */
 (function($) {
   $.fn.annotator = api.annotator;
 }(jQuery));
 },{"./api":3}],7:[function(require,module,exports){
 var SuperShape = require('../superShape');
 
-// Polygon shape definition //
+/**
+ * Polygon Shaped Annotation
+ * @constructor
+ * @extends {SuperShape}
+ */
 function PolyAnn() {
   SuperShape.call(this);
   this.type = 'poly';
@@ -1101,6 +1386,13 @@ PolyAnn.fn = PolyAnn.prototype;
 
 /*jshint unused:vars*/
 
+/**
+ * Adds a point to the polygon - each point is notionally 'connected' in turn to the next, looping back around to the first.
+ * @param {Object} pt
+ * @return {Boolean} Always true (A Polygon is never 'complete')
+ * @memberOf PolyAnn#
+ * @method   addPt
+ */
 PolyAnn.fn.addPt = function(pt) {
   if (this.pts.length === 0) {
     this.pts = [pt, pt];
@@ -1113,7 +1405,13 @@ PolyAnn.fn.addPt = function(pt) {
   return true;
 };
 
-// Insert a point at the given index
+/**
+ * Inserts a point after the given index.
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf PolyAnn#
+ * @method   insPt
+ */
 PolyAnn.fn.insPt = function(ind, pt) {
   if (ind < 0 || ind > this.pts.length) {
     return;
@@ -1122,26 +1420,59 @@ PolyAnn.fn.insPt = function(ind, pt) {
   this.pts.splice(ind, 0, pt);
 };
 
+/**
+ * Whether or not a point can be inserted into the polygon.
+ * Overrides {@link SuperTool} definition - since the polygon has an arbitray number of points, this always returns true.
+ * @return {Boolean} Always true
+ * @memberOf PolyAnn#
+ * @method   canInsPt
+ */
 PolyAnn.fn.canInsPt = function() {
   return true;
 };
 
+/**
+ * Modifies the last point added to match the input.
+ * @param  {Object} pt
+ * @memberOf PolyAnn#
+ * @method   modLastPt
+ */
 PolyAnn.fn.modLastPt = function(pt) {
   if (this.pts.length > 0) {
     this.pts[this.pts.length-1] = pt;
   }
 };
 
+/**
+ * Modifies the point at the given index to match the input.
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf PolyAnn#
+ * @method   modPt
+ */
 PolyAnn.fn.modPt = function(ind, pt) {
   if (ind >= 0 && ind < this.pts.length) {
     this.pts[ind] = pt;
   }
 };
 
+/**
+ * Gets an array of points to draw - called by the {@link CanvasHelper}.
+ * For the polygon, this just returns the stored points with a repeat of the first point appended, in order to create the desired loop.
+ * @return {Array} Array of points to draw
+ * @memberOf PolyAnn#
+ * @method   getDrawPts
+ */
 PolyAnn.fn.getDrawPts = function() {
   return this.pts.concat([this.pts[0]]);
 };
 
+/**
+ * Deletes the point at the given index.
+ * @param  {Number} ind
+ * @memberOf PolyAnn#
+ * @method   delPt
+ */
 PolyAnn.fn.delPt = function(ind) {
   this.pts.splice(ind, 1);
 
@@ -1151,6 +1482,13 @@ PolyAnn.fn.delPt = function(ind) {
   }
 };
 
+/**
+ * Gets the export data for the annotation.
+ * For the polygon, this just returns export data with the internally stored points.
+ * @return {Object} Data for export to client application
+ * @memberOf PolyAnn#
+ * @method   getExport
+ */
 PolyAnn.fn.getExport = function() {
   var res = {};
 
@@ -1166,7 +1504,11 @@ module.exports = PolyAnn;
 },{"../superShape":9}],8:[function(require,module,exports){
 var SuperShape = require('../superShape');
 
-// Rect shape definition //
+/**
+ * Rectangle Shaped Annotation. Defined by exactly two points.
+ * @constructor
+ * @extends {SuperShape}
+ */
 function RectAnn() {
   SuperShape.call(this);
   this.type = 'rect';
@@ -1177,6 +1519,13 @@ RectAnn.fn = RectAnn.prototype;
 
 /*jshint unused:vars*/
 
+/**
+ * Adds a point to the rectangle - the first call will add the first point, and every subsequent call will modify the second.
+ * @param {Object} pt
+ * @return {Boolean} True if another point can be added, false if the shape is complete.
+ * @memberOf RectAnn#
+ * @method   addPt
+ */
 RectAnn.fn.addPt = function(newPt) {
   // Init
   if (this.pts.length === 0) {
@@ -1192,12 +1541,28 @@ RectAnn.fn.addPt = function(newPt) {
   }
 };
 
+/**
+ * Modifies the last point added to match the input.
+ * @param  {Object} pt
+ * @memberOf RectAnn#
+ * @method   modLastPt
+ */
 RectAnn.fn.modLastPt = function(pt) {
   if (this.pts.length === 2) {
     this.pts[1] = pt;
   }
 };
 
+/**
+ * Modifies the point at the given index to match the input.
+ * For the rectangle, the indices are 'faked' - this function accepts 0-3 when only two
+ * points are stored. This allows the tools to interact with the shape as though control
+ * points exist at all four corners.
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf RectAnn#
+ * @method   modPt
+ */
 RectAnn.fn.modPt = function(ind, pt) {
   switch (ind) {
     case 0:
@@ -1217,6 +1582,14 @@ RectAnn.fn.modPt = function(ind, pt) {
   }
 };
 
+/**
+ * Gets an array of points to draw - called by the {@link CanvasHelper}.
+ * For the rectangle, this generates an array of five points based on the stored
+ * two. (Note: the first point is repeated at the end to create the desired loop)
+ * @return {Array} Array of points to draw
+ * @memberOf RectAnn#
+ * @method   getDrawPts
+ */
 RectAnn.fn.getDrawPts = function() {
   if (!this.valid) {
     return [];
@@ -1238,6 +1611,12 @@ RectAnn.fn.getDrawPts = function() {
   return res;
 };
 
+/**
+ * Gets the points array as the user will interact with them - see {@link RectAnn#getDrawPts} for points to be drawn.
+ * @return {Array} Array of four points - the corners of the rectangle
+ * @memberOf RectAnn#
+ * @method   getPts
+ */
 RectAnn.fn.getPts = function() {
   if (this.valid) {
     return this.getDrawPts().slice(0, -1);
@@ -1247,12 +1626,26 @@ RectAnn.fn.getPts = function() {
   }
 };
 
+/**
+ * Deleting a point from a rectangle isn't meaningful -
+ * instead, this method override invalidates the shape,
+ * essentially deleting it.
+ * @param  {Number} ind
+ * @memberOf RectAnn#
+ * @method   delPt
+ */
 RectAnn.fn.delPt = function(ind) {
-  // Deleting a rect point isn't meaningful -
-  // invalidate the shape
   this.invalidate();
 };
 
+/**
+ * Gets the export data for the annotation.
+ * For the rectangle, this generates an object holding a position
+ * (for the top-left point) and a 'size' (width and height).
+ * @return {Object} Data for export to client application
+ * @memberOf RectAnn#
+ * @method   getExport
+ */
 RectAnn.fn.getExport = function() {
   var res = {};
 
@@ -1278,10 +1671,16 @@ RectAnn.fn.getExport = function() {
 
 module.exports = RectAnn;
 },{"../superShape":9}],9:[function(require,module,exports){
-// Shape superclass
+/**
+ * Parent class for the different annotation types.
+ * @constructor
+ */
 function SuperShape() {
+  /** @type {Boolean} Indicates validity of the shape */
   this.valid = false;
+  /** @type {Array} The array of points defining the shape */
   this.pts = [];
+  /** @type {String} Indicates the type of the shape, e.g. "rect" */
   this.type = 'none';
 }
 
@@ -1289,21 +1688,119 @@ SuperShape.fn = SuperShape.prototype;
 
 /*jshint unused:vars*/
 // Available functions for shapes with default/empty defns
+
+/**
+ * Invalidates the shape
+ * @memberOf SuperShape#
+ * @method   invalidate
+ */
 SuperShape.fn.invalidate  = function() {this.valid = false;};
+
+/**
+ * Determines if the shape is valid.
+ * @return {Boolean} Whether the shape is valid.
+ * @memberOf SuperShape#
+ * @method   isValid
+ */
 SuperShape.fn.isValid     = function() {return this.valid;};
-SuperShape.fn.addPt       = function(pt) {};
+
+/**
+ * Adds a point to the shape.
+ * @abstract 
+ * @param {Object} pt
+ * @return {Boolean} False if the shape is complete
+ * @memberOf SuperShape#
+ * @method   addPt
+ */
+SuperShape.fn.addPt       = function(pt) {return false;};
+
+/**
+ * Modifies the last point to match the input.
+ * @abstract
+ * @param  {Object} pt
+ * @memberOf SuperShape#
+ * @method   modLastPt
+ */
 SuperShape.fn.modLastPt   = function(pt) {};
+
+/**
+ * Modifies the point at the given index to match the input.
+ * @abstract
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf SuperShape#
+ * @method   modPt
+ */
 SuperShape.fn.modPt       = function(ind, pt) {};
+
+/**
+ * Inserts a point after the given index.
+ * @abstract
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf SuperShape#
+ * @method   insPt
+ */
 SuperShape.fn.insPt       = function(ind, pt) {};
+
+/**
+ * Deletes the point at the given index.
+ * @abstract
+ * @param  {Number} ind
+ * @memberOf SuperShape#
+ * @method   delPt
+ */
 SuperShape.fn.delPt       = function(ind) {};
+
+/**
+ * Gets an array of points to draw - called by the {@link CanvasHelper}.
+ * @abstract
+ * @return {Array} Array of points to draw
+ * @memberOf SuperShape#
+ * @method   getDrawPts
+ */
 SuperShape.fn.getDrawPts  = function() {return [];};
+
+/**
+ * Gets the export data for the annotation.
+ * @abstract
+ * @return {Object} Data for export to client application
+ * @memberOf SuperShape#
+ * @method   getExport
+ */
 SuperShape.fn.getExport   = function() {return {};};
+
+/**
+ * Gets the number of points in the shape.
+ * @return {Number} Number of points
+ * @memberOf SuperShape#
+ * @method   getNumPts
+ */
 SuperShape.fn.getNumPts   = function() {return this.pts.length;};
+
+/**
+ * Gets the points array as the user will interact with them - see {@link SuperShape#getDrawPts} for points to be drawn.
+ * @return {Array} Array of points
+ * @memberOf SuperShape#
+ * @method   getPts
+ */
 SuperShape.fn.getPts      = function() {return this.pts;};
+
+/**
+ * Whether or not a point can be inserted into the shape.
+ * @abstract
+ * @return {Boolean}
+ * @memberOf SuperShape#
+ * @method   canInsPt
+ */
 SuperShape.fn.canInsPt    = function() {return false;};
 
-// Default implementation of getBounds should suffice for
-// most shapes
+/**
+ * Calculates the rectangular boudns of a shape. The default implementation of this method should suffice for most shapes.
+ * @return {Object}
+ * @memberOf SuperShape#
+ * @method   getBounds
+ */
 SuperShape.fn.getBounds   = function() {
   if (this.pts.length === 0) {
     return null;
@@ -1331,39 +1828,122 @@ SuperShape.fn.getBounds   = function() {
 module.exports = SuperShape;
 
 },{}],10:[function(require,module,exports){
-// Base tool class defn //
+/**
+ * The parent class for tools (essentially user input handlers)<br/>
+ * The default handlers all do nothing when called.
+ * @constructor
+ */
 function SuperTool() {
   this.x0 = 0;
   this.x1 = 0;
   this.y0 = 0;
   this.y1 = 0;
 
+  /** @type {Boolean} Indicates whether or not the tool is actively performing an operation */
   this.active = false;
 }
 
 SuperTool.fn = SuperTool.prototype;
 
 /*jshint unused:vars*/
+
+/**
+ * Handler for left-click press
+ * @param  {Number} x
+ * @param  {Number} y
+ * @abstract
+ * @memberOf SuperTool#
+ * @method lbDown
+ */
 SuperTool.fn.lbDown   = function(x, y) {};
+
+/**
+ * Handler for left-click release
+ * @param  {Number} x
+ * @param  {Number} y
+ * @abstract
+ * @memberOf SuperTool#
+ * @method lbUp
+ */
 SuperTool.fn.lbUp     = function(x, y) {};
+
+/**
+ * Handler for left double-click
+ * @param  {Number} x
+ * @param  {Number} y
+ * @abstract
+ * @memberOf SuperTool#
+ * @method lbDbl
+ */
 SuperTool.fn.lbDbl    = function(x, y) {};
+
+/**
+ * Handler for right-click press
+ * @param  {Number} x
+ * @param  {Number} y
+ * @abstract
+ * @memberOf SuperTool#
+ * @method rbDown
+ */
 SuperTool.fn.rbDown   = function(x, y) {};
+
+/**
+ * Handler for right-click release
+ * @param  {Number} x
+ * @param  {Number} y
+ * @abstract
+ * @memberOf SuperTool#
+ * @method rbUp
+ */
 SuperTool.fn.rbUp     = function(x, y) {};
+
+/**
+ * Handler for mouse movement
+ * @param  {Number} x
+ * @param  {Number} y
+ * @abstract
+ * @memberOf SuperTool#
+ * @method  mMove
+ */
 SuperTool.fn.mMove    = function(x, y) {};
+
+/**
+ * Handler for keyboard input
+ * @param  {Number} key
+ * @abstract
+ * @memberOf SuperTool#
+ * @method keyDown
+ */
 SuperTool.fn.keyDown  = function(key) {};
+
+/**
+ * Allows custom rendering to be performed by the tool, e.g. for extra information on-screen while in use.
+ * Called by {@link CanvasHelper} on the current tool when the canvas is repainted.
+ * @param  {GraphicsContext} g Graphics context handle.
+ * @abstract
+ * @memberOf SuperTool#
+ * @method draw
+ */
 SuperTool.fn.draw     = function(g) {};
+
 /*jshint unused:true*/
 
 module.exports = SuperTool;
 },{}],11:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
-// Annotation tool class definition //
-// This accepts user input to generate a *new* Annotation
-
+/**
+ * The annotation tool handles user input to the canvas. It allows
+ * the user to draw out NEW annotations.
+ * @param {Annotator} parent The Annotator the tool will operate on
+ * @constructor
+ * @extends {SuperTool}
+ */
 function AnnTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
+
+  /** @type {SuperShape} The annotation being drawn */
   this.ann = null;
 }
 AnnTool.prototype = Object.create(SuperTool.prototype);
@@ -1371,7 +1951,13 @@ AnnTool.fn = AnnTool.prototype;
 
 /*jshint unused:vars*/
 
-// Mouse up - add a point to the annotation
+/**
+ * Handles a left mouse up event, attempting to add a point to the annotation.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf AnnTool#
+ * @method  lbUp
+ */
 AnnTool.fn.lbUp = function(x, y) {
   var a = this.parent;
 
@@ -1388,7 +1974,13 @@ AnnTool.fn.lbUp = function(x, y) {
   a.showChange();
 };
 
-// Double click - finish a polygon annotation
+/**
+ * Handler for left double-click, which immediately completes a Polygon annotation
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf AnnTool#
+ * @method lbDbl
+ */
 AnnTool.fn.lbDbl = function(x, y) {
   // NB: We get 2x 'up' events before the double-click
   // Need to remove erroneous extra points
@@ -1403,7 +1995,13 @@ AnnTool.fn.lbDbl = function(x, y) {
   }
 };
 
-// Mouse move - update last point
+/**
+ * Handler for mouse movement, which updates the last added point
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf AnnTool#
+ * @method  mMove
+ */
 AnnTool.fn.mMove = function(x, y) {
   if (this.active) {
     var c = this.parent.cHelper;
@@ -1414,6 +2012,13 @@ AnnTool.fn.mMove = function(x, y) {
   }
 };
 
+/**
+ * Handler for keyboard input - delete key deletes the current annotation and ends drawing.
+ * Backspace removes the last placed point, and deletes the annotation if it was the last point.
+ * @param  {Number} key
+ * @memberOf AnnTool#
+ * @method keyDown
+ */
 AnnTool.fn.keyDown = function(key) {
   var anh = this.parent.annHelper;
 
@@ -1446,18 +2051,24 @@ module.exports = AnnTool;
 },{"../superTool":10}],12:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
-// Edit tool class definition //
-// This allows selection and modification of existing annotations
-
+/**
+ * The Edit tool handles user input to the canvas. It allows the user
+ * to modify existing annotations by moving, adding or removing points.
+ * @param {Annotator} parent The Annotator the tool will operate on
+ * @constructor
+ * @extends {SuperTool}
+ */
 function EditTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
 
+  /** @type {Boolean} Whether an edit operation can be started (depends on cursor position) */
   this.canEdit = false;
-
+  /** @type {Boolean} Whether an edit operation is in progress */
   this.editing = false;
+  /** @type {Number} Index of the point being edited */
   this.editPt = 0;
-
+  /** @type {Object} Point to be displayed as a highlight on the canvas */
   this.hlt = null;
 }
 
@@ -1466,6 +2077,14 @@ EditTool.fn = EditTool.prototype;
 
 /*jshint unused:vars*/
 
+/**
+ * Handler for mouse movement, which either highlights nearby annotations/points or
+ * continues an edit operation which is in progress by updating the editPt.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf EditTool#
+ * @method  mMove
+ */
 EditTool.fn.mMove = function(x, y) {
   var a = this.parent;
   var c = a.cHelper;
@@ -1485,6 +2104,14 @@ EditTool.fn.mMove = function(x, y) {
   }
 };
 
+/**
+ * Handler for left-click press. This can select a new annotation to edit, 
+ * a point on the current annotation to edit, or create a new point to edit.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf EditTool#
+ * @method lbDown
+ */
 EditTool.fn.lbDown = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
@@ -1532,7 +2159,15 @@ EditTool.fn.lbDown = function(x, y) {
   }
 };
 
-// Highlight annotations under the cursor
+/**
+ * This performs the picking logic for highlighting
+ * annotations or potential edit points for selection.
+ * It is called by {@link EditTool#mMove} when an edit operation is not already in progress.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf EditTool#
+ * @method passiveMove
+ */
 EditTool.fn.passiveMove = function(x, y) {
   var c = this.parent.cHelper;
   var anh = this.parent.annHelper;
@@ -1576,7 +2211,13 @@ EditTool.fn.passiveMove = function(x, y) {
   c.setHlt(pick.ann);
 };
 
-// Point deletion (right click)
+/**
+ * Handler for right-click press, which deletes the highlighted point.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf EditTool#
+ * @method rbDown
+ */
 EditTool.fn.rbDown = function(x, y) {
   var anh = this.parent.annHelper;
   var c = this.parent.cHelper;
@@ -1596,6 +2237,12 @@ EditTool.fn.rbDown = function(x, y) {
   }
 };
 
+/**
+ * Handler for keyboard input. The delete key removes the point currently being edited.
+ * @param  {Number} key
+ * @memberOf EditTool#
+ * @method keyDown
+ */
 EditTool.fn.keyDown = function(key) {
   var anh = this.parent.annHelper;
 
@@ -1616,7 +2263,14 @@ EditTool.fn.keyDown = function(key) {
   }
 };
 
-// Draw point to change/create
+/**
+ * Draws the current highlight point to the canvas - this is a point which can potentially
+ * be selected, or a point which is being edited.
+ * Called by {@link CanvasHelper} on the current tool when the canvas is repainted.
+ * @param  {GraphicsContext} g Graphics context handle.
+ * @memberOf EditTool#
+ * @method draw
+ */
 EditTool.fn.draw = function(g) {
   if (this.hlt) {
     g.fillStyle = "white";
@@ -1631,7 +2285,13 @@ module.exports = EditTool;
 },{"../superTool":10}],13:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
-// Pan tool class definition //
+/**
+ * The Pan tool handles user input to the canvas. It allows the user
+ * to pan their vew of the image and annotations.
+ * @param {Annotator} parent The Annotator the tool will operate on
+ * @constructor
+ * @extends {SuperTool}
+ */
 function PanTool(parent) {
   SuperTool.call(this);
   this.parent = parent;
@@ -1642,6 +2302,13 @@ PanTool.fn = PanTool.prototype;
 
 /*jshint unused:vars*/
 
+/**
+ * Handler for left-click press, which starts the pan operation.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf PanTool#
+ * @method lbDown
+ */
 PanTool.fn.lbDown = function(x, y) {
   if (!this.active) {
     this.x0 = x;
@@ -1650,10 +2317,24 @@ PanTool.fn.lbDown = function(x, y) {
   }
 };
 
+/**
+ * Handler for left-click release, which ends the pan operation
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf PanTool#
+ * @method lbUp
+ */
 PanTool.fn.lbUp = function(x, y) {
   this.active = false;
 };
 
+/**
+ * Handler for mouse movement, which pans the canvas.
+ * @param  {Number} x
+ * @param  {Number} y
+ * @memberOf PanTool#
+ * @method  mMove
+ */
 PanTool.fn.mMove = function(x, y) {
   if (this.active) {
     var dx = x - this.x0;
@@ -1673,7 +2354,12 @@ module.exports = PanTool;
 var RectAnn = require('./shapes/rect');
 var PolyAnn = require('./shapes/poly');
 
-// Annotations - as distinct on the canvas
+/**
+ * Creates an annotation of the specified type.
+ * Note: Use {@link AnnHelper#newAnn} to add new annotations, NOT this method.
+ * @param  {String} type
+ * @method
+ */
 module.exports.createAnnotation = function createAnnotation(type) {
   switch (type) {
     case 'rect':
