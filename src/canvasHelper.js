@@ -123,6 +123,13 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
     drawPts = true;
   }
 
+  // Make sure to always draw point annontations.
+  if (ann.type === 'point' || this.parent.annHelper.getAnn() === 'point') {
+    cInd = 1;
+    fillCol = col[1];
+    drawPts = true;
+  }
+
   g.shadowColor = "#FFF";
   g.shadowBlur = 0;
   g.fillStyle = fillCol;

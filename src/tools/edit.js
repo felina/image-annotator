@@ -157,6 +157,20 @@ EditTool.fn.passiveMove = function(x, y) {
     this.hlt = null;
   }
 
+  if (pick.ann.type === 'point') {
+    anh.aInd = anh.anns.indexOf(pick.ann);
+    anh.curType = 'point';
+
+    this.canEdit = true;
+
+    if (pick === pickln && !pick.ann.canInsPt()) {
+      this.hlt = null;
+    }
+    else {
+      this.hlt = pick.pt;
+    }
+  }
+
   c.setHlt(pick.ann);
 };
 

@@ -77,6 +77,7 @@ Annotator.fn = Annotator.prototype;
  */
 Annotator.fn.featuresIn = function(data) {
   if (typeof data.features === 'undefined') {
+    console.log('Not a valid object:', data);
     return; // No input provided
   }
 
@@ -92,6 +93,7 @@ Annotator.fn.featuresIn = function(data) {
  */
 Annotator.fn.annsIn = function(data) {
   if (typeof data.annotations === 'undefined') {
+    console.log('Not a valid object:', data);
     return; // No input provided
   }
 
@@ -196,7 +198,7 @@ Annotator.fn.build = function($parent) {
 
   this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
   this.annType   = $('<select id="typesel"></select>')
-                      .html('<option>Box</option><option>Polygon</option>')
+                      .html('<option>Box</option><option>Polygon</option><option>Point</option>')
                       .appendTo($parent);
   this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
                       .css("margin-right", "20px");
@@ -249,6 +251,10 @@ Annotator.fn.build = function($parent) {
         break;
       case "Polygon":
         a.annHelper.changeType("poly");
+        a.switchOp("annotate");
+        break;
+      case "Point":
+        a.annHelper.changeType("point");
         a.switchOp("annotate");
         break;
     }
@@ -363,8 +369,11 @@ Annotator.fn.lockSelect = function(type, lock) {
       if (type === "rect") {
         this.annType.val('Box');
       }
-      else {
+      else if (type === "rect") {
         this.annType.val('Polygon');
+      }
+      else {
+        this.annType.val('Point');
       }
     }
   }

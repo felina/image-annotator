@@ -1,5 +1,6 @@
 var RectAnn = require('./shapes/rect');
 var PolyAnn = require('./shapes/poly');
+var PointAnn = require('./shapes/point');
 
 /**
  * Creates an annotation of the specified type.
@@ -13,5 +14,7 @@ module.exports.createAnnotation = function createAnnotation(type) {
       return new RectAnn();
     case 'poly':
       return new PolyAnn();
+    case 'point':
+      return new PointAnn();
   }
 };

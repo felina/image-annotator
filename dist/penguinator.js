@@ -1,4 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var Feature = require('./feature');
 var createAnnotation = require('./util').createAnnotation;
 
@@ -39,7 +39,7 @@ AnnHelper.fn.getAnn = function() {
 
 /**
  * Replaces the selected annotation with the one provided
- * @param  {RectAnn|PolyAnn} ann Annotation to store
+ * @param  {RectAnn|PolyAnn|PointAnn} ann Annotation to store
  * @memberof AnnHelper#
  * @method replaceAnn
  */
@@ -49,7 +49,7 @@ AnnHelper.fn.replaceAnn = function(ann) {
 
 /**
  * Sets thse selection to an existing annotation.
- * @param {RectAnn|PolyAnn} ann
+ * @param {RectAnn|PolyAnn|PointAnn} ann
  * @memberof AnnHelper#
  * @method setAnn
  */
@@ -197,6 +197,8 @@ AnnHelper.fn.importAnns = function(anns) {
       if (s.type === 'rect') {
         ann.pts[0] = s.pos;
         ann.pts[1] = {x : s.pos.x+s.size.width, y : s.pos.y+s.size.height};
+      } else if (s.type == 'point') {
+        ann.pts[0] = s.pos;
       }
       else {
         ann.pts = s.points;
@@ -332,7 +334,7 @@ AnnHelper.fn.delAnn = function() {
 /**
  * Creates an returns a new annotation. This is the only safe way to
  * add new annotations.
- * @return {RectAnn|PolyAnn}
+ * @return {RectAnn|PolyAnn|PointAnn}
  * @memberof AnnHelper#
  * @method newAnn
  */
@@ -352,7 +354,7 @@ AnnHelper.fn.newAnn = function() {
  * its index in the shape, and the annotation itself.
  * @param  {Number} x X-coordinate in image space
  * @param  {Number} y Y-coordinate in image space
- * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn}}
+ * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn|PointAnn}}
  * @memberof AnnHelper#
  * @method pickPt
  */
@@ -397,7 +399,7 @@ AnnHelper.fn.pickPt = function(x, y) {
  * whether or not the picked point is an endpoint on the line.
  * @param  {Number} x X-coordinate in image space
  * @param  {Number} y Y-coordinate in image space
- * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn, i0 : Number, i1 : Number, endpt : Boolean}}
+ * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn|PointAnn, i0 : Number, i1 : Number, endpt : Boolean}}
  * @memberof AnnHelper#
  * @method pickLn
  */
@@ -504,7 +506,7 @@ AnnHelper.fn.clrInvalid = function() {
 };
 
 module.exports = AnnHelper;
-},{"./feature":5,"./util":14}],2:[function(require,module,exports){
+},{"./feature":5,"./util":15}],2:[function(require,module,exports){
 // Other core components
 var AnnHelper     = require('./annHelper');
 var CanvasHelper  = require('./canvasHelper');
@@ -584,6 +586,7 @@ Annotator.fn = Annotator.prototype;
  */
 Annotator.fn.featuresIn = function(data) {
   if (typeof data.features === 'undefined') {
+    console.log('Not a valid object:', data);
     return; // No input provided
   }
 
@@ -599,6 +602,7 @@ Annotator.fn.featuresIn = function(data) {
  */
 Annotator.fn.annsIn = function(data) {
   if (typeof data.annotations === 'undefined') {
+    console.log('Not a valid object:', data);
     return; // No input provided
   }
 
@@ -703,7 +707,7 @@ Annotator.fn.build = function($parent) {
 
   this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
   this.annType   = $('<select id="typesel"></select>')
-                      .html('<option>Box</option><option>Polygon</option>')
+                      .html('<option>Box</option><option>Polygon</option><option>Point</option>')
                       .appendTo($parent);
   this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
                       .css("margin-right", "20px");
@@ -756,6 +760,10 @@ Annotator.fn.build = function($parent) {
         break;
       case "Polygon":
         a.annHelper.changeType("poly");
+        a.switchOp("annotate");
+        break;
+      case "Point":
+        a.annHelper.changeType("point");
         a.switchOp("annotate");
         break;
     }
@@ -870,8 +878,11 @@ Annotator.fn.lockSelect = function(type, lock) {
       if (type === "rect") {
         this.annType.val('Box');
       }
-      else {
+      else if (type === "rect") {
         this.annType.val('Polygon');
+      }
+      else {
+        this.annType.val('Point');
       }
     }
   }
@@ -948,7 +959,7 @@ Annotator.fn.switchOp = function(op) {
 };
 
 module.exports = Annotator;
-},{"./annHelper":1,"./canvasHelper":4,"./tools/annotate":11,"./tools/edit":12,"./tools/pan":13}],3:[function(require,module,exports){
+},{"./annHelper":1,"./canvasHelper":4,"./tools/annotate":12,"./tools/edit":13,"./tools/pan":14}],3:[function(require,module,exports){
 var Annotator = require('./annotator');
 
 /**
@@ -1127,6 +1138,13 @@ CanvasHelper.fn.drawAnn = function(ann, fInd) {
   var drawPts = false;
 
   if (ann === this.hlt || this.parent.annHelper.getAnn() === ann) {
+    cInd = 1;
+    fillCol = col[1];
+    drawPts = true;
+  }
+
+  // Make sure to always draw point annontations.
+  if (ann.type === 'point' || this.parent.annHelper.getAnn() === 'point') {
     cInd = 1;
     fillCol = col[1];
     drawPts = true;
@@ -1372,6 +1390,137 @@ var api = require('./api');
 var SuperShape = require('../superShape');
 
 /**
+ * Annotation of a single point.
+ * @constructor
+ * @extends {SuperShape}
+ */
+function PointAnn() {
+  SuperShape.call(this);
+  this.type = 'point';
+}
+
+PointAnn.prototype = Object.create(SuperShape.prototype);
+PointAnn.fn = PointAnn.prototype;
+
+/*jshint unused:vars*/
+
+/**
+ * Creates the point.
+ * @param {Object} pt
+ * @return {Boolean} True if another point can be added, false if the shape is complete.
+ * @memberOf PointAnn#
+ * @method   addPt
+ */
+PointAnn.fn.addPt = function(newPt) {
+  // Init
+  if (this.pts.length === 0) {
+    this.pts.push(newPt);
+    this.valid = true;
+    return false;
+  }
+};
+
+/**
+ * Modifies the point added to match the input.
+ * @param  {Object} pt
+ * @memberOf PointAnn#
+ * @method   modLastPt
+ */
+PointAnn.fn.modLastPt = function(pt) {
+    if (this.pts.length === 1) {
+        this.pts[0] = pt;
+    }
+};
+
+/**
+ * Modifies the single point at the given index to match the input.
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf PointAnn#
+ * @method   modPt
+ */
+PointAnn.fn.modPt = function(ind, pt) {
+    if (this.pts.length === 1) {
+        this.pts[0] = pt;
+    }
+};
+
+/**
+ * Gets an array of the single point to draw - called by the {@link CanvasHelper}.
+ * @return {Array} Array of one single point to draw
+ * @memberOf PointAnn#
+ * @method   getDrawPts
+ */
+PointAnn.fn.getDrawPts = function() {
+  if (!this.valid) {
+    return [];
+  }
+
+  var res = [];
+
+  var x0 = this.pts[0].x;
+  var y0 = this.pts[0].y;
+
+  res.push({x:x0, y:y0});
+  res.push({x:x0, y:y0});
+
+  return res;
+};
+
+/**
+ * Gets the array of the single point as the user will interact with it - see {@link PointAnn#getDrawPts} for point to be drawn.
+ * @return {Array} Array of one single point
+ * @memberOf PointAnn#
+ * @method   getPts
+ */
+PointAnn.fn.getPts = function() {
+  if (this.valid) {
+    var pts = [this.getDrawPts()[0]];
+    return pts;
+  }
+  else {
+    return [];
+  }
+};
+
+/**
+ * Deleting a single point isn't meaningful -
+ * instead, this method override invalidates the shape,
+ * essentially deleting it.
+ * @param  {Number} ind
+ * @memberOf PointAnn#
+ * @method   delPt
+ */
+PointAnn.fn.delPt = function(ind) {
+  this.invalidate();
+};
+
+/**
+ * Gets the export data for the annotation.
+ * @return {Object} Data for export to client application
+ * @memberOf PointAnn#
+ * @method   getExport
+ */
+PointAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'point';
+
+  var x = this.pts[0].x;
+  var y = this.pts[0].y;
+
+  res.pos = {x : x, y : y};
+
+  return res;
+};
+
+/*jshint unused:true*/
+
+module.exports = PointAnn;
+},{"../superShape":10}],8:[function(require,module,exports){
+var SuperShape = require('../superShape');
+
+/**
  * Polygon Shaped Annotation
  * @constructor
  * @extends {SuperShape}
@@ -1501,7 +1650,7 @@ PolyAnn.fn.getExport = function() {
 /*jshint unused:true*/
 
 module.exports = PolyAnn;
-},{"../superShape":9}],8:[function(require,module,exports){
+},{"../superShape":10}],9:[function(require,module,exports){
 var SuperShape = require('../superShape');
 
 /**
@@ -1619,7 +1768,8 @@ RectAnn.fn.getDrawPts = function() {
  */
 RectAnn.fn.getPts = function() {
   if (this.valid) {
-    return this.getDrawPts().slice(0, -1);
+    var pts = this.getDrawPts().slice(0, -1);
+    return pts;
   }
   else {
     return [];
@@ -1670,7 +1820,7 @@ RectAnn.fn.getExport = function() {
 /*jshint unused:true*/
 
 module.exports = RectAnn;
-},{"../superShape":9}],9:[function(require,module,exports){
+},{"../superShape":10}],10:[function(require,module,exports){
 /**
  * Parent class for the different annotation types.
  * @constructor
@@ -1827,7 +1977,7 @@ SuperShape.fn.getBounds   = function() {
 
 module.exports = SuperShape;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /**
  * The parent class for tools (essentially user input handlers)<br/>
  * The default handlers all do nothing when called.
@@ -1929,7 +2079,7 @@ SuperTool.fn.draw     = function(g) {};
 /*jshint unused:true*/
 
 module.exports = SuperTool;
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
 /**
@@ -2048,7 +2198,7 @@ AnnTool.fn.keyDown = function(key) {
 /*jshint unused:true*/
 
 module.exports = AnnTool;
-},{"../superTool":10}],12:[function(require,module,exports){
+},{"../superTool":11}],13:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
 /**
@@ -2208,6 +2358,20 @@ EditTool.fn.passiveMove = function(x, y) {
     this.hlt = null;
   }
 
+  if (pick.ann.type === 'point') {
+    anh.aInd = anh.anns.indexOf(pick.ann);
+    anh.curType = 'point';
+
+    this.canEdit = true;
+
+    if (pick === pickln && !pick.ann.canInsPt()) {
+      this.hlt = null;
+    }
+    else {
+      this.hlt = pick.pt;
+    }
+  }
+
   c.setHlt(pick.ann);
 };
 
@@ -2282,7 +2446,7 @@ EditTool.fn.draw = function(g) {
 /*jshint unused:true*/
 
 module.exports = EditTool;
-},{"../superTool":10}],13:[function(require,module,exports){
+},{"../superTool":11}],14:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
 /**
@@ -2350,9 +2514,10 @@ PanTool.fn.mMove = function(x, y) {
 /*jshint unused:true*/
 
 module.exports = PanTool;
-},{"../superTool":10}],14:[function(require,module,exports){
+},{"../superTool":11}],15:[function(require,module,exports){
 var RectAnn = require('./shapes/rect');
 var PolyAnn = require('./shapes/poly');
+var PointAnn = require('./shapes/point');
 
 /**
  * Creates an annotation of the specified type.
@@ -2366,7 +2531,9 @@ module.exports.createAnnotation = function createAnnotation(type) {
       return new RectAnn();
     case 'poly':
       return new PolyAnn();
+    case 'point':
+      return new PointAnn();
   }
 };
 
-},{"./shapes/poly":7,"./shapes/rect":8}]},{},[6]);
+},{"./shapes/point":7,"./shapes/poly":8,"./shapes/rect":9}]},{},[6]);

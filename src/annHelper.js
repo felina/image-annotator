@@ -38,7 +38,7 @@ AnnHelper.fn.getAnn = function() {
 
 /**
  * Replaces the selected annotation with the one provided
- * @param  {RectAnn|PolyAnn} ann Annotation to store
+ * @param  {RectAnn|PolyAnn|PointAnn} ann Annotation to store
  * @memberof AnnHelper#
  * @method replaceAnn
  */
@@ -48,7 +48,7 @@ AnnHelper.fn.replaceAnn = function(ann) {
 
 /**
  * Sets thse selection to an existing annotation.
- * @param {RectAnn|PolyAnn} ann
+ * @param {RectAnn|PolyAnn|PointAnn} ann
  * @memberof AnnHelper#
  * @method setAnn
  */
@@ -196,6 +196,8 @@ AnnHelper.fn.importAnns = function(anns) {
       if (s.type === 'rect') {
         ann.pts[0] = s.pos;
         ann.pts[1] = {x : s.pos.x+s.size.width, y : s.pos.y+s.size.height};
+      } else if (s.type == 'point') {
+        ann.pts[0] = s.pos;
       }
       else {
         ann.pts = s.points;
@@ -331,7 +333,7 @@ AnnHelper.fn.delAnn = function() {
 /**
  * Creates an returns a new annotation. This is the only safe way to
  * add new annotations.
- * @return {RectAnn|PolyAnn}
+ * @return {RectAnn|PolyAnn|PointAnn}
  * @memberof AnnHelper#
  * @method newAnn
  */
@@ -351,7 +353,7 @@ AnnHelper.fn.newAnn = function() {
  * its index in the shape, and the annotation itself.
  * @param  {Number} x X-coordinate in image space
  * @param  {Number} y Y-coordinate in image space
- * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn}}
+ * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn|PointAnn}}
  * @memberof AnnHelper#
  * @method pickPt
  */
@@ -396,7 +398,7 @@ AnnHelper.fn.pickPt = function(x, y) {
  * whether or not the picked point is an endpoint on the line.
  * @param  {Number} x X-coordinate in image space
  * @param  {Number} y Y-coordinate in image space
- * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn, i0 : Number, i1 : Number, endpt : Boolean}}
+ * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn|PointAnn, i0 : Number, i1 : Number, endpt : Boolean}}
  * @memberof AnnHelper#
  * @method pickLn
  */
