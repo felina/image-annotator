@@ -23,42 +23,53 @@
 
 
 
+
 <section>
 
 <header>
-    <h2>
-    SuperTool
-    </h2>
+    
+        <h2>SuperTool</h2>
+        
     
 </header>
 
 <article>
     <div class="container-overview">
     
+        
 
     
-        
-<dt>
+
     <h4 class="name" id="SuperTool"><span class="type-signature"></span>new SuperTool<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        The parent class for tools (essentially user input handlers)<br/>The default handlers all do nothing when called.
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    The parent class for tools (essentially user input handlers)<br/>The default handlers all do nothing when called.
+</div>
 
-    
 
-    
+
+
+
+
+
+
+
+
+
+
+
 <dl class="details">
+
+    
+
+    
+
+    
+
     
 
     
@@ -92,25 +103,22 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
     
     </div>
-
-    
 
     
 
@@ -125,34 +133,41 @@
     
         <h3 class="subsection-title">Members</h3>
 
-        <dl>
+        
             
-<dt>
-    <h4 class="name" id="active"><span class="type-signature"></span>active<span class="type-signature"> :Boolean</span></h4>
+<h4 class="name" id="active"><span class="type-signature"></span>active<span class="type-signature"> :Boolean</span></h4>
 
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Indicates whether or not the tool is actively performing an operation
-    </div>
-    
 
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
+
+
+<div class="description">
+    Indicates whether or not the tool is actively performing an operation
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
 <span class="param-type">Boolean</span>
 
 
-            </li>
-        </ul>
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -186,39 +201,41 @@
 </dl>
 
 
-    
 
-    
-</dd>
 
-        </dl>
+
+
+        
     
 
     
         <h3 class="subsection-title">Methods</h3>
 
-        <dl>
+        
             
-<dt>
+
+    
+
     <h4 class="name" id="draw"><span class="type-signature">(abstract) </span>draw<span class="signature">(g)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Allows custom rendering to be performed by the tool, e.g. for extra information on-screen while in use.Called by <a href="CanvasHelper.html">CanvasHelper</a> on the current tool when the canvas is repainted.
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Allows custom rendering to be performed by the tool, e.g. for extra information on-screen while in use.Called by <a href="CanvasHelper.html">CanvasHelper</a> on the current tool when the canvas is repainted.
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -264,10 +281,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -301,43 +328,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="keyDown"><span class="type-signature">(abstract) </span>keyDown<span class="signature">(key)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for keyboard input
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for keyboard input
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -383,10 +412,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -420,43 +459,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="lbDbl"><span class="type-signature">(abstract) </span>lbDbl<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for left double-click
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for left double-click
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -525,10 +566,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -562,43 +613,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="lbDown"><span class="type-signature">(abstract) </span>lbDown<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for left-click press
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for left-click press
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -667,10 +720,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -704,43 +767,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="lbUp"><span class="type-signature">(abstract) </span>lbUp<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for left-click release
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for left-click release
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -809,10 +874,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -846,43 +921,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="mMove"><span class="type-signature">(abstract) </span>mMove<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for mouse movement
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for mouse movement
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -951,10 +1028,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -988,43 +1075,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="rbDown"><span class="type-signature">(abstract) </span>rbDown<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for right-click press
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for right-click press
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -1093,10 +1182,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -1130,43 +1229,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="rbUp"><span class="type-signature">(abstract) </span>rbUp<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for right-click release
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for right-click release
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -1235,10 +1336,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -1272,22 +1383,21 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
 
-        </dl>
+
+
+
+
+
+
+
+        
     
 
     
@@ -1303,13 +1413,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="AnnHelper.html">AnnHelper</a></li><li><a href="Annotator.html">Annotator</a></li><li><a href="AnnTool.html">AnnTool</a></li><li><a href="CanvasHelper.html">CanvasHelper</a></li><li><a href="EditTool.html">EditTool</a></li><li><a href="Feature.html">Feature</a></li><li><a href="PanTool.html">PanTool</a></li><li><a href="PolyAnn.html">PolyAnn</a></li><li><a href="RectAnn.html">RectAnn</a></li><li><a href="SuperShape.html">SuperShape</a></li><li><a href="SuperTool.html">SuperTool</a></li></ul><h3>Global</h3><ul><li><a href="global.html#annotator">annotator</a></li><li><a href="global.html#createAnnotation">createAnnotation</a></li><li><a href="global.html#Initializer">Initializer</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AnnHelper.html">AnnHelper</a></li><li><a href="Annotator.html">Annotator</a></li><li><a href="AnnTool.html">AnnTool</a></li><li><a href="CanvasHelper.html">CanvasHelper</a></li><li><a href="EditTool.html">EditTool</a></li><li><a href="Feature.html">Feature</a></li><li><a href="PanTool.html">PanTool</a></li><li><a href="PointAnn.html">PointAnn</a></li><li><a href="PolyAnn.html">PolyAnn</a></li><li><a href="RectAnn.html">RectAnn</a></li><li><a href="SuperShape.html">SuperShape</a></li><li><a href="SuperTool.html">SuperTool</a></li></ul><h3>Global</h3><ul><li><a href="global.html#annotator">annotator</a></li><li><a href="global.html#createAnnotation">createAnnotation</a></li><li><a href="global.html#Initializer">Initializer</a></li></ul>
 </nav>
 
-<br clear="both">
+<br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Mon Apr 28 2014 20:45:32 GMT+0100 (GMT Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Wed May 03 2017 13:48:13 GMT+0200 (Romance Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -23,41 +23,43 @@
 
 
 
+
 <section>
 
 <header>
-    <h2>
-    AnnTool
-    </h2>
+    
+        <h2>AnnTool</h2>
+        
     
 </header>
 
 <article>
     <div class="container-overview">
     
+        
 
     
-        
-<dt>
+
     <h4 class="name" id="AnnTool"><span class="type-signature"></span>new AnnTool<span class="signature">(parent)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        The annotation tool handles user input to the canvas. It allowsthe user to draw out NEW annotations.
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    The annotation tool handles user input to the canvas. It allowsthe user to draw out NEW annotations.
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -103,10 +105,20 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -128,7 +140,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="annotate.js.html">tools/annotate.js</a>, <a href="annotate.js.html#line10">line 10</a>
+        <a href="tools_annotate.js.html">tools/annotate.js</a>, <a href="tools_annotate.js.html#line10">line 10</a>
     </li></ul></dd>
     
 
@@ -140,20 +152,19 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
     
     </div>
@@ -161,10 +172,13 @@
     
         <h3 class="subsection-title">Extends</h3>
 
-        <ul>
-            <li><a href="SuperTool.html">SuperTool</a></li>
-        </ul>
-    
+        
+
+
+    <ul>
+        <li><a href="SuperTool.html">SuperTool</a></li>
+    </ul>
+
 
     
 
@@ -179,35 +193,34 @@
     
         <h3 class="subsection-title">Members</h3>
 
-        <dl>
+        
             
-<dt>
-    <h4 class="name" id="active"><span class="type-signature"></span>active<span class="type-signature"> :Boolean</span></h4>
+<h4 class="name" id="active"><span class="type-signature"></span>active<span class="type-signature"> :Boolean</span></h4>
 
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Indicates whether or not the tool is actively performing an operation
-    </div>
-    
 
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
+
+
+<div class="description">
+    Indicates whether or not the tool is actively performing an operation
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
 <span class="param-type">Boolean</span>
 
 
-            </li>
-        </ul>
-    
+        </li>
+    </ul>
 
-    
+
+
+
+
 <dl class="details">
-    
 
     
 
@@ -217,7 +230,15 @@
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
         <a href="SuperTool.html#active">SuperTool#active</a>
-    </li></dd>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
     
 
     
@@ -245,39 +266,45 @@
 </dl>
 
 
-    
 
-    
-</dd>
+
+
 
         
             
-<dt>
-    <h4 class="name" id="ann"><span class="type-signature"></span>ann<span class="type-signature"> :<a href="SuperShape.html">SuperShape</a></span></h4>
+<h4 class="name" id="ann"><span class="type-signature"></span>ann<span class="type-signature"> :<a href="SuperShape.html">SuperShape</a></span></h4>
 
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        The annotation being drawn
-    </div>
-    
 
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
+
+
+<div class="description">
+    The annotation being drawn
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
 <span class="param-type"><a href="SuperShape.html">SuperShape</a></span>
 
 
-            </li>
-        </ul>
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
     
 
     
@@ -299,7 +326,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="annotate.js.html">tools/annotate.js</a>, <a href="annotate.js.html#line15">line 15</a>
+        <a href="tools_annotate.js.html">tools/annotate.js</a>, <a href="tools_annotate.js.html#line15">line 15</a>
     </li></ul></dd>
     
 
@@ -311,39 +338,41 @@
 </dl>
 
 
-    
 
-    
-</dd>
 
-        </dl>
+
+
+        
     
 
     
         <h3 class="subsection-title">Methods</h3>
 
-        <dl>
+        
             
-<dt>
+
+    
+
     <h4 class="name" id="draw"><span class="type-signature">(abstract) </span>draw<span class="signature">(g)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Allows custom rendering to be performed by the tool, e.g. for extra information on-screen while in use.Called by <a href="CanvasHelper.html">CanvasHelper</a> on the current tool when the canvas is repainted.
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Allows custom rendering to be performed by the tool, e.g. for extra information on-screen while in use.Called by <a href="CanvasHelper.html">CanvasHelper</a> on the current tool when the canvas is repainted.
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -389,11 +418,13 @@
     
     </tbody>
 </table>
-    
 
-    
+
+
+
+
+
 <dl class="details">
-    
 
     
 
@@ -403,7 +434,15 @@
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
         <a href="SuperTool.html#draw">SuperTool#draw</a>
-    </li></dd>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
     
 
     
@@ -431,43 +470,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="keyDown"><span class="type-signature"></span>keyDown<span class="signature">(key)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for keyboard input - delete key deletes the current annotation and ends drawing.Backspace removes the last placed point, and deletes the annotation if it was the last point.
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for keyboard input - delete key deletes the current annotation and ends drawing.Backspace removes the last placed point, and deletes the annotation if it was the last point.
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -513,10 +554,25 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperTool.html#keyDown">SuperTool#keyDown</a>
+    </li></ul></dd>
     
 
     
@@ -538,7 +594,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="annotate.js.html">tools/annotate.js</a>, <a href="annotate.js.html#line83">line 83</a>
+        <a href="tools_annotate.js.html">tools/annotate.js</a>, <a href="tools_annotate.js.html#line83">line 83</a>
     </li></ul></dd>
     
 
@@ -550,43 +606,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="lbDbl"><span class="type-signature"></span>lbDbl<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for left double-click, which immediately completes a Polygon annotation
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for left double-click, which immediately completes a Polygon annotation
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -655,10 +713,25 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperTool.html#lbDbl">SuperTool#lbDbl</a>
+    </li></ul></dd>
     
 
     
@@ -680,7 +753,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="annotate.js.html">tools/annotate.js</a>, <a href="annotate.js.html#line45">line 45</a>
+        <a href="tools_annotate.js.html">tools/annotate.js</a>, <a href="tools_annotate.js.html#line45">line 45</a>
     </li></ul></dd>
     
 
@@ -692,43 +765,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="lbDown"><span class="type-signature">(abstract) </span>lbDown<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for left-click press
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for left-click press
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -797,11 +872,13 @@
     
     </tbody>
 </table>
-    
 
-    
+
+
+
+
+
 <dl class="details">
-    
 
     
 
@@ -811,7 +888,15 @@
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
         <a href="SuperTool.html#lbDown">SuperTool#lbDown</a>
-    </li></dd>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
     
 
     
@@ -839,43 +924,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="lbUp"><span class="type-signature"></span>lbUp<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handles a left mouse up event, attempting to add a point to the annotation.
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handles a left mouse up event, attempting to add a point to the annotation.
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -944,10 +1031,25 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperTool.html#lbUp">SuperTool#lbUp</a>
+    </li></ul></dd>
     
 
     
@@ -969,7 +1071,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="annotate.js.html">tools/annotate.js</a>, <a href="annotate.js.html#line22">line 22</a>
+        <a href="tools_annotate.js.html">tools/annotate.js</a>, <a href="tools_annotate.js.html#line22">line 22</a>
     </li></ul></dd>
     
 
@@ -981,43 +1083,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="mMove"><span class="type-signature"></span>mMove<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for mouse movement, which updates the last added point
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for mouse movement, which updates the last added point
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -1086,10 +1190,25 @@
     
     </tbody>
 </table>
+
+
+
+
+
+
+<dl class="details">
+
     
 
     
-<dl class="details">
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperTool.html#mMove">SuperTool#mMove</a>
+    </li></ul></dd>
     
 
     
@@ -1111,7 +1230,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="annotate.js.html">tools/annotate.js</a>, <a href="annotate.js.html#line66">line 66</a>
+        <a href="tools_annotate.js.html">tools/annotate.js</a>, <a href="tools_annotate.js.html#line66">line 66</a>
     </li></ul></dd>
     
 
@@ -1123,43 +1242,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="rbDown"><span class="type-signature">(abstract) </span>rbDown<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for right-click press
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for right-click press
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -1228,11 +1349,13 @@
     
     </tbody>
 </table>
-    
 
-    
+
+
+
+
+
 <dl class="details">
-    
 
     
 
@@ -1242,7 +1365,15 @@
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
         <a href="SuperTool.html#rbDown">SuperTool#rbDown</a>
-    </li></dd>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
     
 
     
@@ -1270,43 +1401,45 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
+
+
+
+
+
+
+
 
         
             
-<dt>
+
+    
+
     <h4 class="name" id="rbUp"><span class="type-signature">(abstract) </span>rbUp<span class="signature">(x, y)</span><span class="type-signature"></span></h4>
 
     
-</dt>
-<dd>
 
-    
-    <div class="description">
-        Handler for right-click release
-    </div>
-    
 
-    
 
-    
+<div class="description">
+    Handler for right-click release
+</div>
 
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
     
-        <h5>Parameters:</h5>
-        
 
 <table class="params">
     <thead>
@@ -1375,11 +1508,13 @@
     
     </tbody>
 </table>
-    
 
-    
+
+
+
+
+
 <dl class="details">
-    
 
     
 
@@ -1389,7 +1524,15 @@
     <dt class="inherited-from">Inherited From:</dt>
     <dd class="inherited-from"><ul class="dummy"><li>
         <a href="SuperTool.html#rbUp">SuperTool#rbUp</a>
-    </li></dd>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
     
 
     
@@ -1417,22 +1560,21 @@
 </dl>
 
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
 
-    
-</dd>
 
-        </dl>
+
+
+
+
+
+
+
+        
     
 
     
@@ -1448,13 +1590,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Classes</h3><ul><li><a href="AnnHelper.html">AnnHelper</a></li><li><a href="Annotator.html">Annotator</a></li><li><a href="AnnTool.html">AnnTool</a></li><li><a href="CanvasHelper.html">CanvasHelper</a></li><li><a href="EditTool.html">EditTool</a></li><li><a href="Feature.html">Feature</a></li><li><a href="PanTool.html">PanTool</a></li><li><a href="PolyAnn.html">PolyAnn</a></li><li><a href="RectAnn.html">RectAnn</a></li><li><a href="SuperShape.html">SuperShape</a></li><li><a href="SuperTool.html">SuperTool</a></li></ul><h3>Global</h3><ul><li><a href="global.html#annotator">annotator</a></li><li><a href="global.html#createAnnotation">createAnnotation</a></li><li><a href="global.html#Initializer">Initializer</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="AnnHelper.html">AnnHelper</a></li><li><a href="Annotator.html">Annotator</a></li><li><a href="AnnTool.html">AnnTool</a></li><li><a href="CanvasHelper.html">CanvasHelper</a></li><li><a href="EditTool.html">EditTool</a></li><li><a href="Feature.html">Feature</a></li><li><a href="PanTool.html">PanTool</a></li><li><a href="PointAnn.html">PointAnn</a></li><li><a href="PolyAnn.html">PolyAnn</a></li><li><a href="RectAnn.html">RectAnn</a></li><li><a href="SuperShape.html">SuperShape</a></li><li><a href="SuperTool.html">SuperTool</a></li></ul><h3>Global</h3><ul><li><a href="global.html#annotator">annotator</a></li><li><a href="global.html#createAnnotation">createAnnotation</a></li><li><a href="global.html#Initializer">Initializer</a></li></ul>
 </nav>
 
-<br clear="both">
+<br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-dev</a> on Mon Apr 28 2014 20:45:31 GMT+0100 (GMT Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Wed May 03 2017 13:48:13 GMT+0200 (Romance Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
