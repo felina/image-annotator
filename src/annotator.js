@@ -176,8 +176,8 @@ Annotator.fn.toggleFullscreen = function(annotator, clickedToggleButton) {
     annotator.h = screen.height -
       $("#annotator-top-controls").height() -
       $("#annotator-bottom-controls").height() -
-      parseInt($("body").css("margin-top").replace("px", "")) * 2 -
-      parseInt($("body").css("margin-bottom").replace("px", "")) * 2;
+      parseInt($("body").css("margin-top").replace("px", "")) -
+      parseInt($("body").css("margin-bottom").replace("px", ""));
     // Reloading & resizing
     annotator.container.width(annotator.w).height(annotator.h);
     // Reset pan/zoom
@@ -284,7 +284,7 @@ Annotator.fn.build = function($parent) {
   console.log("Annotator", this);
 
   // Top controls
-  this.divTop   = $('<divid="annotator-top-controls"></div>').appendTo($parent).css("width", "100%");
+  this.divTop   = $('<div id="annotator-top-controls"></div>').appendTo($parent).css("width", "100%");
   this.divRight  = $('<div></div>').appendTo(this.divTop).css("float", "right");
   this.divLeft   = $('<div></div>').appendTo(this.divTop);
   this.divClear   = $('<div></div>').appendTo(this.divTop).css("clear", "both");
