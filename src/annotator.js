@@ -34,10 +34,14 @@ function Annotator(img, w, h) {
 
   /** @type {Image} The image being annotated. */
   this.img = img;
+  this.originalW = w;
+  this.originalH = h;
   this.w = w;
   this.h = h;
 
   // Controls
+  this.divRight = null;
+  this.divLeft = null;
   this.zoomin = null;
   this.zoomout = null;
   this.pan = null;
@@ -46,6 +50,8 @@ function Annotator(img, w, h) {
   this.annType = null;
   this.ftrSel = null;
   this.delAnn = null;
+  this.tip = null;
+  this.gofull = null;
 
   this.title = null;
 
@@ -145,6 +151,90 @@ Annotator.fn.getFeatures = function() {
 };
 
 //////////////////////////////////////////////////////
+// Full-screen
+
+/**
+ * Toggle full-screen mode.
+ * @param    {Annotator} Reference to the annotator
+ * @param    {Boolean} Clicked toggle-button
+ * @memberOf Annotator#
+ * @method   toggleFullscreen
+ */
+Annotator.fn.toggleFullscreen = function(annotator, clickedToggleButton) {
+  console.log('toggleFullscreen', annotator);
+  
+  if (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  ) {
+    annotator.stopFullscreen(annotator, clickedToggleButton);
+  } else {
+    // Update dimensions
+    annotator.w = screen.width;
+    annotator.h = screen.height -
+      $("#annotator-top-controls").height() -
+      $("#annotator-bottom-controls").height() -
+      parseInt($("body").css("margin-top").replace("px", "")) * 2 -
+      parseInt($("body").css("margin-bottom").replace("px", "")) * 2;
+    // Reloading & resizing
+    annotator.container.width(annotator.w).height(annotator.h);
+    // Reset pan/zoom
+    annotator.cHelper.reset(annotator.w, annotator.h);
+    annotator.showChange();
+
+    element = $(".annotator")[0];
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if (element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+    } else if (element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  }
+};
+
+/**
+ * Stop full-screen mode.
+ * @param    {Annotator} Reference to the annotator
+ * @param    {Boolean} Clicked toggle-button
+ * @memberOf Annotator#
+ * @method   stopFullscreen
+ */
+Annotator.fn.stopFullscreen = function(annotator, clickedToggleButton) {
+  console.log('stopFullscreen', annotator);
+
+  // Update dimensions
+  annotator.w = annotator.originalW;
+  annotator.h = annotator.originalH;
+  // Reloading & resizing
+  annotator.container.width(annotator.w).height(annotator.h);
+  // Reset pan/zoom
+  annotator.cHelper.reset(annotator.w, annotator.h);
+  annotator.showChange();
+
+  if (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  ) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+};
+
+//////////////////////////////////////////////////////
 // Update / build functionality
 
 /**
@@ -190,27 +280,70 @@ Annotator.fn.build = function($parent) {
   $parent.addClass("annotator");
   $parent.data("Annotator", this);
 
+  var annotator = this;
+  console.log("Annotator", this);
+
+  // Top controls
+  this.divTop   = $('<divid="annotator-top-controls"></div>').appendTo($parent).css("width", "100%");
+  this.divRight  = $('<div></div>').appendTo(this.divTop).css("float", "right");
+  this.divLeft   = $('<div></div>').appendTo(this.divTop);
+  this.divClear   = $('<div></div>').appendTo(this.divTop).css("clear", "both");
+
   // Controls
-  this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
-  this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
-  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent)
+  this.zoomin    = $('<button id="zoomin">+</button>').appendTo(this.divLeft);
+  this.zoomout   = $('<button id="zoomout">-</button>').appendTo(this.divLeft);
+  this.pan       = $('<button id="pan">Pan</button>').appendTo(this.divLeft)
                       .css("margin-right", "20px");
 
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo(this.divLeft);
   this.annType   = $('<select id="typesel"></select>')
-                      .html('<option>Box</option><option>Polygon</option><option>Point</option>')
-                      .appendTo($parent);
-  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+                      .html('<option>Box</option><option>Line</option><option>Point</option><option>Polygon</option>')
+                      .appendTo(this.divLeft);
+  this.edit      = $('<button id="edit">Edit</button>').appendTo(this.divLeft)
                       .css("margin-right", "20px");
 
-  this.title     = $('<label>Annotating:</label>').appendTo($parent)
-                      .css("font-family", "sans-serif")
-                      .css("font-size", "12px");
+  this.title     = $('<label>Annotating:</label>').appendTo(this.divLeft)
+                      .css("margin-right", "10px")
 
   this.ftrSel    = $('<select id="ftrsel"></select>')
                       .html('<option>Image</option>')
                       .prop('disabled', true)
-                      .appendTo($parent);
+                      .appendTo(this.divLeft);
+
+  this.tip       = $('<span>Tip: Double-click the last point to complete a line or a polygon.</span>')
+                      .appendTo(this.divRight)
+                      .addClass("text-muted");
+
+  this.gofull    = $('<button id="toggle_fullscreen">Toggle fullscreen</button>')
+                      .appendTo(this.divRight)
+                      .css("margin-left", "10px")
+                      .click(function () {
+                        annotator.toggleFullscreen(annotator, true);
+                      });
+
+  if (document.addEventListener)
+  {
+      document.addEventListener('webkitfullscreenchange', exitHandler, false);
+      document.addEventListener('mozfullscreenchange', exitHandler, false);
+      document.addEventListener('fullscreenchange', exitHandler, false);
+      document.addEventListener('MSFullscreenChange', exitHandler, false);
+  }
+
+  function exitHandler()
+  {
+      if (document.webkitIsFullScreen === false)
+      {
+          annotator.stopFullscreen(annotator, false);
+      }
+      else if (document.mozFullScreen === false)
+      {
+          annotator.stopFullscreen(annotator, false);
+      }
+      else if (document.msFullscreenElement === false)
+      {
+          annotator.stopFullscreen(annotator, false);
+      }
+  }
 
   // Canvas container
   this.container = $('<div tabindex=0></div>')
@@ -220,12 +353,13 @@ Annotator.fn.build = function($parent) {
                       .appendTo($parent);
 
   // The drawing canvas
-  this.canvas = $('<canvas>Unsupported browser.</canvas>')
+  this.canvas =    $('<canvas>Unsupported browser.</canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
 
   // Bottom controls
-  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo($parent);
+  this.divBottom   = $('<div id="annotator-bottom-controls"></div>').appendTo($parent);
+  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo(this.divBottom);
 
   // Disable some of the normal page interaction in the canvas area
   this.canvas[0].onselectstart = function(){return false;};
@@ -251,6 +385,10 @@ Annotator.fn.build = function($parent) {
         break;
       case "Polygon":
         a.annHelper.changeType("poly");
+        a.switchOp("annotate");
+        break;
+      case "Line":
+        a.annHelper.changeType("line");
         a.switchOp("annotate");
         break;
       case "Point":
@@ -369,8 +507,11 @@ Annotator.fn.lockSelect = function(type, lock) {
       if (type === "rect") {
         this.annType.val('Box');
       }
-      else if (type === "rect") {
+      else if (type === "poly") {
         this.annType.val('Polygon');
+      }
+      else if (type === "line") {
+        this.annType.val('Line');
       }
       else {
         this.annType.val('Point');

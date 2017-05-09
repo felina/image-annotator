@@ -39,7 +39,7 @@ AnnHelper.fn.getAnn = function() {
 
 /**
  * Replaces the selected annotation with the one provided
- * @param  {RectAnn|PolyAnn|PointAnn} ann Annotation to store
+ * @param  {RectAnn|PolyAnn|PointAnn|LineAnn} ann Annotation to store
  * @memberof AnnHelper#
  * @method replaceAnn
  */
@@ -49,7 +49,7 @@ AnnHelper.fn.replaceAnn = function(ann) {
 
 /**
  * Sets thse selection to an existing annotation.
- * @param {RectAnn|PolyAnn|PointAnn} ann
+ * @param {RectAnn|PolyAnn|PointAnn|LineAnn} ann
  * @memberof AnnHelper#
  * @method setAnn
  */
@@ -334,7 +334,7 @@ AnnHelper.fn.delAnn = function() {
 /**
  * Creates an returns a new annotation. This is the only safe way to
  * add new annotations.
- * @return {RectAnn|PolyAnn|PointAnn}
+ * @return {RectAnn|PolyAnn|PointAnn|LineAnn}
  * @memberof AnnHelper#
  * @method newAnn
  */
@@ -354,7 +354,7 @@ AnnHelper.fn.newAnn = function() {
  * its index in the shape, and the annotation itself.
  * @param  {Number} x X-coordinate in image space
  * @param  {Number} y Y-coordinate in image space
- * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn|PointAnn}}
+ * @return {{dist : Number, pt : {x : Number, y : Number}, ind : Integer, ann : RectAnn|PolyAnn|PointAnn|LineAnn}}
  * @memberof AnnHelper#
  * @method pickPt
  */
@@ -399,7 +399,7 @@ AnnHelper.fn.pickPt = function(x, y) {
  * whether or not the picked point is an endpoint on the line.
  * @param  {Number} x X-coordinate in image space
  * @param  {Number} y Y-coordinate in image space
- * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn|PointAnn, i0 : Number, i1 : Number, endpt : Boolean}}
+ * @return {{pt : {x : Number, y : Number}, dist : Number, ann : PolyAnn|RectAnn|PointAnn|LineAnn, i0 : Number, i1 : Number, endpt : Boolean}}
  * @memberof AnnHelper#
  * @method pickLn
  */
@@ -506,7 +506,7 @@ AnnHelper.fn.clrInvalid = function() {
 };
 
 module.exports = AnnHelper;
-},{"./feature":5,"./util":15}],2:[function(require,module,exports){
+},{"./feature":5,"./util":16}],2:[function(require,module,exports){
 // Other core components
 var AnnHelper     = require('./annHelper');
 var CanvasHelper  = require('./canvasHelper');
@@ -543,10 +543,14 @@ function Annotator(img, w, h) {
 
   /** @type {Image} The image being annotated. */
   this.img = img;
+  this.originalW = w;
+  this.originalH = h;
   this.w = w;
   this.h = h;
 
   // Controls
+  this.divRight = null;
+  this.divLeft = null;
   this.zoomin = null;
   this.zoomout = null;
   this.pan = null;
@@ -555,6 +559,8 @@ function Annotator(img, w, h) {
   this.annType = null;
   this.ftrSel = null;
   this.delAnn = null;
+  this.tip = null;
+  this.gofull = null;
 
   this.title = null;
 
@@ -654,6 +660,90 @@ Annotator.fn.getFeatures = function() {
 };
 
 //////////////////////////////////////////////////////
+// Full-screen
+
+/**
+ * Toggle full-screen mode.
+ * @param    {Annotator} Reference to the annotator
+ * @param    {Boolean} Clicked toggle-button
+ * @memberOf Annotator#
+ * @method   toggleFullscreen
+ */
+Annotator.fn.toggleFullscreen = function(annotator, clickedToggleButton) {
+  console.log('toggleFullscreen', annotator);
+  
+  if (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  ) {
+    annotator.stopFullscreen(annotator, clickedToggleButton);
+  } else {
+    // Update dimensions
+    annotator.w = screen.width;
+    annotator.h = screen.height -
+      $("#annotator-top-controls").height() -
+      $("#annotator-bottom-controls").height() -
+      parseInt($("body").css("margin-top").replace("px", "")) * 2 -
+      parseInt($("body").css("margin-bottom").replace("px", "")) * 2;
+    // Reloading & resizing
+    annotator.container.width(annotator.w).height(annotator.h);
+    // Reset pan/zoom
+    annotator.cHelper.reset(annotator.w, annotator.h);
+    annotator.showChange();
+
+    element = $(".annotator")[0];
+    if (element.requestFullscreen) {
+      element.requestFullscreen();
+    } else if (element.mozRequestFullScreen) {
+      element.mozRequestFullScreen();
+    } else if (element.webkitRequestFullscreen) {
+      element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+    } else if (element.msRequestFullscreen) {
+      element.msRequestFullscreen();
+    }
+  }
+};
+
+/**
+ * Stop full-screen mode.
+ * @param    {Annotator} Reference to the annotator
+ * @param    {Boolean} Clicked toggle-button
+ * @memberOf Annotator#
+ * @method   stopFullscreen
+ */
+Annotator.fn.stopFullscreen = function(annotator, clickedToggleButton) {
+  console.log('stopFullscreen', annotator);
+
+  // Update dimensions
+  annotator.w = annotator.originalW;
+  annotator.h = annotator.originalH;
+  // Reloading & resizing
+  annotator.container.width(annotator.w).height(annotator.h);
+  // Reset pan/zoom
+  annotator.cHelper.reset(annotator.w, annotator.h);
+  annotator.showChange();
+
+  if (
+    document.fullscreenElement ||
+    document.webkitFullscreenElement ||
+    document.mozFullScreenElement ||
+    document.msFullscreenElement
+  ) {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+};
+
+//////////////////////////////////////////////////////
 // Update / build functionality
 
 /**
@@ -699,27 +789,70 @@ Annotator.fn.build = function($parent) {
   $parent.addClass("annotator");
   $parent.data("Annotator", this);
 
+  var annotator = this;
+  console.log("Annotator", this);
+
+  // Top controls
+  this.divTop   = $('<divid="annotator-top-controls"></div>').appendTo($parent).css("width", "100%");
+  this.divRight  = $('<div></div>').appendTo(this.divTop).css("float", "right");
+  this.divLeft   = $('<div></div>').appendTo(this.divTop);
+  this.divClear   = $('<div></div>').appendTo(this.divTop).css("clear", "both");
+
   // Controls
-  this.zoomin    = $('<button id="zoomin">+</button>').appendTo($parent);
-  this.zoomout   = $('<button id="zoomout">-</button>').appendTo($parent);
-  this.pan       = $('<button id="pan">Pan</button>').appendTo($parent)
+  this.zoomin    = $('<button id="zoomin">+</button>').appendTo(this.divLeft);
+  this.zoomout   = $('<button id="zoomout">-</button>').appendTo(this.divLeft);
+  this.pan       = $('<button id="pan">Pan</button>').appendTo(this.divLeft)
                       .css("margin-right", "20px");
 
-  this.annotate  = $('<button id="annot">Annotate</button>').appendTo($parent);
+  this.annotate  = $('<button id="annot">Annotate</button>').appendTo(this.divLeft);
   this.annType   = $('<select id="typesel"></select>')
-                      .html('<option>Box</option><option>Polygon</option><option>Point</option>')
-                      .appendTo($parent);
-  this.edit      = $('<button id="edit">Edit</button>').appendTo($parent)
+                      .html('<option>Box</option><option>Line</option><option>Point</option><option>Polygon</option>')
+                      .appendTo(this.divLeft);
+  this.edit      = $('<button id="edit">Edit</button>').appendTo(this.divLeft)
                       .css("margin-right", "20px");
 
-  this.title     = $('<label>Annotating:</label>').appendTo($parent)
-                      .css("font-family", "sans-serif")
-                      .css("font-size", "12px");
+  this.title     = $('<label>Annotating:</label>').appendTo(this.divLeft)
+                      .css("margin-right", "10px")
 
   this.ftrSel    = $('<select id="ftrsel"></select>')
                       .html('<option>Image</option>')
                       .prop('disabled', true)
-                      .appendTo($parent);
+                      .appendTo(this.divLeft);
+
+  this.tip       = $('<span>Tip: Double-click the last point to complete a line or a polygon.</span>')
+                      .appendTo(this.divRight)
+                      .addClass("text-muted");
+
+  this.gofull    = $('<button id="toggle_fullscreen">Toggle fullscreen</button>')
+                      .appendTo(this.divRight)
+                      .css("margin-left", "10px")
+                      .click(function () {
+                        annotator.toggleFullscreen(annotator, true);
+                      });
+
+  if (document.addEventListener)
+  {
+      document.addEventListener('webkitfullscreenchange', exitHandler, false);
+      document.addEventListener('mozfullscreenchange', exitHandler, false);
+      document.addEventListener('fullscreenchange', exitHandler, false);
+      document.addEventListener('MSFullscreenChange', exitHandler, false);
+  }
+
+  function exitHandler()
+  {
+      if (document.webkitIsFullScreen === false)
+      {
+          annotator.stopFullscreen(annotator, false);
+      }
+      else if (document.mozFullScreen === false)
+      {
+          annotator.stopFullscreen(annotator, false);
+      }
+      else if (document.msFullscreenElement === false)
+      {
+          annotator.stopFullscreen(annotator, false);
+      }
+  }
 
   // Canvas container
   this.container = $('<div tabindex=0></div>')
@@ -729,12 +862,13 @@ Annotator.fn.build = function($parent) {
                       .appendTo($parent);
 
   // The drawing canvas
-  this.canvas = $('<canvas>Unsupported browser.</canvas>')
+  this.canvas =    $('<canvas>Unsupported browser.</canvas>')
                       .css(canvascss)
                       .appendTo(this.container);
 
   // Bottom controls
-  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo($parent);
+  this.divBottom   = $('<div id="annotator-bottom-controls"></div>').appendTo($parent);
+  this.delAnn    = $('<button id="nextAnn">Delete Annotation</button>').appendTo(this.divBottom);
 
   // Disable some of the normal page interaction in the canvas area
   this.canvas[0].onselectstart = function(){return false;};
@@ -760,6 +894,10 @@ Annotator.fn.build = function($parent) {
         break;
       case "Polygon":
         a.annHelper.changeType("poly");
+        a.switchOp("annotate");
+        break;
+      case "Line":
+        a.annHelper.changeType("line");
         a.switchOp("annotate");
         break;
       case "Point":
@@ -878,8 +1016,11 @@ Annotator.fn.lockSelect = function(type, lock) {
       if (type === "rect") {
         this.annType.val('Box');
       }
-      else if (type === "rect") {
+      else if (type === "poly") {
         this.annType.val('Polygon');
+      }
+      else if (type === "line") {
+        this.annType.val('Line');
       }
       else {
         this.annType.val('Point');
@@ -959,7 +1100,7 @@ Annotator.fn.switchOp = function(op) {
 };
 
 module.exports = Annotator;
-},{"./annHelper":1,"./canvasHelper":4,"./tools/annotate":12,"./tools/edit":13,"./tools/pan":14}],3:[function(require,module,exports){
+},{"./annHelper":1,"./canvasHelper":4,"./tools/annotate":13,"./tools/edit":14,"./tools/pan":15}],3:[function(require,module,exports){
 var Annotator = require('./annotator');
 
 /**
@@ -1390,6 +1531,139 @@ var api = require('./api');
 var SuperShape = require('../superShape');
 
 /**
+ * Polygon Shaped Annotation
+ * @constructor
+ * @extends {SuperShape}
+ */
+function LineAnn() {
+  SuperShape.call(this);
+  this.type = 'line';
+}
+
+LineAnn.prototype = Object.create(SuperShape.prototype);
+LineAnn.fn = LineAnn.prototype;
+
+/*jshint unused:vars*/
+
+/**
+ * Adds a point to the line - each point is notionally 'connected' in turn to the next.
+ * @param {Object} pt
+ * @return {Boolean} Always true (A Line is never 'complete')
+ * @memberOf LineAnn#
+ * @method   addPt
+ */
+LineAnn.fn.addPt = function(pt) {
+  if (this.pts.length === 0) {
+    this.pts = [pt, pt];
+  }
+  else {
+    this.pts.push(pt);
+  }
+
+  this.valid = true;
+  return true;
+};
+
+/**
+ * Inserts a point after the given index.
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf LineAnn#
+ * @method   insPt
+ */
+LineAnn.fn.insPt = function(ind, pt) {
+  if (ind < 0 || ind > this.pts.length) {
+    return;
+  }
+
+  this.pts.splice(ind, 0, pt);
+};
+
+/**
+ * Whether or not a point can be inserted into the line.
+ * Overrides {@link SuperTool} definition - since the line has an arbitray number of points, this always returns true.
+ * @return {Boolean} Always true
+ * @memberOf LineAnn#
+ * @method   canInsPt
+ */
+LineAnn.fn.canInsPt = function() {
+  return true;
+};
+
+/**
+ * Modifies the last point added to match the input.
+ * @param  {Object} pt
+ * @memberOf LineAnn#
+ * @method   modLastPt
+ */
+LineAnn.fn.modLastPt = function(pt) {
+  if (this.pts.length > 0) {
+    this.pts[this.pts.length-1] = pt;
+  }
+};
+
+/**
+ * Modifies the point at the given index to match the input.
+ * @param  {Number} ind
+ * @param  {Object} pt
+ * @memberOf LineAnn#
+ * @method   modPt
+ */
+LineAnn.fn.modPt = function(ind, pt) {
+  if (ind >= 0 && ind < this.pts.length) {
+    this.pts[ind] = pt;
+  }
+};
+
+/**
+ * Gets an array of points to draw - called by the {@link CanvasHelper}.
+ * For the line, this just returns the stored points.
+ * @return {Array} Array of points to draw
+ * @memberOf LineAnn#
+ * @method   getDrawPts
+ */
+LineAnn.fn.getDrawPts = function() {
+  return this.pts;
+};
+
+/**
+ * Deletes the point at the given index.
+ * @param  {Number} ind
+ * @memberOf LineAnn#
+ * @method   delPt
+ */
+LineAnn.fn.delPt = function(ind) {
+  this.pts.splice(ind, 1);
+
+  if (this.pts.length < 2) {
+    this.invalidate();
+    this.pts = [];
+  }
+};
+
+/**
+ * Gets the export data for the annotation.
+ * For the line, this just returns export data with the internally stored points.
+ * @return {Object} Data for export to client application
+ * @memberOf LineAnn#
+ * @method   getExport
+ */
+LineAnn.fn.getExport = function() {
+  var res = {};
+
+  res.type = 'line';
+  res.points = this.pts;
+
+  return res;
+};
+
+/*jshint unused:true*/
+
+module.exports = LineAnn;
+},{"../superShape":11}],8:[function(require,module,exports){
+var SuperShape = require('../superShape');
+
+/**
  * Annotation of a single point.
  * @constructor
  * @extends {SuperShape}
@@ -1517,7 +1791,7 @@ PointAnn.fn.getExport = function() {
 /*jshint unused:true*/
 
 module.exports = PointAnn;
-},{"../superShape":10}],8:[function(require,module,exports){
+},{"../superShape":11}],9:[function(require,module,exports){
 var SuperShape = require('../superShape');
 
 /**
@@ -1650,7 +1924,7 @@ PolyAnn.fn.getExport = function() {
 /*jshint unused:true*/
 
 module.exports = PolyAnn;
-},{"../superShape":10}],9:[function(require,module,exports){
+},{"../superShape":11}],10:[function(require,module,exports){
 var SuperShape = require('../superShape');
 
 /**
@@ -1820,7 +2094,7 @@ RectAnn.fn.getExport = function() {
 /*jshint unused:true*/
 
 module.exports = RectAnn;
-},{"../superShape":10}],10:[function(require,module,exports){
+},{"../superShape":11}],11:[function(require,module,exports){
 /**
  * Parent class for the different annotation types.
  * @constructor
@@ -1977,7 +2251,7 @@ SuperShape.fn.getBounds   = function() {
 
 module.exports = SuperShape;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * The parent class for tools (essentially user input handlers)<br/>
  * The default handlers all do nothing when called.
@@ -2079,7 +2353,7 @@ SuperTool.fn.draw     = function(g) {};
 /*jshint unused:true*/
 
 module.exports = SuperTool;
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
 /**
@@ -2198,7 +2472,7 @@ AnnTool.fn.keyDown = function(key) {
 /*jshint unused:true*/
 
 module.exports = AnnTool;
-},{"../superTool":11}],13:[function(require,module,exports){
+},{"../superTool":12}],14:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
 /**
@@ -2446,7 +2720,7 @@ EditTool.fn.draw = function(g) {
 /*jshint unused:true*/
 
 module.exports = EditTool;
-},{"../superTool":11}],14:[function(require,module,exports){
+},{"../superTool":12}],15:[function(require,module,exports){
 var SuperTool = require('../superTool');
 
 /**
@@ -2514,10 +2788,11 @@ PanTool.fn.mMove = function(x, y) {
 /*jshint unused:true*/
 
 module.exports = PanTool;
-},{"../superTool":11}],15:[function(require,module,exports){
+},{"../superTool":12}],16:[function(require,module,exports){
 var RectAnn = require('./shapes/rect');
 var PolyAnn = require('./shapes/poly');
 var PointAnn = require('./shapes/point');
+var LineAnn = require('./shapes/line');
 
 /**
  * Creates an annotation of the specified type.
@@ -2533,7 +2808,9 @@ module.exports.createAnnotation = function createAnnotation(type) {
       return new PolyAnn();
     case 'point':
       return new PointAnn();
+    case 'line':
+      return new LineAnn();
   }
 };
 
-},{"./shapes/point":7,"./shapes/poly":8,"./shapes/rect":9}]},{},[6]);
+},{"./shapes/line":7,"./shapes/point":8,"./shapes/poly":9,"./shapes/rect":10}]},{},[6]);
