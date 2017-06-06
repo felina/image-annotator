@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: SuperShape</title>
+    <title>JSDoc: Class: PointAnn</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: SuperShape</h1>
+    <h1 class="page-title">Class: PointAnn</h1>
 
     
 
@@ -28,7 +28,7 @@
 
 <header>
     
-        <h2>SuperShape</h2>
+        <h2>PointAnn</h2>
         
     
 </header>
@@ -40,14 +40,14 @@
 
     
 
-    <h4 class="name" id="SuperShape"><span class="type-signature"></span>new SuperShape<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="PointAnn"><span class="type-signature"></span>new PointAnn<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Parent class for the different annotation types.
+    Annotation of a single point.
 </div>
 
 
@@ -91,7 +91,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line5">line 5</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line8">line 8</a>
     </li></ul></dd>
     
 
@@ -119,6 +119,17 @@
 
     
     </div>
+
+    
+        <h3 class="subsection-title">Extends</h3>
+
+        
+
+
+    <ul>
+        <li><a href="SuperShape.html">SuperShape</a></li>
+    </ul>
+
 
     
 
@@ -166,6 +177,11 @@
 
     
 
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#pts">SuperShape#pts</a>
+    </li></ul></dd>
     
 
     
@@ -241,6 +257,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#type">SuperShape#type</a>
+    </li></ul></dd>
+    
 
     
 
@@ -311,6 +332,11 @@
     
 
     
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#valid">SuperShape#valid</a>
+    </li></ul></dd>
+    
 
     
 
@@ -360,14 +386,14 @@
 
     
 
-    <h4 class="name" id="addPt"><span class="type-signature">(abstract) </span>addPt<span class="signature">(pt)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    <h4 class="name" id="addPt"><span class="type-signature"></span>addPt<span class="signature">(pt)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
 
     
 
 
 
 <div class="description">
-    Adds a point to the shape.
+    Creates the point.
 </div>
 
 
@@ -440,6 +466,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#addPt">SuperShape#addPt</a>
+    </li></ul></dd>
+    
 
     
 
@@ -460,7 +491,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line34">line 34</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line18">line 18</a>
     </li></ul></dd>
     
 
@@ -487,7 +518,7 @@
 
         
 <div class="param-desc">
-    False if the shape is complete
+    True if another point can be added, false if the shape is complete.
 </div>
 
 
@@ -541,6 +572,11 @@
 
     
 
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#canInsPt">SuperShape#canInsPt</a>
+    </li></ul></dd>
     
 
     
@@ -613,14 +649,14 @@
 
     
 
-    <h4 class="name" id="delPt"><span class="type-signature">(abstract) </span>delPt<span class="signature">(ind)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="delPt"><span class="type-signature"></span>delPt<span class="signature">(ind)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Deletes the point at the given index.
+    Deleting a single point isn't meaningful -instead, this method override invalidates the shape,essentially deleting it.
 </div>
 
 
@@ -693,6 +729,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#delPt">SuperShape#delPt</a>
+    </li></ul></dd>
+    
 
     
 
@@ -713,7 +754,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line73">line 73</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line97">line 97</a>
     </li></ul></dd>
     
 
@@ -772,6 +813,11 @@
 
     
 
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#getBounds">SuperShape#getBounds</a>
+    </li></ul></dd>
     
 
     
@@ -844,14 +890,14 @@
 
     
 
-    <h4 class="name" id="getDrawPts"><span class="type-signature">(abstract) </span>getDrawPts<span class="signature">()</span><span class="type-signature"> &rarr; {Array}</span></h4>
+    <h4 class="name" id="getDrawPts"><span class="type-signature"></span>getDrawPts<span class="signature">()</span><span class="type-signature"> &rarr; {Array}</span></h4>
 
     
 
 
 
 <div class="description">
-    Gets an array of points to draw - called by the <a href="CanvasHelper.html">CanvasHelper</a>.
+    Gets an array of the single point to draw - called by the <a href="CanvasHelper.html">CanvasHelper</a>.
 </div>
 
 
@@ -875,6 +921,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#getDrawPts">SuperShape#getDrawPts</a>
+    </li></ul></dd>
+    
 
     
 
@@ -895,7 +946,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line82">line 82</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line59">line 59</a>
     </li></ul></dd>
     
 
@@ -922,7 +973,7 @@
 
         
 <div class="param-desc">
-    Array of points to draw
+    Array of one single point to draw
 </div>
 
 
@@ -948,7 +999,7 @@
 
     
 
-    <h4 class="name" id="getExport"><span class="type-signature">(abstract) </span>getExport<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    <h4 class="name" id="getExport"><span class="type-signature"></span>getExport<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
 
@@ -979,6 +1030,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#getExport">SuperShape#getExport</a>
+    </li></ul></dd>
+    
 
     
 
@@ -999,7 +1055,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line91">line 91</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line109">line 109</a>
     </li></ul></dd>
     
 
@@ -1080,6 +1136,11 @@
 
     
 
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#getNumPts">SuperShape#getNumPts</a>
+    </li></ul></dd>
     
 
     
@@ -1163,7 +1224,7 @@
 
 
 <div class="description">
-    Gets the points array as the user will interact with them - see <a href="SuperShape.html#getDrawPts">SuperShape#getDrawPts</a> for points to be drawn.
+    Gets the array of the single point as the user will interact with it - see <a href="PointAnn.html#getDrawPts">PointAnn#getDrawPts</a> for point to be drawn.
 </div>
 
 
@@ -1187,6 +1248,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#getPts">SuperShape#getPts</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1207,7 +1273,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line108">line 108</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line81">line 81</a>
     </li></ul></dd>
     
 
@@ -1234,7 +1300,7 @@
 
         
 <div class="param-desc">
-    Array of points
+    Array of one single point
 </div>
 
 
@@ -1361,6 +1427,11 @@
     
 
     
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#insPt">SuperShape#insPt</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1442,6 +1513,11 @@
 
     
 
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#invalidate">SuperShape#invalidate</a>
+    </li></ul></dd>
     
 
     
@@ -1525,6 +1601,11 @@
     
 
     
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="SuperShape.html#isValid">SuperShape#isValid</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1600,14 +1681,14 @@
 
     
 
-    <h4 class="name" id="modLastPt"><span class="type-signature">(abstract) </span>modLastPt<span class="signature">(pt)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="modLastPt"><span class="type-signature"></span>modLastPt<span class="signature">(pt)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Modifies the last point to match the input.
+    Modifies the point added to match the input.
 </div>
 
 
@@ -1680,6 +1761,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#modLastPt">SuperShape#modLastPt</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1700,7 +1786,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line44">line 44</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line34">line 34</a>
     </li></ul></dd>
     
 
@@ -1731,14 +1817,14 @@
 
     
 
-    <h4 class="name" id="modPt"><span class="type-signature">(abstract) </span>modPt<span class="signature">(ind, pt)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="modPt"><span class="type-signature"></span>modPt<span class="signature">(ind, pt)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    Modifies the point at the given index to match the input.
+    Modifies the single point at the given index to match the input.
 </div>
 
 
@@ -1834,6 +1920,11 @@
     
 
     
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="SuperShape.html#modPt">SuperShape#modPt</a>
+    </li></ul></dd>
+    
 
     
 
@@ -1854,7 +1945,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="superShape.js.html">superShape.js</a>, <a href="superShape.js.html#line53">line 53</a>
+        <a href="shapes_point.js.html">shapes/point.js</a>, <a href="shapes_point.js.html#line46">line 46</a>
     </li></ul></dd>
     
 

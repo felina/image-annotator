@@ -115,7 +115,8 @@ RectAnn.fn.getDrawPts = function() {
  */
 RectAnn.fn.getPts = function() {
   if (this.valid) {
-    return this.getDrawPts().slice(0, -1);
+    var pts = this.getDrawPts().slice(0, -1);
+    return pts;
   }
   else {
     return [];
